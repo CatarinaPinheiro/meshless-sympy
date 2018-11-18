@@ -13,30 +13,30 @@ class MovingLeastSquares2D():
     @property
     def r_min(self):
         distances = [np.linalg.norm(np.subtract(d, self.point)) for d in self.data]
-        return np.sort(distances)[self.base.shape[1] + 1]
+        return np.sort(distances)[len(self.basis) + 1]
 
     def AB(self, r):
         x, y = sp.var("x y")
-        P = [
+        P = sp.Matrix([
             h.cut(np.linalg.norm(p - self.point),
                   r,
                   [0 for _ in b.quadratic_2d],
-                  [float(exp.evalf(subs={"x": self.data[0], "y": self.data[1]})) for exp in b.quadratic_2d])
-            for p in self.data]
+                  [exp.evalf(subs={"x": self.point[0], "y": self.point[1]}) for exp in b.quadratic_2d])
+            for p in self.data])
 
-        B = np.transpose(P) @ np.diag([
+        B = sp.transpose(P) @ sp.diag(*[
             h.cut(np.linalg.norm(np.array([xj, yj]) - self.point),
-                  r, 0, float(h.gaussian_with_radius(x - xj, y - yj, r).evalf(subs={'x': self.point[0], 'y': self.point[1]})))
+                  r, 0, h.gaussian_with_radius(x - xj, y - yj, r).evalf(subs={'x': self.point[0], 'y': self.point[1]}))
             for xj, yj in self.data])
         A = B @ P
         return A, B
 
     @property
     def phi(self):
-        pt = np.array([[float(exp.evalf(subs={'x': self.point[0], 'y':self.point[1]})) for exp in self.basis]])
+        pt = sp.Matrix([ self.basis])
 
         ri = self.r_min
-        while np.linalg.det(self.AB(ri)[0]) < 1e-6:
+        while np.linalg.det(self.AB(ri)[0].evalf(subs={"x": self.point[0], "y": self.point[1]})) < 1e-6:
             ri *= 1.05
         A, B = self.AB(ri)
 
