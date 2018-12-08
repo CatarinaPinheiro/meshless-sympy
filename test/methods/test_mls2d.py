@@ -14,21 +14,21 @@ class TestMovingLeastSquare2D(unittest.TestCase):
         mls = m.MovingLeastSquares2D(data[0:, 0:2], base)
         mls.set_point(point)
         example.point = point
-        approx = mls.approximate(np.array(data[0:, 2]))
+        approx = mls.approximate(np.array(data[:, 2]))
 
         self.assertEqual(np.round(approx, 3)[0], np.round(example.eval(point), 3))
 
     def test_polynomial_phi(self):
-       self.template(ef.PolynomialExample(20))
+       self.template(ef.PolynomialExample(10))
 
     def test_linear_phi(self):
-       self.template(ef.LinearExample(20))
+       self.template(ef.LinearExample(10))
 
     def test_exponential_phi(self):
-       self.template(ef.ExponentialExample(20))
+       self.template(ef.ExponentialExample(10))
 
     def test_trigonometric_phi(self):
-       self.template(ef.TrigonometricExample(20))
+       self.template(ef.TrigonometricExample(10))
 
 
 if __name__ == '__main__':
