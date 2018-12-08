@@ -31,18 +31,25 @@ class MovingLeastSquares2D:
         A = B @ P
         return A, B
 
-    @property
-    def phi(self):
-        pt = sp.Matrix([ self.basis])
+    def compute_phi(self):
+        pt = sp.Matrix([self.basis])
 
         ri = self.r_min
-        while np.linalg.det(np.array(self.AB(ri)[0].evalf(subs={"x": self.point[0], "y": self.point[1]}), dtype=np.float64)) < 1e-6:
+        while np.linalg.det(
+                np.array(self.AB(ri)[0].evalf(subs={"x": self.point[0], "y": self.point[1]}), dtype=np.float64)) < 1e-9:
             ri *= 1.05
-            print(np.linalg.det(np.array(self.AB(ri)[0].evalf(subs={"x": self.point[0], "y": self.point[1]}), dtype=np.float64)))
+            print(np.linalg.det(
+                np.array(self.AB(ri)[0].evalf(subs={"x": self.point[0], "y": self.point[1]}), dtype=np.float64)))
             print(ri)
         A, B = self.AB(ri)
 
-        return pt @ A.inv("LU") @ B
+        print(A)
+
+        invA = A.inverse_LU()
+
+        phii = pt @ invA
+        self.phi = pt @ sp.Inverse(A) @ B
+        return self.phi
 
     @property
     def numeric_phi(self):
@@ -51,15 +58,29 @@ class MovingLeastSquares2D:
             'y': self.point[1]
         }
 
-        pt = np.array([ sp.Matrix(self.basis).evalf(subs=dict)],dtype=np.float64)
-
+        spt = sp.Matrix(self.basis)
+        pt = np.array([spt.evalf(subs=dict)], dtype=np.float64)
 
         ri = self.r_min
         while np.linalg.det(np.array(self.AB(ri)[0].evalf(subs=dict), dtype=np.float64)) < 1e-6:
             ri *= 1.05
-        A, B = self.AB(ri)
+        sA, sB = self.AB(ri)
+        invA = np.linalg.inv(np.array(sA.evalf(subs=dict), dtype=np.float64))
+        B = np.array(sB.evalf(subs=dict), dtype=np.float64)
 
-        return pt @ np.linalg.inv(np.array(A.evalf(subs=dict),dtype=np.float64)) @ np.array(B.evalf(subs=dict),dtype=np.float64)
+        def dspt(var):
+            return np.array([spt.diff(var).evalf(subs=dict)], dtype=np.float64)
+
+        def dA(var):
+            return np.array(sA.diff(var).evalf(subs=dict), dtype=np.float64)
+
+        def dB(var):
+            return np.array(sB.diff(var).evalf(subs=dict), dtype=np.float64)
+        return {
+            '': pt @ invA @ B,
+            'x': dspt('x')@invA@B+spt@(-invA@dA('x')@invA)@B+pt@invA@dB('x'),
+            'y': dspt('y')@invA@B+spt@(-invA@dA('y')@invA)@B+pt@invA@dB('y'),
+        }
 
     def set_point(self, point):
         self.point = point

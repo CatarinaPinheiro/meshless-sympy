@@ -17,8 +17,8 @@ class Rectangle:
 
     @property
     def segments(self):
-        return [[self.x1 + self.dx*i for i in range(1 + self.width/self.dx)],
-                [self.y1 + self.dy*i for i in range(1 + self.height/self.dy)]]
+        return [[self.x1 + self.dx*i for i in range(int(1 + self.width/self.dx))],
+                [self.y1 + self.dy*i for i in range(int(1 + self.height/self.dy))]]
 
     # returns array except it's first and last elements.
 
@@ -31,3 +31,8 @@ class Rectangle:
     @property
     def inside_cartesian(self):
         return [[x, y] for x in self.inside[0] for y in self.inside[1]]
+
+    # Returns Cartesian Product of two sets.
+    @property
+    def cartesian(self):
+        return [[x, y] for x in self.segments[0] for y in self.segments[1]]
