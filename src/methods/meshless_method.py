@@ -2,9 +2,10 @@ from numpy import linalg as la
 import src.methods.mls2d as mls
 from scipy.spatial import Delaunay
 import numpy as np
-
+from src.helpers.cache import cache
+import time
 from src.helpers import unique_rows
-
+import threading as td
 
 class MeshlessMethod:
     def __init__(self,data,basis,domain_function,domain_operator,boundary_operator,boundary_function,integration_points):
@@ -17,33 +18,56 @@ class MeshlessMethod:
         self.integration_points = integration_points
 
     def solve(self):
-        m2d = mls.MovingLeastSquares2D(self.data, self.basis)
+        lphi = {}
+        b = {}
 
-        lphi = []
-        b = []
-        for d in self.domain_data:
-            m2d.point = d
-            lphi.append(self.integration_points(self.domain_operator(m2d.numeric_phi()).eval(subs={
-                'x': d[0],
-                'y': d[1]
-            })))
 
-            b.append(self.integration_points(self.domain_function(d)))
+        print("domain data")
 
-        for d in self.boundary_data:
-            m2d.point = d
-            lphi.append(self.boundary_operator(m2d.numeric_phi()).eval(subs={
-                'x': d[0],
-                'y': d[1]
-            }))
+        def fill(i,self):
+            m2d = mls.MovingLeastSquares2D(self.data, self.basis)
+            if i < len(self.domain_data):
+                d = self.domain_data[i]
+                begin_time = time.time()
+                print("%d/%d" % (i + 1, len(self.domain_data)))
+                m2d.point = self.domain_data[i]
 
-            b.append(self.boundary_function(d))
+                lphi[i] = self.integration_points(m2d.numeric_phi).eval(d)[0]
 
+                b[i] = self.integration_points(self.domain_function(d))
+
+                cache.reset()
+                print("--- %s seconds ---" % (time.time() - begin_time))
+            else:
+                d = self.boundary_data[i - len(self.domain_data)]
+                begin_time = time.time()
+
+                print("%d/%d" % (i + 1, len(self.boundary_data)))
+                m2d.point = self.boundary_data[i - len(self.domain_data)]
+
+                lphi[i + len(self.domain_data)] = self.boundary_operator(m2d.numeric_phi, d).eval(d)[0]
+
+                b[i + len(self.domain_data)] = self.boundary_function(m2d.point)
+
+                cache.reset()
+                print("--- %s seconds ---" % (time.time() - begin_time))
+
+        threads = []
+        for i in range(len(self.domain_data)+len(self.boundary_data)):
+            t = td.Thread(target=fill, args=(i,self))
+            threads.append(t)
+            t.start()
+
+            if i%1==0:
+                for t in threads:
+                    t.join()
+
+        for t in threads:
+            t.join()
+
+        lphi = list(map(lambda p: p[1], lphi.items()))
+        b = list(map(lambda p: p[1], b.items()))
         return la.solve(lphi, b)
-
-    @property
-    def domain_data(self):
-        return np.setdiff1d(self.data, self.boundary_data)
 
     @property
     def boundary_data(self):
@@ -64,4 +88,10 @@ class MeshlessMethod:
 
         boundary_data = unique_rows(boundary_data_initial)
 
+
         return boundary_data
+
+    @property
+    def domain_data(self):
+        boundary_list = [[x, y] for x, y in self.boundary_data]
+        return [x for x in self.data if x not in boundary_list]

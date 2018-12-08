@@ -1,25 +1,48 @@
 import numpy as np
-
+import functools as ft
+import sympy as sp
+from src.helpers.cache import cache
 
 class Matrix:
-    def __init__(self, symbolic):
+    def __init__(self, symbolic,name="M"):
         self.symbolic = symbolic
+        self.name = name
 
     def derivate(self,var):
-        return [Matrix(self.symbolic.diff(var))]
+        return Matrix(self.symbolic.diff(var),self.name+"!")
     
     def eval(self,subs):
-        return np.array(self.symbolic.evalf(subs=subs),dtype=np.float64)
+        found, stored = cache.get(self)
+        if found:
+            return stored
+        else:
+            value = sp.lambdify(sp.var("x y"),self.symbolic,"numpy")(*subs)
+            cache.set(self,value)
+            return value
+
+    def __str__(self):
+        return self.name
+
 
 class Inverse:
-    def __init__(self,symbolic):
+    def __init__(self,symbolic, name="M"):
         self.symbolic = symbolic
+        self.name = name
     
     def derivate(self,var):
-        return [self, Matrix(-self.symbolic),self]
+        return Product([self, Matrix(-self.symbolic,"(-"+self.name+")").derivate(var),self])
 
     def eval(self,subs):
-        return np.array(self.symbolic.evalf(subs=subs),dtype=np.float64)
+        found, stored = cache.get(self)
+        if found:
+            return stored
+        else:
+            value = np.linalg.inv(sp.lambdify(sp.var("x y"),self.symbolic,"numpy")(*subs))
+            cache.set(self,value)
+            return value
+
+    def __str__(self):
+        return self.name+"⁻¹"
 
 class Sum:
     def __init__(self, terms):
@@ -33,6 +56,10 @@ class Sum:
 
     def eval(self,subs):
         return np.sum([t.eval(subs) for t in self.terms],axis=0)
+
+    def __str__(self):
+        return ft.reduce(lambda a,b: "("+str(a)+" + "+str(b)+")",self.terms)
+
 
 class Product:
     def __init__(self, factors):
@@ -48,4 +75,7 @@ class Product:
         return Sum(terms)
 
     def eval(self,subs):
-        return np.prod([f.eval(subs) for f in self.factors],axis=0)
+        return ft.reduce(lambda x,y: x@y, [f.eval(subs) for f in self.factors])
+
+    def __str__(self):
+        return ft.reduce(lambda a, b: str(a) + "*" + str(b), self.factors)

@@ -9,6 +9,12 @@ def gaussian_with_radius(x, y, r):
     weight = (exp1 - exp2) / (1 - exp2)
     return weight
 
+def np_gaussian_with_radius(x, y, r):
+    c = 100
+    exp1 = np.exp(-((x ** 2 + y ** 2) / c ** 2))
+    exp2 = np.exp(-((r / c) ** 2))
+    weight = (exp1 - exp2) / (1 - exp2)
+    return weight
 
 def cut(a, b, c, d):
     return c if a > b else d

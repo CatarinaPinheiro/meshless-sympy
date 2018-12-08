@@ -6,18 +6,20 @@ from src.methods.collocation_method import CollocationMethod
 from src.methods.galerkin_method import GalerkinMethod
 from src.methods.petrov_galerkin_method import PetrovGalerkinMethod
 from src.methods.subregion_method import SubregionMethod
+import src.helpers.numeric as num
 
 
 class TestMeshless(unittest.TestCase):
     def template(self, method_class):
+        size = 5
         def boundary_function(point):
             if point[0] == 0:
                 return 0
-            elif point[0] == 10:
-                return 100
+            elif point[0] == size:
+                return 10*size
             elif point[1] == 0:
                 return 0
-            elif point[1] == 10:
+            elif point[1] == size:
                 return 0
             else:
                 raise ValueError("point not in boundary")
@@ -25,23 +27,23 @@ class TestMeshless(unittest.TestCase):
         def boundary_operator(exp,point):
             if point[0] == 0:
                 return exp
-            elif point[0] == 10:
+            elif point[0] == size:
                 return exp
             elif point[1] == 0:
                 return exp.derivate("y")
-            elif point[1] == 10:
+            elif point[1] == size:
                 return exp.derivate("y")
             else:
                 raise ValueError("point not in boundary")
 
         def domain_operator(exp,point):
-            return exp.derivate("x").derivate("x")+exp.derivate("y").derivate("y")
+            return num.Sum([exp.derivate("x").derivate("x"),exp.derivate("y").derivate("y")])
 
         def domain_function(point):
             return 0
 
         from src.geometry.rectangle import Rectangle
-        data = Rectangle(0,0,10,10).cartesian
+        data = Rectangle(0,0,size,size).cartesian
 
         method = method_class(
             boundary_function=boundary_function,
@@ -49,15 +51,15 @@ class TestMeshless(unittest.TestCase):
             domain_function=domain_function,
             domain_operator=domain_operator,
             data=data,
-            basis = quadratic_2d)
+            basis=quadratic_2d)
 
         def analytical(point):
-            return 10*point[0]
+            return point
 
         result = method.solve()
 
         for point in result:
-            self.assertAlmostEqual(point[0], analytical(point), 1)
+            self.assertAlmostEqual(point, analytical(point), 4)
 
 
     def test_collocation(self):

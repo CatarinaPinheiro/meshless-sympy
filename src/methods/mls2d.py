@@ -4,7 +4,6 @@ import src.basis as b
 import sympy as sp
 import src.helpers.numeric as num
 
-
 class MovingLeastSquares2D:
     def __init__(self, data, basis):
         self.basis = basis
@@ -19,12 +18,11 @@ class MovingLeastSquares2D:
     def AB(self, r):
         x, y = sp.symbols("x y")
         P = sp.Matrix([
-            h.cut(np.linalg.norm(d - self.point),
+            h.cut(np.linalg.norm(np.array(d) - self.point),
                   r,
                   [0 for _ in b.quadratic_2d],
-                  [exp.evalf(subs={"x": d[0], "y": d[1]}) for exp in b.quadratic_2d])
+                  [sp.lambdify(sp.var("x y"), exp, "numpy")(*d) for exp in b.quadratic_2d])
             for d in self.data])
-
         B = sp.transpose(P) @ sp.diag(*[
             h.cut(np.linalg.norm(np.array([xj, yj]) - self.point),
                   r, 0, h.gaussian_with_radius(x - xj, y - yj, r))
@@ -32,44 +30,40 @@ class MovingLeastSquares2D:
         A = B @ P
         return A, B
 
-    def compute_phi(self):
-        pt = sp.Matrix([self.basis])
+    def numeric_AB(self, r):
+        P = np.array([
+            h.cut(np.linalg.norm(np.array(d) - self.point),
+                  r,
+                  [0 for _ in b.quadratic_2d],
+                  [sp.lambdify(sp.var("x y"), exp, "numpy")(*d) for exp in b.quadratic_2d])
+            for d in self.data])
+        W = [
+            h.cut(np.linalg.norm(np.array([xj, yj]) - self.point),
+                  r, 0, h.np_gaussian_with_radius(self.point[0] - xj, self.point[1] - yj, r))
+            for xj, yj in self.data
+        ]
 
-        ri = self.r_min
-        while np.linalg.det(
-                np.array(self.AB(ri)[0].evalf(subs={"x": self.point[0], "y": self.point[1]}), dtype=np.float64)) < 1e-9:
-            ri *= 1.05
-            print(np.linalg.det(
-                np.array(self.AB(ri)[0].evalf(subs={"x": self.point[0], "y": self.point[1]}), dtype=np.float64)))
-            print(ri)
-        A, B = self.AB(ri)
-
-        print(A)
-
-        invA = A.inverse_LU()
-
-        phii = pt @ invA
-        self.phi = pt @ sp.Inverse(A) @ B
-        return self.phi
+        B = np.transpose(P) @ np.diag(W)
+        A = B @ P
+        return A, B
 
     @property
     def numeric_phi(self):
-        dict = {
-            'x': self.point[0],
-            'y': self.point[1]
-        }
-
-        spt = sp.Matrix(self.basis)
-        pt = np.array([spt.evalf(subs=dict)], dtype=np.float64)
-
+        spt = sp.Matrix([self.basis])
         ri = self.r_min
-        while np.linalg.det(np.array(self.AB(ri)[0].evalf(subs=dict), dtype=np.float64)) < 1e-6:
-            ri *= 1.05
-        sA, sB = self.AB(ri)
-        invA = np.linalg.inv(np.array(sA.evalf(subs=dict), dtype=np.float64))
-        B = np.array(sB.evalf(subs=dict), dtype=np.float64)
 
-        return num.Product([Matrix(spt),num.Inverse(A),num.Matrix(B)])
+        while True:
+            A = self.numeric_AB(ri)[0]
+            det = np.linalg.det(A)
+            if det < 1e-6:
+                ri *= 1.05
+                continue
+            else:
+                break
+
+        sA, sB = self.AB(ri)
+
+        return num.Product([num.Matrix(spt, "pt"),num.Inverse(sA,"A"),num.Matrix(sB,"B")])
 
     def set_point(self, point):
         self.point = point
