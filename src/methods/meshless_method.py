@@ -23,7 +23,7 @@ class MeshlessMethod:
         b = []
         for d in self.domain_data:
             m2d.point = d
-            lphi.append(self.integration_points(self.domain_operator(m2d.compute_phi()).evalf(subs={
+            lphi.append(self.integration_points(self.domain_operator(m2d.numeric_phi()).eval(subs={
                 'x': d[0],
                 'y': d[1]
             })))
@@ -32,7 +32,7 @@ class MeshlessMethod:
 
         for d in self.boundary_data:
             m2d.point = d
-            lphi.append(self.boundary_operator(m2d.compute_phi()).evalf(subs={
+            lphi.append(self.boundary_operator(m2d.numeric_phi()).eval(subs={
                 'x': d[0],
                 'y': d[1]
             }))

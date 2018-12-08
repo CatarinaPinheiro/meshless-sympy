@@ -23,23 +23,19 @@ class TestMeshless(unittest.TestCase):
                 raise ValueError("point not in boundary")
 
         def boundary_operator(exp,point):
-            x, y = sp.var("x y")
-
             if point[0] == 0:
                 return exp
             elif point[0] == 10:
                 return exp
             elif point[1] == 0:
-                return sp.Derivative(exp,y)
+                return exp.derivate("y")
             elif point[1] == 10:
-                return sp.Derivative(exp,y)
+                return exp.derivate("y")
             else:
                 raise ValueError("point not in boundary")
 
         def domain_operator(exp,point):
-            x, y = sp.var("x y")
-
-            return sp.Derivative(exp,(x,2))+sp.Derivative(exp,(y,2))
+            return exp.derivate("x").derivate("x")+exp.derivate("y").derivate("y")
 
         def domain_function(point):
             return 0

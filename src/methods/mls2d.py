@@ -2,6 +2,7 @@ import numpy as np
 import src.helpers as h
 import src.basis as b
 import sympy as sp
+import src.helpers.numeric as num
 
 
 class MovingLeastSquares2D:
@@ -68,19 +69,7 @@ class MovingLeastSquares2D:
         invA = np.linalg.inv(np.array(sA.evalf(subs=dict), dtype=np.float64))
         B = np.array(sB.evalf(subs=dict), dtype=np.float64)
 
-        def dspt(var):
-            return np.array([spt.diff(var).evalf(subs=dict)], dtype=np.float64)
-
-        def dA(var):
-            return np.array(sA.diff(var).evalf(subs=dict), dtype=np.float64)
-
-        def dB(var):
-            return np.array(sB.diff(var).evalf(subs=dict), dtype=np.float64)
-        return {
-            '': pt @ invA @ B,
-            'x': dspt('x')@invA@B+spt@(-invA@dA('x')@invA)@B+pt@invA@dB('x'),
-            'y': dspt('y')@invA@B+spt@(-invA@dA('y')@invA)@B+pt@invA@dB('y'),
-        }
+        return num.Product([Matrix(spt),num.Inverse(A),num.Matrix(B)])
 
     def set_point(self, point):
         self.point = point
