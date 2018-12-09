@@ -2,12 +2,21 @@ import sympy as sp
 import numpy as np
 
 
-def gaussian_with_radius(x, y, r):
+def gaussian_with_radius():
+    x, y, xj, yj, r = sp.var("x y xj yj r")
     c = 100
-    exp1 = sp.exp(-((x ** 2 + y ** 2) / c ** 2))
+    exp1 = sp.exp(-(((x-xj) ** 2 + (y-yj) ** 2) / c ** 2))
     exp2 = sp.exp(-((r / c) ** 2))
     weight = (exp1 - exp2) / (1 - exp2)
     return weight
+
+# def gaussian_with_radius(x, y, r):
+#     c = 100
+#     exp1 = sp.exp(-((x ** 2 + y ** 2) / c ** 2))
+#     exp2 = sp.exp(-((r / c) ** 2))
+#     weight = (exp1 - exp2) / (1 - exp2)
+#     return weight
+
 
 def np_gaussian_with_radius(x, y, r):
     c = 100

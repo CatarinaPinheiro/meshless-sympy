@@ -10,44 +10,45 @@ class Matrix:
         self.name = name
 
     def derivate(self,var):
-        return Matrix(self.symbolic.diff(var),self.name+"!")
-    
+        return Matrix(self.symbolic.diff(var),self.name+var)
+
     def eval(self,subs):
         found, stored = cache.get(self)
         if found:
-            return stored
+            return stored(*subs)
         else:
             duration.start("Matrix::eval %s"%str(self))
-            value = sp.lambdify(sp.var("x y"),self.symbolic,"numpy")(*subs)
+            func = sp.lambdify(sp.var("x y"),self.symbolic,"numpy")
+            value = func(*subs)
             duration.step()
-            cache.set(self,value)
+            cache.set(self,func)
             return value
 
     def __str__(self):
         return self.name
-
-
-class Inverse:
-    def __init__(self,symbolic, name="M"):
-        self.symbolic = symbolic
-        self.name = name
-    
-    def derivate(self,var):
-        return Product([self, Matrix(-self.symbolic,"(-"+self.name+")").derivate(var),self])
-
-    def eval(self,subs):
-        found, stored = cache.get(self.name)
-        if found:
-            return stored
-        else:
-            duration.start("Inverse::eval %s"%str(self))
-            value = np.linalg.inv(sp.lambdify(sp.var("x y"),self.symbolic,"numpy")(*subs))
-            duration.step()
-            cache.set(self,value)
-            return value
-
-    def __str__(self):
-        return self.name+"⁻¹"
+#
+#
+# class Inverse:
+#     def __init__(self,symbolic, name="M"):
+#         self.symbolic = symbolic
+#         self.name = name
+#
+#     def derivate(self,var):
+#         return Product([self, Matrix(-self.symbolic,"(-"+self.name+")").derivate(var),self])
+#
+#     def eval(self,subs):
+#         found, stored = cache.get(self.name)
+#         if found:
+#             return stored
+#         else:
+#             duration.start("Inverse::eval %s"%str(self))
+#             value = np.linalg.inv(sp.lambdify(sp.var("x y"),self.symbolic,"numpy")(*subs))
+#             duration.step()
+#             cache.set(self,value)
+#             return value
+#
+#     def __str__(self):
+#         return self.name+"⁻¹"
 
 class Sum:
     def __init__(self, terms):
@@ -92,3 +93,68 @@ class Product:
 
     def __str__(self):
         return ft.reduce(lambda a, b: str(a) + "*" + str(b), self.factors)
+
+
+class Diagonal:
+    def __init__(self, elements):
+        self.elements = elements
+
+    def eval(self, subs):
+        return np.diag([
+            element.eval(subs) for element in self.elements
+        ])
+
+    def derivate(self, var):
+        return Diagonal([
+            element.derivate(var) for element in self.elements
+        ])
+
+
+class Constant:
+    def __init__(self, value, name="C"):
+        self.value = value
+        self.name = name
+
+    def eval(self, _):
+        return self.value
+
+    def derivate(self, _):
+        return Constant(np.zeros(self.value.shape),name="0")
+
+    def __str__(self):
+        return self.name
+
+
+class Function:
+    def __init__(self, func,extra, name="f"):
+        self.func = func
+        self.name = name
+        self.extra = extra
+
+    def eval(self,subs):
+        found, stored = cache.get(self)
+        subs = list(subs)
+        if found:
+            return stored(*(subs+self.extra))
+        else:
+            duration.start("Function::eval %s"%str(self))
+            func = sp.lambdify(sp.var("x y xj yj r"),self.func,"numpy")
+
+            value = func(*(subs+self.extra))
+            duration.step()
+            cache.set(self,func)
+            return value
+
+    def derivate(self, var):
+        found, stored = cache.get("d"+self.name+var)
+        if found:
+            return stored
+        else:
+            duration.start("Function::derivate %s" % str(self))
+            value = Function(self.func.diff(var),self.extra,self.name+var)
+            cache.set("d"+self.name+var, value)
+            duration.step()
+            return value
+
+    def __str__(self):
+        return self.name

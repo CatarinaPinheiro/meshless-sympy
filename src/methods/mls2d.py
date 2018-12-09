@@ -22,23 +22,27 @@ class MovingLeastSquares2D:
         distances = [np.linalg.norm(np.subtract(d, self.point)) for d in self.data]
         return np.sort(distances)[int(self.security*(len(self.basis) + 1))]
 
-    def AB(self, r):
+    def ABPW(self, r):
         x, y = sp.symbols("x y")
-        P = sp.Matrix(np.array([
+        P = np.array([
             h.cut(np.linalg.norm(np.array(d) - self.point),
                   r,
                   [0 for _ in b.quadratic_2d],
                   self.preP[i])
-            for i, d in enumerate(self.data)]))
-        W = [
-            h.cut(np.linalg.norm(np.array([xj, yj]) - self.point),
-                  r, 0, h.gaussian_with_radius(x - xj, y - yj, r))
-            for xj, yj in self.data
-        ]
+            for i, d in enumerate(self.data)], dtype=np.float64)
 
-        B = sp.transpose(P) @ sp.diag(*W)
-        A = B @ P
-        return A, B
+        W = num.Diagonal([
+            h.cut(np.linalg.norm(np.array([xj, yj]) - self.point),
+                  r,
+                  num.Function(sp.Integer(0), [0,0,0],"0"),
+                  num.Function(h.gaussian_with_radius(),[xj, yj, r],"g"))
+            for xj, yj in self.data])
+
+        Pt = num.Constant(np.transpose(P))
+        B = num.Product([Pt , W])
+        A = num.Product([B , num.Constant(P)])
+
+        return A, B, P, W
 
     def numeric_AB(self, r):
         P = [
@@ -53,7 +57,7 @@ class MovingLeastSquares2D:
             for xj, yj in self.data
         ]
 
-        B = np.transpose(np.array(P, dtype=np.float64)) @ np.diag(np.array(W, dtype=np.float64))
+        B = np.transpose(P)@ np.diag(np.array(W, dtype=np.float64))
         A = B @ P
         return A, B
 
@@ -71,11 +75,16 @@ class MovingLeastSquares2D:
             else:
                 break
 
-        sA, sB = self.AB(ri)
+        sA, sB, P, sW = self.ABPW(ri)
 
-        cache.set("A", A)
-        cache.set("B", B)
-        return num.Product([num.Matrix(spt, "pt"),num.Inverse(sA,"A"),num.Matrix(sB,"B")])
+        return num.Product([
+            num.Matrix(spt, "pt"),
+            num.Product([
+                num.Constant(np.transpose(P)),
+                sW,
+                num.Constant(P)
+            ]),
+            sB])
 
     def set_point(self, point):
         self.point = point

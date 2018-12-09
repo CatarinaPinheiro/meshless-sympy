@@ -11,7 +11,7 @@ import src.helpers.numeric as num
 
 class TestMeshless(unittest.TestCase):
     def template(self, method_class):
-        size = 5
+        size = 7
         def boundary_function(point):
             if point[0] == 0:
                 return 0
