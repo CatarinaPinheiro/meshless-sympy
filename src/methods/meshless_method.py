@@ -5,49 +5,57 @@ import numpy as np
 from src.helpers.cache import cache
 import time
 from src.helpers import unique_rows
+import src.helpers.numeric as num
 import threading as td
+import src.helpers.duration as duration
 
 class MeshlessMethod:
-    def __init__(self,data,basis,domain_function,domain_operator,boundary_operator,boundary_function,integration_points):
+    def __init__(self,data,basis,domain_function,domain_operator,boundary_operator,boundary_function):
         self.data = data
         self.basis = basis
         self.domain_function = domain_function
         self.domain_operator = domain_operator
         self.boundary_operator = boundary_operator
         self.boundary_function = boundary_function
-        self.integration_points = integration_points
+        self.m2d = mls.MovingLeastSquares2D(self.data, self.basis)
 
     def solve(self):
+        cache.reset()
         lphi = []
         b = []
-        m2d = mls.MovingLeastSquares2D(self.data, self.basis)
-
-        print("domain data")
 
         for i,d in enumerate(self.domain_data):
-            d = self.domain_data[i]
-            begin_time = time.time()
-            print("%d/%d" % (i + 1, len(self.domain_data)))
-            m2d.point = self.domain_data[i]
+            duration.duration.start("domain data %d/%d"%(i,len(self.domain_data)))
 
-            lphi.append(self.integration_points(self.domain_operator(m2d.numeric_phi,d)).eval(d)[0])
+            self.m2d.point = d
+            radius = self.m2d.r_first(1)
 
-            b.append(self.integration_points(self.domain_function(d)))
+            def integration_element(integration_point, i):
+                key = "gauss%s"%integration_point
+                found, value = cache.get(key)
+                if found:
+                    return value[i]
+                else:
+                    self.m2d.point = integration_point
+                    phi = self.m2d.numeric_phi
+                    value = phi.eval(d)[0]*self.integration_weight(d,integration_point,radius)
+                    cache.set(key, value)
+                    return value[i]
 
-            print("--- %s seconds ---" % (time.time() - begin_time))
+            lphi.append([self.integration(d, radius, lambda p: integration_element(p,i)) for i in range(len(self.data))])
+            b.append(self.integration(d, radius, self.domain_function))
+
+
+            duration.duration.step()
 
         for i, d in enumerate(self.boundary_data):
-            d = self.boundary_data[i]
-            begin_time = time.time()
+            duration.duration.start("boudary data %d/%d"%(i,len(self.boundary_data)))
+            self.m2d.point = self.boundary_data[i]
 
-            print("%d/%d" % (i + 1, len(self.boundary_data)))
-            m2d.point = self.boundary_data[i]
+            lphi.append(self.boundary_operator(self.m2d.numeric_phi, d).eval(d)[0])
 
-            lphi.append(self.boundary_operator(m2d.numeric_phi, d).eval(d)[0])
-
-            b.append(self.boundary_function(m2d.point))
-
-            print("--- %s seconds ---" % (time.time() - begin_time))
+            b.append(self.boundary_function(self.m2d.point))
+            duration.duration.step()
 
         return la.solve(lphi, b)
 

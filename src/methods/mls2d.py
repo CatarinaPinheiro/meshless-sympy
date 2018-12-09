@@ -19,8 +19,11 @@ class MovingLeastSquares2D:
 
     @property
     def r_min(self):
+        return self.r_first(int(self.security*(len(self.basis) + 1)))
+
+    def r_first(self, n):
         distances = [np.linalg.norm(np.subtract(d, self.point)) for d in self.data]
-        return np.sort(distances)[int(self.security*(len(self.basis) + 1))]
+        return np.sort(distances)[n]
 
     def ABPW(self, r):
         x, y = sp.symbols("x y")

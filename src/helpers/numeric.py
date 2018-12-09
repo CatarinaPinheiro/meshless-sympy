@@ -26,6 +26,9 @@ class Matrix:
 
     def __str__(self):
         return self.name
+
+    def shape(self):
+        return self.symbolic.shape
 #
 #
 # class Inverse:
@@ -50,6 +53,7 @@ class Matrix:
 #     def __str__(self):
 #         return self.name+"⁻¹"
 
+
 class Sum:
     def __init__(self, terms):
         self.terms = terms
@@ -68,7 +72,7 @@ class Sum:
             return np.sum([t.eval(subs) for t in self.terms],axis=0)
 
     def __str__(self):
-        return ft.reduce(lambda a,b: "("+str(a)+" + "+str(b)+")",self.terms)
+        return str(ft.reduce(lambda a,b: "("+str(a)+" + "+str(b)+")", self.terms))
 
 
 class Product:
@@ -84,20 +88,24 @@ class Product:
             ]))
         return Sum(terms)
 
-    def eval(self,subs):
+    def eval(self, subs):
         found, stored = cache.get(self)
         if found:
             return stored
         else:
-            return ft.reduce(lambda x,y: x@y, [f.eval(subs) for f in self.factors])
+            return ft.reduce(lambda x, y: x@y, [f.eval(subs) for f in self.factors])
 
     def __str__(self):
-        return ft.reduce(lambda a, b: str(a) + "*" + str(b), self.factors)
+        return str(ft.reduce(lambda a, b: str(a) + "*" + str(b), self.factors))
+
+    def shape(self):
+        return self.factors[0].shape()[0],self.factors[-1].shape()[1]
 
 
 class Diagonal:
-    def __init__(self, elements):
+    def __init__(self, elements, name="D"):
         self.elements = elements
+        self.name = name
 
     def eval(self, subs):
         return np.diag([
@@ -108,6 +116,12 @@ class Diagonal:
         return Diagonal([
             element.derivate(var) for element in self.elements
         ])
+
+    def __str__(self):
+        return self.name
+
+    def shape(self):
+        return len(self.elements), len(self.elements)
 
 
 class Constant:
@@ -123,6 +137,9 @@ class Constant:
 
     def __str__(self):
         return self.name
+
+    def shape(self):
+        return self.value.shape
 
 
 class Function:

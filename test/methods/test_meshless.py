@@ -11,7 +11,7 @@ import src.helpers.numeric as num
 
 class TestMeshless(unittest.TestCase):
     def template(self, method_class):
-        size = 7
+        size = 5
         def boundary_function(point):
             if point[0] == 0:
                 return 0
@@ -36,14 +36,14 @@ class TestMeshless(unittest.TestCase):
             else:
                 raise ValueError("point not in boundary")
 
-        def domain_operator(exp,point):
+        def domain_operator(exp, _):
             return num.Sum([exp.derivate("x").derivate("x"),exp.derivate("y").derivate("y")])
 
-        def domain_function(point):
+        def domain_function(_):
             return 0
 
         from src.geometry.rectangle import Rectangle
-        data = Rectangle(0,0,size,size).cartesian
+        data = Rectangle(0, 0, size, size).cartesian
 
         method = method_class(
             boundary_function=boundary_function,
@@ -65,11 +65,11 @@ class TestMeshless(unittest.TestCase):
     def test_collocation(self):
         self.template(CollocationMethod)
 
-   # def test_subregion(self):
-   #     self.template(SubregionMethod)
+    def test_subregion(self):
+        self.template(SubregionMethod)
 
-    #def test_galerkin(self):
-    #    self.template(GalerkinMethod)
+    def test_galerkin(self):
+       self.template(GalerkinMethod)
 
     #def test_petrov_galerkin(self):
     #    self.template(PetrovGalerkinMethod)
