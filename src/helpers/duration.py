@@ -9,10 +9,11 @@ class Duration:
         self.store[str] = time.time()
         self.last = str
 
-    def step(self, str = None):
+    def step(self, str=None):
         if not str:
             str = self.last
-        print("%s: %ss"%(str,time.time() - self.store[str]))
+        print("%s: %ss" % (str, time.time() - self.store[str]))
         self.store[str] = time.time()
+
 
 duration = Duration()

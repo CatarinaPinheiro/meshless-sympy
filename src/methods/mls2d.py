@@ -3,11 +3,10 @@ import src.helpers as h
 import src.basis as b
 import sympy as sp
 import src.helpers.numeric as num
-from src.helpers.duration import duration
-from src.helpers.cache import cache
+
 
 class MovingLeastSquares2D:
-    def __init__(self, data, basis,security=1):
+    def __init__(self, data, basis, security=1):
         self.basis = basis
         self.data = data
         self.point = np.zeros(np.shape(data[0]))
@@ -19,7 +18,8 @@ class MovingLeastSquares2D:
 
     @property
     def r_min(self):
-        return self.r_first(int(self.security*(len(self.basis) + 1)))
+        return self.r_first(int(self.security * (len(self.basis) + 1)))
+
 
     def r_first(self, n):
         distances = [np.linalg.norm(np.subtract(d, self.point)) for d in self.data]
@@ -37,13 +37,13 @@ class MovingLeastSquares2D:
         W = num.Diagonal([
             h.cut(np.linalg.norm(np.array([xj, yj]) - self.point),
                   r,
-                  num.Function(sp.Integer(0), [0,0,0],"0"),
-                  num.Function(h.gaussian_with_radius(),[xj, yj, r],"g"))
+                  num.Function(sp.Integer(0), [0, 0, 0], "0"),
+                  num.Function(h.gaussian_with_radius(), [xj, yj, r], "g"))
             for xj, yj in self.data])
 
         Pt = num.Constant(np.transpose(P))
-        B = num.Product([Pt , W])
-        A = num.Product([B , num.Constant(P)])
+        B = num.Product([Pt, W])
+        A = num.Product([B, num.Constant(P)])
 
         return A, B, P, W
 
@@ -60,7 +60,7 @@ class MovingLeastSquares2D:
             for xj, yj in self.data
         ]
 
-        B = np.transpose(P)@ np.diag(np.array(W, dtype=np.float64))
+        B = np.transpose(P) @ np.diag(np.array(W, dtype=np.float64))
         A = B @ P
         return A, B
 
@@ -70,7 +70,7 @@ class MovingLeastSquares2D:
         ri = self.r_min
 
         while True:
-            A,B = self.numeric_AB(ri)
+            A, B = self.numeric_AB(ri)
             det = np.linalg.det(A)
             if det < 1e-6:
                 ri *= 1.05
@@ -82,15 +82,11 @@ class MovingLeastSquares2D:
 
         return num.Product([
             num.Matrix(spt, "pt"),
-            num.Product([
-                num.Constant(np.transpose(P)),
-                sW,
-                num.Constant(P)
-            ]),
+            num.Inverse(sA, "A"),
             sB])
 
     def set_point(self, point):
         self.point = point
 
     def approximate(self, u):
-        return self.numeric_phi @ u
+        return self.numeric_phi.eval(self.point[:2]) @ u

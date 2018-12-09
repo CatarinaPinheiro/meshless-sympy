@@ -27,7 +27,7 @@ class Rectangle:
         return [[self.x1 + self.dx*i for i in range(1, self.width/self.dx)],
                 [self.y1 + self.dy*i for i in range(1, self.height/self.dy)]]
 
-    # Returns Cartesian Product of two sets.
+    # Returns Cartesian Product of two sets points in domain.
     @property
     def inside_cartesian(self):
         return [[x, y] for x in self.inside[0] for y in self.inside[1]]
