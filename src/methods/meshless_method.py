@@ -20,19 +20,18 @@ class MeshlessMethod:
     def solve(self):
         lphi = {}
         b = {}
-
+        m2d = mls.MovingLeastSquares2D(self.data, self.basis)
 
         print("domain data")
 
         def fill(i,self):
-            m2d = mls.MovingLeastSquares2D(self.data, self.basis)
             if i < len(self.domain_data):
                 d = self.domain_data[i]
                 begin_time = time.time()
                 print("%d/%d" % (i + 1, len(self.domain_data)))
                 m2d.point = self.domain_data[i]
 
-                lphi[i] = self.integration_points(m2d.numeric_phi).eval(d)[0]
+                lphi[i] = self.integration_points(self.domain_operator(m2d.numeric_phi,d)).eval(d)[0]
 
                 b[i] = self.integration_points(self.domain_function(d))
 
