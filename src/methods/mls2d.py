@@ -37,8 +37,12 @@ class MovingLeastSquares2D:
         W = num.Diagonal([
             h.cut(np.linalg.norm(np.array([xj, yj]) - self.point),
                   r,
-                  num.Function(sp.Integer(0), [0, 0, 0], "0"),
-                  num.Function(h.gaussian_with_radius(), [xj, yj, r], "g"))
+                  num.Function(sp.Integer(0),name = "0"),
+                  num.Function(h.gaussian_with_radius(), {
+                      'xj': xj,
+                      'yj': yj,
+                      'r': r
+                  }, name="g"))
             for xj, yj in self.data])
 
         Pt = num.Constant(np.transpose(P))

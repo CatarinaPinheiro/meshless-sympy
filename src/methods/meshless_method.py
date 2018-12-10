@@ -18,67 +18,49 @@ class MeshlessMethod:
         self.m2d = mls.MovingLeastSquares2D(self.data, self.basis)
 
     def solve(self):
-        cache.reset()
         lphi = []
         b = []
 
-        for i, d in enumerate(self.domain_data):
-            duration.duration.start("domain data %d/%d" % (i, len(self.domain_data)))
+        for i, d in enumerate(self.data):
+            cache.reset()
 
+            duration.duration.start("%d/%d" % (i, len(self.data)))
             self.m2d.point = d
-            radius = self.m2d.r_first(1)
 
-            def integration_element(integration_point, i):
-                key = "gauss%s" % integration_point
-                found, value = cache.get(key)
-                if found:
-                    return value[i]
-                else:
-                    self.m2d.point = integration_point
-                    phi = self.m2d.numeric_phi
-                    value = phi.eval(d)[0] * self.integration_weight(d, integration_point, radius)
-                    cache.set(key, value)
-                    return value[i]
+            if d in self.domain_data:
 
-            lphi.append(
-                [self.integration(d, radius, lambda p: integration_element(p, i)) for i in range(len(self.data))])
-            b.append(self.integration(d, radius, self.domain_function))
+                radius = self.m2d.r_first(1)
 
-            duration.duration.step()
+                def integration_element(integration_point, i):
+                    key = "gauss%s" % (integration_point)
+                    found, value = cache.get(key)
+                    if found:
+                        return value[i]
+                    else:
+                        self.m2d.point = integration_point
+                        phi = self.m2d.numeric_phi
+                        value = phi.eval(d)[0] * self.integration_weight(d, integration_point, radius)
+                        cache.set(key, value)
+                        return value[i]
 
-        for i, d in enumerate(self.boundary_data):
-            duration.duration.start("boundary data %d/%d" % (i, len(self.boundary_data)))
-            self.m2d.point = self.boundary_data[i]
+                lphi.append(
+                    [self.integration(d, radius, lambda p: integration_element(p, i)) for i in range(len(self.data))])
+                b.append(self.integration(d, radius, self.domain_function))
 
-            lphi.append(self.boundary_operator(self.m2d.numeric_phi, d).eval(d)[0])
+            elif d in self.boundary_data:
 
-            b.append(self.boundary_function(self.m2d.point))
+                lphi.append(self.boundary_operator(self.m2d.numeric_phi, d).eval(d)[0])
+
+                b.append(self.boundary_function(self.m2d.point))
             duration.duration.step()
 
         return la.solve(lphi, b)
 
     @property
     def boundary_data(self):
-        boundary_data_initial = []
-        data_array = np.array(self.data)
-        x = data_array[:, 0]
-        y = data_array[:, 1]
-        x = x.flatten()
-        y = y.flatten()
-        points2D = np.vstack([x, y]).T
-        tri = Delaunay(points2D)
-        boundary = (points2D[tri.convex_hull]).flatten()
-        bx = boundary[0:-2:2]
-        by = boundary[1:-1:2]
+        return [x for x in self.data if self.boundary_function(x, check=True)]
 
-        for i in range(len(bx)):
-            boundary_data_initial.append([bx[i], by[i]])
-
-        boundary_data = unique_rows(boundary_data_initial)
-
-        return boundary_data
 
     @property
     def domain_data(self):
-        boundary_list = [[x, y] for x, y in self.boundary_data]
-        return [x for x in self.data if x not in boundary_list]
+        return [x for x in self.data if not self.boundary_function(x, check=True)]

@@ -40,17 +40,17 @@ class Inverse:
         self.name = name
 
     def derivate(self,var):
-        return Product([self, self.original.derivate(var), self])
+        return Product([self, Constant(-1*np.identity(self.original.shape()[0])), self.original.derivate(var), self])
 
     def eval(self, subs):
-        found, stored = cache.get(self.name)
+        found, stored = cache.get(str(self)+str(subs))
         if found:
             return stored
         else:
-            duration.start("Inverse::eval %s"%str(self))
+            duration.start("Inverse::eval %s%s"%(self,subs))
             value = np.linalg.inv(self.original.eval(subs))
             duration.step()
-            cache.set(self,value)
+            cache.set(str(self)+str(subs),value)
             return value
 
     def __str__(self):
@@ -146,23 +146,24 @@ class Constant:
 
 
 class Function:
-    def __init__(self, func, extra, name="f"):
-        self.func = func
+    def __init__(self, expression, extra={'_': 0}, name="f"):
+        self.expression = expression
         self.name = name
         self.extra = extra
 
     def eval(self, subs):
-        found, stored = cache.get(self)
+        key = "%s%s"%(self.name, subs + list(self.extra.values()))
+        found, stored = cache.get(key)
         subs = list(subs)
         if found:
-            return stored(*(subs + self.extra))
+            return stored(*(subs + list(self.extra.values())))
         else:
-            duration.start("Function::eval %s" % str(self))
-            func = sp.lambdify(sp.var("x y xj yj r"), self.func, "numpy")
+            duration.start("Inverse::eval %s%s"%(self,subs))
+            func = sp.lambdify(sp.var("x y "+" ".join((*self.extra,))), self.expression, "numpy")
 
-            value = func(*(subs + self.extra))
+            value = func(*(subs + list(self.extra.values())))
             duration.step()
-            cache.set(self, func)
+            cache.set(key, func)
             return value
 
     def derivate(self, var):
@@ -171,7 +172,7 @@ class Function:
             return stored
         else:
             duration.start("Function::derivate %s" % str(self))
-            value = Function(self.func.diff(var), self.extra, self.name + var)
+            value = Function(self.expression.diff(var), self.extra, self.name + var)
             cache.set("d" + self.name + var, value)
             duration.step()
             return value
