@@ -4,9 +4,8 @@ import src.helpers as h
 
 
 class PetrovGalerkinMethod(MeshlessMethod):
-    def __init__(self, data, basis, domain_function, domain_operator, boundary_operator, boundary_function):
-        MeshlessMethod.__init__(self, data, basis, domain_function, domain_operator, boundary_operator,
-                                boundary_function)
+    def __init__(self, data, basis, model):
+        MeshlessMethod.__init__(self, data, basis, model)
 
     def integration(self, point, radius, f):
         return gq.polar_gauss_integral(point, radius, lambda p: f(p))

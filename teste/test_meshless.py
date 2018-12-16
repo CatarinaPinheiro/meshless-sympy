@@ -7,7 +7,8 @@ from src.methods.petrov_galerkin_method import PetrovGalerkinMethod
 from src.methods.subregion_method import SubregionMethod
 import src.helpers.numeric as num
 import sympy as sp
-from src.geometry.rectangle import Rectangle
+from src.geometry.regions.rectangle import Rectangle
+from src.models.pde_model import Model
 
 
 class TestMeshless(unittest.TestCase):
@@ -18,46 +19,41 @@ class TestMeshless(unittest.TestCase):
         x, y = sp.var("x y")
         analytical = 18*y-8
 
-        def boundary_function(point, check=False):
-            if check:
-                return point[0]==sizei or point[1] == sizei or point[0] == size or point[1] == size
-            else:
-                if point[1] == sizei:
-                    return sp.lambdify((x,y),analytical,"numpy")(*point)
-                elif point[1] == size:
-                    return sp.lambdify((x,y),analytical,"numpy")(*point)
-                elif point[0] == sizei:
-                    return sp.lambdify((x,y),analytical.diff("x"),"numpy")(*point)
-                elif point[0] == size:
-                    return sp.lambdify((x,y),analytical.diff("x"),"numpy")(*point)
-                else:
-                    raise ValueError("point not in boundary")
-
-        def boundary_operator(num, point):
-            if point[1] == sizei:
-                return num
-            elif point[1] == size:
-                return num
-            elif point[0] == sizei:
-                return num.derivate("x")
-            elif point[0] == size:
-                return num.derivate("x")
-            else:
-                raise ValueError("point not in boundary")
-
-        def domain_operator(exp, _):
+        def laplacian(exp, _):
             return num.Sum([exp.derivate("x").derivate("x"), exp.derivate("y").derivate("y")])
 
         def domain_function(point):
-            return domain_operator(num.Function(analytical, name="domain"), point).eval(point)
+            return laplacian(num.Function(analytical, name="domain"), point).eval(point)
 
-        data = Rectangle(sizei, sizei, size, size).cartesian
+
+        region = Rectangle(
+                x1=sizei,
+                y1=sizei,
+                x2=size,
+                y2=size,
+                parametric_partition={
+                    1: "DIRICHLET",
+                    2: "NEUMANN",
+                    3: "DIRICHLET",
+                    4: "NEUMANN"
+                })
+        data = region.cartesian
+
+        def partial_evaluate(point):
+            if region.condition(point) == "NEUMANN":
+                return sp.lambdify((x,y),analytical.diff(region.normal(point)),"numpy")(*point)
+            elif region.condition(point) == "DIRICHLET":
+                return sp.lambdify((x,y),analytical,"numpy")(*point)
+
+
+        model = Model(
+            region=region,
+            partial_evaluate=partial_evaluate,
+            domain_operator=laplacian,
+            domain_function = domain_function)
 
         method = method_class(
-            boundary_function=boundary_function,
-            boundary_operator=boundary_operator,
-            domain_function=domain_function,
-            domain_operator=domain_operator,
+            model=model,
             data=data,
             basis=quadratic_2d)
 
