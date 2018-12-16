@@ -1,6 +1,5 @@
 from numpy import linalg as la
 import src.methods.mls2d as mls
-from scipy.spatial import Delaunay
 import numpy as np
 from src.helpers.cache import cache
 from src.helpers import unique_rows
@@ -22,6 +21,7 @@ class MeshlessMethod:
         b = []
 
         for i, d in enumerate(self.data):
+            print(i)
             cache.reset()
 
             duration.duration.start("%d/%d" % (i, len(self.data)))
@@ -39,7 +39,7 @@ class MeshlessMethod:
                     else:
                         self.m2d.point = integration_point
                         phi = self.m2d.numeric_phi
-                        value = phi.eval(d)[0] * self.integration_weight(d, integration_point, radius)
+                        value = phi.eval(integration_point)[0] * self.integration_weight(d, integration_point, radius)
                         cache.set(key, value)
                         return value[i]
 

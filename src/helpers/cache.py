@@ -7,7 +7,6 @@ class Cache:  # Reused the variables already used
 
     def get(self, key):
         if str(key) in self.store:
-            print("caching %s"%key)
             return True, self.store[str(key)]
         else:
             return False, None
