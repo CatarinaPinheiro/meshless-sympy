@@ -1,4 +1,6 @@
 import sympy as sp
+import numpy as np
+from src.helpers.numeric import Sum, Constant, Product
 
 
 class Model:
@@ -23,8 +25,17 @@ class Model:
         return self.region.include(point)
 
     def boundary_operator(self, num, point):
+        """
+        NEUMANN:
+            ∇f(p).n # computes directional derivative
+        DIRICHLET:
+            f(p) # constraints function value
+        """
         normal = self.region.normal(point)
         if self.region.condition(point) == "NEUMANN":
-            return num.derivate(normal)
+            return Sum([
+                Product([ Constant(np.array( [[ normal[0] ]] )), num.derivate("x")]),
+                Product([ Constant(np.array( [[ normal[1] ]] )), num.derivate("y")])
+            ])
         elif self.region.condition(point) == "DIRICHLET":
             return num

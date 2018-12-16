@@ -92,9 +92,9 @@ class Rectangle:
 
     def normal(self, point):
         if point[0] == self.x1 or point[0] == self.x2:
-            return "x"
+            return (1,0)
         elif point[1] == self.y1 or point[1] == self.y2:
-            return "y"
+            return (0,1)
         else:
             raise "Point not in boundary"
     

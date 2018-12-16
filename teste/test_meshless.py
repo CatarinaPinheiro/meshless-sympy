@@ -40,8 +40,9 @@ class TestMeshless(unittest.TestCase):
         data = region.cartesian
 
         def partial_evaluate(point):
+            var = "x" if region.normal(point) == (1,0) else "y"
             if region.condition(point) == "NEUMANN":
-                return sp.lambdify((x,y),analytical.diff(region.normal(point)),"numpy")(*point)
+                return sp.lambdify((x,y),analytical.diff(var),"numpy")(*point)
             elif region.condition(point) == "DIRICHLET":
                 return sp.lambdify((x,y),analytical,"numpy")(*point)
 
