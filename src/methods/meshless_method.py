@@ -38,7 +38,7 @@ class MeshlessMethod:
                         return value[i]
                     else:
                         self.m2d.point = integration_point
-                        phi = self.m2d.numeric_phi
+                        phi = self.domain_operator(self.m2d.numeric_phi, integration_point)
                         value = phi.eval(integration_point)[0] * self.integration_weight(d, integration_point, radius)
                         cache.set(key, value)
                         return value[i]

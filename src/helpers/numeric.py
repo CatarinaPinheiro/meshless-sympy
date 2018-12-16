@@ -176,7 +176,7 @@ class Function(Numeric):
         duration.start("Inverse::eval %s%s"%(self,subs))
         func = sp.lambdify(sp.var("x y "+" ".join((*self.extra,))), self.expression, "numpy")
 
-        value = func(*(subs + list(self.extra.values())))
+        value = func(*(list(subs) + list(self.extra.values())))
         duration.step()
         return value
 
@@ -192,6 +192,6 @@ class Function(Numeric):
             return value
 
     def cache_str(self, subs):
-        return self.name + str(subs + list(self.extra.values()))
+        return self.name + str(list(subs) + list(self.extra.values()))
 
 

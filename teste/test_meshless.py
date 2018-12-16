@@ -16,7 +16,7 @@ class TestMeshless(unittest.TestCase):
         sizei = 1
 
         x, y = sp.var("x y")
-        analytical = 18*y-8
+        analytical = y-2*x
 
         def boundary_function(point, check=False):
             if check:
@@ -33,15 +33,15 @@ class TestMeshless(unittest.TestCase):
                 else:
                     raise ValueError("point not in boundary")
 
-        def boundary_operator(exp, point):
+        def boundary_operator(num, point):
             if point[0] == sizei:
-                return exp
+                return num
             elif point[0] == size:
-                return exp
+                return num
             elif point[1] == sizei:
-                return exp.derivate("x")
+                return num.derivate("x")
             elif point[1] == size:
-                return exp.derivate("x")
+                return num.derivate("x")
             else:
                 raise ValueError("point not in boundary")
 
@@ -49,7 +49,7 @@ class TestMeshless(unittest.TestCase):
             return num.Sum([exp.derivate("x").derivate("x"), exp.derivate("y").derivate("y")])
 
         def domain_function(point):
-            return domain_operator(num.Function(analytical, name="domain"), point).eval(point)
+            return num.Function(analytical, name="domain").eval(point)
 
         data = Rectangle(sizei, sizei, size, size).cartesian
 
@@ -80,8 +80,8 @@ class TestMeshless(unittest.TestCase):
     def test_galerkin(self):
         self.template(GalerkinMethod)
 
-    def test_petrov_galerkin(self):
-        self.template(PetrovGalerkinMethod)
+    # def test_petrov_galerkin(self):
+    #     self.template(PetrovGalerkinMethod)
 
 
 if __name__ == '__main__':
