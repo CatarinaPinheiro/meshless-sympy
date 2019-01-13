@@ -3,8 +3,8 @@ import src.helpers.integration as gq
 
 
 class SubregionMethod(MeshlessMethod):
-    def __init__(self, data, basis, model):
-        MeshlessMethod.__init__(self, data, basis, model)
+    def __init__(self, basis, model):
+        MeshlessMethod.__init__(self, basis, model)
 
     def integration(self, point, radius, f):
         return gq.polar_gauss_integral(point, radius, lambda p: f(p))

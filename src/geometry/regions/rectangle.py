@@ -1,5 +1,8 @@
-class Rectangle:
-    def __init__(self, x1, y1, x2, y2, dx=1, dy=1, parametric_partition={0: "DIRICHLET"}):
+from src.geometry.regions.region import Region
+import numpy as np
+
+class Rectangle(Region):
+    def __init__(self, x1, y1, x2, y2, dx=1, dy=1, parametric_partition={4: "DIRICHLET"}):
         """
         params:
             (x1,y1) (float, float):
@@ -56,39 +59,8 @@ class Rectangle:
         self.y2 = y2
         self.parametric_partition = parametric_partition
 
-    @property
-    def width(self):
-        return self.x2-self.x1
+        self.setup()
 
-    @property
-    def height(self):
-        return self.y2-self.y1
-
-    @property
-    def segments(self):
-        return [[self.x1 + self.dx*i for i in range(int(1 + self.width/self.dx))],
-                [self.y1 + self.dy*i for i in range(int(1 + self.height/self.dy))]]
-
-    # returns array except it's first and last elements.
-
-    @property
-    def inside(self):
-        return [[self.x1 + self.dx*i for i in range(1, self.width/self.dx)],
-                [self.y1 + self.dy*i for i in range(1, self.height/self.dy)]]
-
-    @property
-    def inside_cartesian(self):
-        """
-        Returns Cartesian Product of two sets points in domain.
-        """
-        return [[x, y] for x in self.inside[0] for y in self.inside[1]]
-
-    @property
-    def cartesian(self):
-        """
-        Returns Cartesian Product of two sets.
-        """
-        return [[x, y] for x in self.segments[0] for y in self.segments[1]]
 
     def normal(self, point):
         if point[0] == self.x1 or point[0] == self.x2:
@@ -96,15 +68,15 @@ class Rectangle:
         elif point[1] == self.y1 or point[1] == self.y2:
             return (0,1)
         else:
-            raise "Point not in boundary"
+            raise Exception("Point not in boundary")
     
     def include(self, point):
         return point[0] > self.x1 and point[0] < self.x2 and point[1] > self.y1 and point[1] < self.y2
 
-    def condition(self, point):
+    def boundary_point_to_parameter(self, point):
         """
-        Computes boundary condition using parametric partition.
-        """
+               Computes boundary condition using parametric partition.
+               """
         """
                   (x1,y2)--2.5--(x2,y2)
                      |             |
@@ -112,23 +84,25 @@ class Rectangle:
                      |             |
                   (x1,y1)--0.5--(x2,y1)
         """
-        if point[0] == self.x1: # left
-            alpha = 3+(self.y2 - point[1])/(self.y2 - self.y1)
+        if point[0] == self.x1:  # left
+            return 3 + (self.y2 - point[1]) / (self.y2 - self.y1)
 
-        elif point[0] == self.x2: # right
-            alpha = 1+(point[1] - self.y1)/(self.y2 - self.y1)
-         
-        elif point[1] == self.y1: # bottom
-            alpha = (point[0] - self.x1)/(self.x2 - self.x1)
-        
-        elif point[1] == self.y2: # top
-            alpha = 2+(self.x2 - point[0])/(self.x2 - self.x1)
+        elif point[0] == self.x2:  # right
+            return 1 + (point[1] - self.y1) / (self.y2 - self.y1)
 
-        key = min([k for k in self.parametric_partition.keys() if k >= alpha])
-        # [k for k in self.parametric_partition.keys() if k > alpha]: []
-        # [k for k in self.parametric_partition.keys() ]: [1, 2, 3, 4]
-        # alpha: 4.0
-        # self.parametric_partition: {0: 'DIRICHLET'}
+        elif point[1] == self.y1:  # bottom
+            return (point[0] - self.x1) / (self.x2 - self.x1)
 
-        return self.parametric_partition[key]
-            
+        elif point[1] == self.y2:  # top
+            return 2 + (self.x2 - point[0]) / (self.x2 - self.x1)
+
+    def boundary_snap(self, point):
+        # TODO generalize
+        return point
+
+    def distance_from_boundary(self, point):
+        delta_x1 = point[0] - self.x1
+        delta_x2 = self.x2 - point[0]
+        delta_y1 = point[1] - self.y1
+        delta_y2 = self.y2 - point[1]
+        return min(delta_x1, delta_x2, delta_y1, delta_y2)

@@ -22,7 +22,7 @@ class MovingLeastSquares2D:
 
 
     def r_first(self, n):
-        distances = [np.linalg.norm(np.subtract(d, self.point)) for d in self.data]
+        distances = [np.linalg.norm(np.array(d)-self.point) for d in self.data]
         return np.sort(distances)[n]
 
     def ABPW(self, r):

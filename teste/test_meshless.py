@@ -6,13 +6,72 @@ from src.methods.galerkin_method import GalerkinMethod
 from src.methods.petrov_galerkin_method import PetrovGalerkinMethod
 from src.methods.subregion_method import SubregionMethod
 import src.helpers.numeric as num
+import numpy as np
 import sympy as sp
 from src.geometry.regions.rectangle import Rectangle
+from src.geometry.regions.circle import Circle
 from src.models.pde_model import Model
+from matplotlib import pyplot as plt
 
+DEBUG_PLOT = True
 
 class TestMeshless(unittest.TestCase):
-    def template(self, method_class):
+    def circle_template(self, method_class):
+        radius = 4
+
+        x, y = sp.var("x y")
+        analytical = x**2 + y**2
+
+        def laplacian(exp, _):
+            return num.Sum([exp.derivate("x").derivate("x"), exp.derivate("y").derivate("y")])
+
+        def domain_function(point):
+            return laplacian(num.Function(analytical, name="domain"), point).eval(point)
+
+
+        region = Circle(
+                center=np.array([0,0]),
+                radius=radius)
+
+        data = region.cartesian
+
+        def partial_evaluate(point):
+            normal = region.normal(point)
+            if region.condition(point) == "NEUMANN":
+                return sp.lambdify((x,y),analytical.diff(x)*normal[0]+analytical.diff(y)*normal[1],"numpy")(*point)
+            elif region.condition(point) == "DIRICHLET":
+                return sp.lambdify((x,y),analytical,"numpy")(*point)
+
+
+        model = Model(
+            region=region,
+            partial_evaluate=partial_evaluate,
+            domain_operator=laplacian,
+            domain_function=domain_function)
+
+        method = method_class(
+            model=model,
+            basis=quadratic_2d)
+
+
+
+        result = method.solve()
+
+        if DEBUG_PLOT:
+            region.plot()
+            method.plot()
+            plt.show()
+
+        for i, u in enumerate(result):
+            point = data[i]
+            print([point, u])
+
+        for i, u in enumerate(result):
+            point = data[i]
+            correct = sp.lambdify((x, y), analytical,"numpy")(*point)
+            self.assertAlmostEqual(u, correct, 4)
+
+    def rectangle_template(self, method_class):
         size = 6
         sizei = 1
 
@@ -40,9 +99,9 @@ class TestMeshless(unittest.TestCase):
         data = region.cartesian
 
         def partial_evaluate(point):
-            var = "x" if region.normal(point) == (1,0) else "y"
+            normal = region.normal(point)
             if region.condition(point) == "NEUMANN":
-                return sp.lambdify((x,y),analytical.diff(var),"numpy")(*point)
+                return sp.lambdify((x,y),analytical.diff(x)*normal[0]+analytical.diff(y)*normal[1],"numpy")(*point)
             elif region.condition(point) == "DIRICHLET":
                 return sp.lambdify((x,y),analytical,"numpy")(*point)
 
@@ -55,7 +114,6 @@ class TestMeshless(unittest.TestCase):
 
         method = method_class(
             model=model,
-            data=data,
             basis=quadratic_2d)
 
 
@@ -71,13 +129,17 @@ class TestMeshless(unittest.TestCase):
             self.assertAlmostEqual(u, correct, 4)
 
     def test_collocation(self):
-        self.template(CollocationMethod)
+        self.rectangle_template(CollocationMethod)
+        self.circle_template(CollocationMethod)
+
 
     def test_subregion(self):
-        self.template(SubregionMethod)
+        self.rectangle_template(SubregionMethod)
+        self.circle_template(SubregionMethod)
 
     def test_galerkin(self):
-        self.template(GalerkinMethod)
+        self.rectangle_template(GalerkinMethod)
+        self.circle_template(GalerkinMethod)
 
     # def test_petrov_galerkin(self):
     #     self.template(PetrovGalerkinMethod)
