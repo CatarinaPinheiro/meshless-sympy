@@ -19,6 +19,8 @@ class Region:
                 [[self.x2, y] for y in self.segments[1]])
         self.cartesian = self.inside_cartesian + [self.boundary_snap(point) for point in self.boundary_cartesian]
 
+        self.center = (self.x1+self.x2)/2, (self.y1+self.y2)/2
+
 
 
     def condition(self, point):

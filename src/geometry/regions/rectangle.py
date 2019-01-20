@@ -69,7 +69,7 @@ class Rectangle(Region):
         elif point[1] == self.y1 or point[1] == self.y2:
             return (0,1)
         else:
-            raise Exception("Point not in boundary")
+            raise Exception("Point %s not in boundary"%point)
     
     def include(self, point):
         return point[0] > self.x1 and point[0] < self.x2 and point[1] > self.y1 and point[1] < self.y2
@@ -110,3 +110,23 @@ class Rectangle(Region):
 
     def plot(self):
         plt.plot([self.x1,self.x1,self.x2,self.x2, self.x1],[self.y1,self.y2,self.y2,self.y1, self.y1])
+
+    def boundary_integration_limits(self, point):
+        if point[0] == self.x1 and point[1] == self.y1:
+            return [0, np.pi/2]
+        elif point[0] == self.x1 and point[1] == self.y2:
+            return [3*np.pi/2, 2*np.pi]
+        elif point[0] == self.x2 and point[1] == self.y1:
+            return [np.pi/2, np.pi]
+        elif point[0] == self.x2 and point[1] == self.y2:
+            return [np.pi, 3*np.pi/2]
+        elif point[0] == self.x1:
+            return [-np.pi/2, np.pi/2]
+        elif point[0] == self.x2:
+            return [np.pi/2, 3*np.pi/2]
+        elif point[1] == self.y1:
+            return [0, np.pi]
+        elif point[1] == self.y2:
+            return [np.pi, 2*np.pi]
+        else:
+            raise Exception("Point %s not in boundary!" % point)
