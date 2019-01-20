@@ -68,7 +68,10 @@ class PetrovGalerkinMethod(MeshlessMethod):
                     lphi.append(self.model.boundary_operator(self.m2d.numeric_phi, d).eval(d)[0])
                     b.append(self.model.boundary_function(self.m2d.point))
                 elif self.model.region.condition(d) == "NEUMANN":
+
                     radius = self.m2d.r_first(1)
+                    if self.model.region.closest_corner_distance(d) > 0:
+                        radius = min(self.m2d.r_first(1), self.model.region.closest_corner_distance(d))
 
                     self.m2d.point = d
                     phi = self.model.domain_operator(self.m2d.numeric_phi, d)

@@ -68,11 +68,11 @@ class TestMeshless(unittest.TestCase):
             self.assertAlmostEqual(u, correct, 4)
 
     def rectangle_template(self, method_class):
-        size = 6
+        size = 4
         sizei = 1
 
         x, y = sp.var("x y")
-        analytical = 18*y-8
+        analytical = 18*y*y-8*x
 
         def laplacian(exp, _):
             return num.Sum([exp.derivate("x").derivate("x"), exp.derivate("y").derivate("y")])
@@ -121,13 +121,16 @@ class TestMeshless(unittest.TestCase):
             method.plot()
             plt.show()
 
+        errors = []
         for i, u in enumerate(result):
             point = data[i]
             # print(u)
             # print(sp.lambdify((x,y),analytical,"numpy")(*point))
             correct = sp.lambdify((x,y),analytical,"numpy")(*point)
-            print(u - correct)
+            errors.append((u - correct)**2)
             self.assertAlmostEqual(u, correct, 3)
+
+        print(np.sqrt(np.mean(errors)))
 
     def test_collocation(self):
         self.rectangle_template(CollocationMethod)

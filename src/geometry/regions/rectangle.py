@@ -111,6 +111,12 @@ class Rectangle(Region):
     def plot(self):
         plt.plot([self.x1,self.x1,self.x2,self.x2, self.x1],[self.y1,self.y2,self.y2,self.y1, self.y1])
 
+    def closest_corner_distance(self, point):
+        return min([np.linalg.norm(np.array(point) - np.array(corner)) for corner in [[self.x1,self.y1],
+                                                                                      [self.x1,self.y2],
+                                                                                      [self.x2,self.y2],
+                                                                                      [self.x2,self.y1]]])
+
     def boundary_integration_limits(self, point):
         if point[0] == self.x1 and point[1] == self.y1:
             return [0, np.pi/2]
