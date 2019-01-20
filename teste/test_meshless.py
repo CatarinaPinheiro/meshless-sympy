@@ -13,7 +13,7 @@ from src.geometry.regions.circle import Circle
 from src.models.pde_model import Model
 from matplotlib import pyplot as plt
 
-DEBUG_PLOT = True
+DEBUG_PLOT = False
 
 class TestMeshless(unittest.TestCase):
     def circle_template(self, method_class):
@@ -61,10 +61,6 @@ class TestMeshless(unittest.TestCase):
             region.plot()
             method.plot()
             plt.show()
-
-        for i, u in enumerate(result):
-            point = data[i]
-            print([point, u])
 
         for i, u in enumerate(result):
             point = data[i]
@@ -120,6 +116,11 @@ class TestMeshless(unittest.TestCase):
 
         result = method.solve()
 
+        if DEBUG_PLOT:
+            region.plot()
+            method.plot()
+            plt.show()
+
         for i, u in enumerate(result):
             point = data[i]
             # print(u)
@@ -130,16 +131,16 @@ class TestMeshless(unittest.TestCase):
 
     def test_collocation(self):
         self.rectangle_template(CollocationMethod)
-        self.circle_template(CollocationMethod)
+        # self.circle_template(CollocationMethod)
 
 
     def test_subregion(self):
         self.rectangle_template(SubregionMethod)
-        self.circle_template(SubregionMethod)
+        # self.circle_template(SubregionMethod)
 
     def test_galerkin(self):
         self.rectangle_template(GalerkinMethod)
-        self.circle_template(GalerkinMethod)
+        # self.circle_template(GalerkinMethod)
 
     # def test_petrov_galerkin(self):
     #     self.template(PetrovGalerkinMethod)

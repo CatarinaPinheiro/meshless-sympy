@@ -2,4 +2,3 @@ sympy
 matplotlib
 numpy
 scipy
-tk

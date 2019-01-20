@@ -1,3 +1,5 @@
+import numpy as np
+
 class Region:
     def setup(self):
         self.width = self.x2-self.x1

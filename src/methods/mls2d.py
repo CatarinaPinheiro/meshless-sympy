@@ -15,6 +15,7 @@ class MovingLeastSquares2D:
             [sp.lambdify(sp.var("x y"), exp, "numpy")(*d) for exp in b.quadratic_2d]
             for d in self.data
         ])
+        self.ri = 0
 
     @property
     def r_min(self):
@@ -71,18 +72,18 @@ class MovingLeastSquares2D:
     @property
     def numeric_phi(self):
         spt = sp.Matrix([self.basis])
-        ri = self.r_min
+        self.ri = self.r_min
 
         while True:
-            A, B = self.numeric_AB(ri)
+            A, B = self.numeric_AB(self.ri)
             det = np.linalg.det(A)
             if det < 1e-6:
-                ri *= 1.05
+                self.ri *= 1.05
                 continue
             else:
                 break
 
-        sA, sB, P, sW = self.ABPW(ri)
+        sA, sB, P, sW = self.ABPW(self.ri)
 
         return num.Product([
             num.Matrix(spt, "pt"),

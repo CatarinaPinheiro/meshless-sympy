@@ -1,5 +1,6 @@
 from src.geometry.regions.region import Region
 import numpy as np
+from matplotlib import pyplot as plt
 
 class Rectangle(Region):
     def __init__(self, x1, y1, x2, y2, dx=1, dy=1, parametric_partition={4: "DIRICHLET"}):
@@ -106,3 +107,6 @@ class Rectangle(Region):
         delta_y1 = point[1] - self.y1
         delta_y2 = self.y2 - point[1]
         return min(delta_x1, delta_x2, delta_y1, delta_y2)
+
+    def plot(self):
+        plt.plot([self.x1,self.x1,self.x2,self.x2, self.x1],[self.y1,self.y2,self.y2,self.y1, self.y1])
