@@ -7,20 +7,6 @@ class Model:
     """
     Generalization of Partial Diferential Equations
     """
-    def __init__(self, region, partial_evaluate, domain_function, domain_operator):
-        """
-        params:
-            region (Region): Region object with geometric properties
-            partial_evaluate (float[]): Function with values used in condition
-        """
-        self.region = region
-        self.partial_evaluate = partial_evaluate
-        self.domain_function = domain_function
-        self.domain_operator = domain_operator
-
-    def boundary_function(self, point):
-        return self.partial_evaluate(point)
-
     def is_in_boundary(self, point):
         return self.region.include(point)
 
@@ -32,10 +18,17 @@ class Model:
             f(p) # constraints function value
         """
         normal = self.region.normal(point)
-        if self.region.condition(point) == "NEUMANN":
-            return Sum([
-                Product([ Constant(np.array( [[ normal[0] ]] )), num.derivate("x")]),
-                Product([ Constant(np.array( [[ normal[1] ]] )), num.derivate("y")])
-            ])
-        elif self.region.condition(point) == "DIRICHLET":
-            return num
+        values = []
+        for condition in self.region.condition(point):
+            if condition == "NEUMANN":
+                values.append(Sum([
+                    Product([ Constant(np.array( [[ normal[0] ]] )), num.derivate("x")]),
+                    Product([ Constant(np.array( [[ normal[1] ]] )), num.derivate("y")])
+                ]))
+            elif condition == "DIRICHLET":
+                values.append(num)
+
+            else:
+                raise Exception("Incorrect condition")
+        return values
+

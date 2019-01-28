@@ -10,76 +10,16 @@ import numpy as np
 import sympy as sp
 from src.geometry.regions.rectangle import Rectangle
 from src.geometry.regions.circle import Circle
-from src.models.pde_model import Model
+from src.models.potential_model import PotentialModel
+from src.models.elastic_model import ElasticModel
 from matplotlib import pyplot as plt
 
 DEBUG_PLOT = False
 
 class TestMeshless(unittest.TestCase):
-    def circle_template(self, method_class):
-        radius = 4
-
-        x, y = sp.var("x y")
-        analytical = x**2 + y**2
-
-        def laplacian(exp, _):
-            return num.Sum([exp.derivate("x").derivate("x"), exp.derivate("y").derivate("y")])
-
-        def domain_function(point):
-            return laplacian(num.Function(analytical, name="domain"), point).eval(point)
-
-
-        region = Circle(
-                center=np.array([0,0]),
-                radius=radius)
-
-        data = region.cartesian
-
-        def partial_evaluate(point):
-            normal = region.normal(point)
-            if region.condition(point) == "NEUMANN":
-                return sp.lambdify((x,y),analytical.diff(x)*normal[0]+analytical.diff(y)*normal[1],"numpy")(*point)
-            elif region.condition(point) == "DIRICHLET":
-                return sp.lambdify((x,y),analytical,"numpy")(*point)
-
-
-        model = Model(
-            region=region,
-            partial_evaluate=partial_evaluate,
-            domain_operator=laplacian,
-            domain_function=domain_function)
-
-        method = method_class(
-            model=model,
-            basis=quadratic_2d)
-
-
-
-        result = method.solve()
-
-        if DEBUG_PLOT:
-            region.plot()
-            method.plot()
-            plt.show()
-
-        for i, u in enumerate(result):
-            point = data[i]
-            correct = sp.lambdify((x, y), analytical,"numpy")(*point)
-            self.assertAlmostEqual(u, correct, 4)
-
-    def rectangle_template(self, method_class):
-        size = 4
+    def rectangle_template(self, method_class, model_class):
+        size = 6
         sizei = 1
-
-        x, y = sp.var("x y")
-        analytical = 18*y*y-8*x
-
-        def laplacian(exp, _):
-            return num.Sum([exp.derivate("x").derivate("x"), exp.derivate("y").derivate("y")])
-
-        def domain_function(point):
-            return laplacian(num.Function(analytical, name="domain"), point).eval(point)
-
 
         region = Rectangle(
                 x1=sizei,
@@ -87,32 +27,20 @@ class TestMeshless(unittest.TestCase):
                 x2=size,
                 y2=size,
                 parametric_partition={
-                    1: "DIRICHLET",
-                    2: "NEUMANN",
-                    3: "DIRICHLET",
-                    4: "NEUMANN"
+                    1:    ["NEUMANN",   "NEUMANN"],
+                    2:    ["NEUMANN",   "NEUMANN"],
+                    3:    ["NEUMANN",   "NEUMANN"],
+                    3.49: ["DIRICHLET", "NEUMANN"],
+                    3.5:  ["DIRICHLET", "DIRICHLET"],
+                    4:    ["DIRICHLET", "NEUMANN"]
                 })
         data = region.cartesian
 
-        def partial_evaluate(point):
-            normal = region.normal(point)
-            if region.condition(point) == "NEUMANN":
-                return sp.lambdify((x,y),analytical.diff(x)*normal[0]+analytical.diff(y)*normal[1],"numpy")(*point)
-            elif region.condition(point) == "DIRICHLET":
-                return sp.lambdify((x,y),analytical,"numpy")(*point)
-
-
-        model = Model(
-            region=region,
-            partial_evaluate=partial_evaluate,
-            domain_operator=laplacian,
-            domain_function = domain_function)
+        model = model_class(region=region)
 
         method = method_class(
             model=model,
             basis=quadratic_2d)
-
-
 
         result = method.solve()
 
@@ -122,31 +50,27 @@ class TestMeshless(unittest.TestCase):
             plt.show()
 
         errors = []
-        for i, u in enumerate(result):
-            point = data[i]
-            # print(u)
-            # print(sp.lambdify((x,y),analytical,"numpy")(*point))
-            correct = sp.lambdify((x,y),analytical,"numpy")(*point)
-            errors.append((u - correct)**2)
-            self.assertAlmostEqual(u, correct, 3)
+        corrects = np.concatenate([sp.lambdify((x,y),model.analytical,"numpy")(*point) for point in data], axis=0)
+        print(corrects - result)
+        self.assertAlmostEqual(np.linalg.norm(corrects - result), 0, 3)
 
         print(np.sqrt(np.mean(errors)))
 
     def test_collocation(self):
-        self.rectangle_template(CollocationMethod)
-        # self.circle_template(CollocationMethod)
+        # self.rectangle_template(CollocationMethod, PotentialModel)
+        self.rectangle_template(CollocationMethod, ElasticModel)
 
 
     def test_subregion(self):
-        self.rectangle_template(SubregionMethod)
+        self.rectangle_template(SubregionMethod, PotentialModel)
         # self.circle_template(SubregionMethod)
 
     def test_galerkin(self):
-        self.rectangle_template(GalerkinMethod)
+        self.rectangle_template(GalerkinMethod, PotentialModel)
         # self.circle_template(GalerkinMethod)
 
     def test_petrov_galerkin(self):
-        self.rectangle_template(PetrovGalerkinMethod)
+        self.rectangle_template(PetrovGalerkinMethod, PotentialModel)
 
 
 if __name__ == '__main__':

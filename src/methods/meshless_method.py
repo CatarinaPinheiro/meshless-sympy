@@ -1,3 +1,5 @@
+from functools import reduce
+
 from numpy import linalg as la
 import src.methods.mls2d as mls
 import numpy as np
@@ -14,19 +16,12 @@ class MeshlessMethod:
         self.model = model
         self.m2d = mls.MovingLeastSquares2D(self.data, self.basis)
         self.support_radius = {}
-        
-    def integration_weight(self, b, p, r):
-        return 1
-
-    def integration(self,b,p,r):
-        pass
 
     def solve(self):
         lphi = []
         b = []
 
         for i, d in enumerate(self.data):
-            # print(i)
             cache.reset()
 
             duration.duration.start("%d/%d" % (i, len(self.data)))
@@ -40,32 +35,35 @@ class MeshlessMethod:
                     key = "gauss%s" % (integration_point)
                     found, value = cache.get(key)
                     if found:
-                        return value[i]
+                        return value[:,:,i]
                     else:
                         self.m2d.point = integration_point
                         phi = self.model.domain_operator(self.m2d.numeric_phi, integration_point)
-                        value = phi.eval(integration_point)[0] * self.integration_weight(d, integration_point, radius)
+                        value = np.array([[cell.eval(integration_point)[0] * self.integration_weight(d, integration_point, radius) for cell in row] for row in phi])
                         cache.set(key, value)
-                        return value[i]
+                        return value[:,:,i]
 
 
-                lphi.append(
-                    [self.integration(d, radius, lambda p: integration_element(p, i)) for i in range(len(self.data))])
+                domain_integral = [ self.integration(d, radius, lambda p: integration_element(p, i)) for i in range(len(self.data)) ]
+                lphi.append(np.concatenate(domain_integral, axis=1))
 
-                b.append(self.integration(d, radius, lambda p: self.integration_weight(d, p, radius)*self.model.domain_function(p)))
+                boundary_integral = self.integration(d, radius, lambda p: self.integration_weight(d, p, radius)*self.model.domain_function(p))
+                b += [np.array(boundary_integral)]
 
             else:
 
-                lphi.append(self.model.boundary_operator(self.m2d.numeric_phi, d).eval(d)[0])
+                boundary_value =  self.model.boundary_operator(self.m2d.numeric_phi, d)
+                lphi.append(np.concatenate(np.reshape([[cell.eval(d) for cell in row] for row in boundary_value], (self.model.num_dimensions,self.model.num_dimensions,len(self.model.region.cartesian))), axis=1))
 
-                b.append(self.model.boundary_function(self.m2d.point))
+                b += [np.array(self.model.boundary_function(self.m2d.point))]
 
 
             self.support_radius[i] = self.m2d.ri
             duration.duration.step()
 
-
-
+        lphi = np.concatenate(lphi, axis=0)
+        b = [r.reshape((2,1)) for r in b]
+        b = np.concatenate(b, axis=0)
         return la.solve(lphi, b)
 
     @property

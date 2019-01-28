@@ -96,7 +96,8 @@ class Sum(Numeric):
         return str(ft.reduce(lambda a, b: "(" + str(a) + " + " + str(b) + ")", self.terms)) + str(subs)
 
     def eval(self, subs):
-        return np.sum([t.eval(subs) for t in self.terms], axis=0)
+        values = [t.eval(subs) for t in self.terms]
+        return np.sum(values, axis=0)
 
     def __str__(self):
         return str(ft.reduce(lambda a, b: "(" + str(a) + " + " + str(b) + ")", self.terms))
@@ -117,7 +118,18 @@ class Product(Numeric):
         return Sum(terms)
 
     def eval(self, subs):
-        return ft.reduce(lambda x, y: x @ y, [f.eval(subs) for f in self.factors])
+        array_list = []
+        number_list = [1]
+        for factor in self.factors:
+            value = factor.eval(subs)
+            if type(value) == np.ndarray:
+                array_list.append(value)
+            else:
+                number_list.append(value)
+
+        matrix_part = ft.reduce(lambda x, y: x @ y, array_list)
+        number_part = ft.reduce(lambda x, y: x * y, number_list)
+        return matrix_part*number_part
 
     def __str__(self):
         return str(ft.reduce(lambda a, b: str(a) + "*" + str(b), self.factors))
@@ -186,6 +198,8 @@ class Function(Numeric):
             return stored
         else:
             duration.start("Function::derivate %s" % str(self))
+            if type(self.expression) == list:
+                print("tipo lista!")
             value = Function(self.expression.diff(var), self.extra, self.name + var)
             cache.set("d" + self.name + var, value)
             duration.step()
@@ -195,3 +209,5 @@ class Function(Numeric):
         return self.name + str(list(subs) + list(self.extra.values()))
 
 
+    def shape(self):
+        return (1,1)
