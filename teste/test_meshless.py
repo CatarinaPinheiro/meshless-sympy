@@ -18,14 +18,16 @@ DEBUG_PLOT = False
 
 class TestMeshless(unittest.TestCase):
     def rectangle_template(self, method_class, model_class):
-        size = 6
-        sizei = 1
+        size = 2
+        sizei = 0
 
         region = Rectangle(
                 x1=sizei,
                 y1=sizei,
                 x2=size,
                 y2=size,
+                # dx=0.5,
+                # dy=0.5,
                 parametric_partition={
                     1:    ["NEUMANN",   "NEUMANN"],
                     2:    ["NEUMANN",   "NEUMANN"],
@@ -49,12 +51,15 @@ class TestMeshless(unittest.TestCase):
             method.plot()
             plt.show()
 
-        errors = []
-        corrects = np.concatenate([sp.lambdify((x,y),model.analytical,"numpy")(*point) for point in data], axis=0)
-        print(corrects - result)
-        self.assertAlmostEqual(np.linalg.norm(corrects - result), 0, 3)
+        corrects = np.reshape([sp.lambdify((x,y),model.analytical,"numpy")(*point) for point in data], (model.num_dimensions*len(data)))
+        result = result.reshape(model.num_dimensions*len(data))
 
-        print(np.sqrt(np.mean(errors)))
+        diff = corrects - result
+
+        for index, point in enumerate(data):
+            print(point, result[index*2], result[2*index+1], corrects[index*2], corrects[2*index+1])
+
+        self.assertAlmostEqual(np.linalg.norm(diff)/len(corrects), 0, 3)
 
     def test_collocation(self):
         # self.rectangle_template(CollocationMethod, PotentialModel)

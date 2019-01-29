@@ -13,6 +13,7 @@ class ElasticModel(Model):
         self.region = region
         x, y = sp.var("x y")
         self.analytical = [x,-y/4]
+        # self.analytical = [x,sp.Integer(0)]
         self.num_dimensions = 2
 
     def domain_operator(self, exp, point):
@@ -49,7 +50,6 @@ class ElasticModel(Model):
 
         if v is None:
             v = u
-
 
         u_x = u.derivate("x")
         u_y = u.derivate("y")
@@ -104,9 +104,7 @@ class ElasticModel(Model):
                 [0]]
 
     def boundary_function(self, point):
-        u = num.Function(self.analytical[0])
-        v = num.Function(self.analytical[1])
+        u = num.Function(self.analytical[0], name="u(%s)"%point)
+        v = num.Function(self.analytical[1], name="v(%s)"%point)
 
-        print(point)
-        print([[cell.eval(point) for cell in row] for row in self.boundary_operator(u,point,v)])
         return [num.Sum(row).eval(point) for row in self.boundary_operator(u,point,v)]

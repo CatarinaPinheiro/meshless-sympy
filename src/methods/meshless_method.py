@@ -53,7 +53,9 @@ class MeshlessMethod:
             else:
 
                 boundary_value =  self.model.boundary_operator(self.m2d.numeric_phi, d)
-                lphi.append(np.concatenate(np.reshape([[cell.eval(d) for cell in row] for row in boundary_value], (self.model.num_dimensions,self.model.num_dimensions,len(self.model.region.cartesian))), axis=1))
+                matrix_of_arrays = np.array([[cell.eval(d) for cell in row] for row in boundary_value])
+                array_of_matrices = [matrix_of_arrays[:,:,0,i] for i in range(len(self.data))]
+                lphi.append(np.concatenate(array_of_matrices, axis=1))
 
                 b += [np.array(self.model.boundary_function(self.m2d.point))]
 
@@ -62,7 +64,7 @@ class MeshlessMethod:
             duration.duration.step()
 
         lphi = np.concatenate(lphi, axis=0)
-        b = [r.reshape((2,1)) for r in b]
+        b = [r.reshape((self.model.num_dimensions,1)) for r in b]
         b = np.concatenate(b, axis=0)
         return la.solve(lphi, b)
 
