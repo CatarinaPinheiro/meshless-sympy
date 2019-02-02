@@ -16,26 +16,36 @@ from matplotlib import pyplot as plt
 
 DEBUG_PLOT = False
 
-class TestMeshless(unittest.TestCase):
-    def rectangle_template(self, method_class, model_class):
-        size = 2
-        sizei = 0
+elastic_region_example = Rectangle(
+    x1=0,
+    y1=-15,
+    x2=60,
+    y2=15,
+    dx=10,
+    dy=7.5,
+    parametric_partition={
+        1:    ["NEUMANN",   "NEUMANN"],
+        2:    ["NEUMANN",   "NEUMANN"],
+        3:    ["NEUMANN",   "NEUMANN"],
+        3.49: ["DIRICHLET", "NEUMANN"],
+        3.5:  ["DIRICHLET", "DIRICHLET"],
+        4:    ["DIRICHLET", "NEUMANN"]
+    })
 
-        region = Rectangle(
-                x1=sizei,
-                y1=sizei,
-                x2=size,
-                y2=size,
-                # dx=0.5,
-                # dy=0.5,
-                parametric_partition={
-                    1:    ["NEUMANN",   "NEUMANN"],
-                    2:    ["NEUMANN",   "NEUMANN"],
-                    3:    ["NEUMANN",   "NEUMANN"],
-                    3.49: ["DIRICHLET", "NEUMANN"],
-                    3.5:  ["DIRICHLET", "DIRICHLET"],
-                    4:    ["DIRICHLET", "NEUMANN"]
-                })
+potential_region_example = Rectangle(
+    x1=1,
+    y1=1,
+    x2=5,
+    y2=5,
+    parametric_partition={
+        1: ["DIRICHLET"],
+        2: ["NEUMANN"],
+        3: ["DIRICHLET"],
+        4: ["NEUMANN"]
+    })
+
+class TestMeshless(unittest.TestCase):
+    def rectangle_template(self, method_class, model_class, region):
         data = region.cartesian
 
         model = model_class(region=region)
@@ -56,26 +66,31 @@ class TestMeshless(unittest.TestCase):
 
         diff = corrects - result
 
-        for index, point in enumerate(data):
-            print(point, result[index*2], result[2*index+1], corrects[index*2], corrects[2*index+1])
-
         self.assertAlmostEqual(np.linalg.norm(diff)/len(corrects), 0, 3)
 
-    def test_collocation(self):
-        # self.rectangle_template(CollocationMethod, PotentialModel)
-        self.rectangle_template(CollocationMethod, ElasticModel)
+    def test_collocation_potential(self):
+        self.rectangle_template(CollocationMethod, PotentialModel, potential_region_example)
 
+    def test_collocation_elasticity(self):
+        self.rectangle_template(CollocationMethod, ElasticModel, elastic_region_example)
 
-    def test_subregion(self):
-        self.rectangle_template(SubregionMethod, PotentialModel)
-        # self.circle_template(SubregionMethod)
+    def test_subregion_potential(self):
+        self.rectangle_template(SubregionMethod, PotentialModel, potential_region_example)
 
-    def test_galerkin(self):
-        self.rectangle_template(GalerkinMethod, PotentialModel)
-        # self.circle_template(GalerkinMethod)
+    def test_subregion_elasticity(self):
+        self.rectangle_template(SubregionMethod, ElasticModel, elastic_region_example)
 
-    def test_petrov_galerkin(self):
-        self.rectangle_template(PetrovGalerkinMethod, PotentialModel)
+    def test_galerkin_potential(self):
+        self.rectangle_template(GalerkinMethod, PotentialModel, potential_region_example)
+
+    def test_galerkin_elasticity(self):
+        self.rectangle_template(GalerkinMethod, ElasticModel, elastic_region_example)
+
+    def test_petrov_galerkin_porential(self):
+        self.rectangle_template(PetrovGalerkinMethod, PotentialModel, potential_region_example)
+
+    def test_petrov_galerkin_elasticity(self):
+        self.rectangle_template(PetrovGalerkinMethod, ElasticModel, elastic_region_example)
 
 
 if __name__ == '__main__':

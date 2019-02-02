@@ -10,4 +10,4 @@ class GalerkinMethod(MeshlessMethod):
         return gq.polar_gauss_integral(point, radius, lambda p: f(p))
 
     def integration_weight(self,central, point, radius):
-        return h.np_gaussian_with_radius(central[0]-point[0],central[1]-point[1],radius)
+        return self.weight_function.numpy(central[0]-point[0],central[1]-point[1],radius)

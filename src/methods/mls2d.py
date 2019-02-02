@@ -1,16 +1,17 @@
 import numpy as np
-import src.helpers as h
 import src.basis as b
 import sympy as sp
+import src.helpers.functions as h
 import src.helpers.numeric as num
 
 
 class MovingLeastSquares2D:
-    def __init__(self, data, basis, security=1):
+    def __init__(self, data, basis, weight_function, security=1.5):
         self.basis = basis
         self.data = data
         self.point = np.zeros(np.shape(data[0]))
         self.security = security
+        self.weight_function = weight_function
         self.preP = np.array([
             [sp.lambdify(sp.var("x y"), exp, "numpy")(*d) for exp in b.quadratic_2d]
             for d in self.data
@@ -19,7 +20,7 @@ class MovingLeastSquares2D:
 
     @property
     def r_min(self):
-        return self.r_first(int(self.security * (len(self.basis) + 1)))
+        return self.security * self.r_first(int((len(self.basis) + 1)))
 
 
     def r_first(self, n):
@@ -39,7 +40,7 @@ class MovingLeastSquares2D:
             h.cut(np.linalg.norm(np.array([xj, yj]) - self.point),
                   r,
                   num.Function(sp.Integer(0),name = "0"),
-                  num.Function(h.gaussian_with_radius(), {
+                  num.Function(self.weight_function.sympy(), {
                       'xj': xj,
                       'yj': yj,
                       'r': r
@@ -59,11 +60,16 @@ class MovingLeastSquares2D:
                   [0 for _ in b.quadratic_2d],
                   self.preP[i])
             for i, d in enumerate(self.data)]
-        W = [
-            h.cut(np.linalg.norm(np.array([xj, yj]) - self.point),
-                  r, 0, h.np_gaussian_with_radius(self.point[0] - xj, self.point[1] - yj, r))
-            for xj, yj in self.data
-        ]
+        W = []
+        for xj, yj in self.data:
+            dx = self.point[0] - xj
+            dy = self.point[1] - yj
+            weight = self.weight_function.numpy(dx, dy, r)
+            norm = np.linalg.norm(np.array([xj, yj]) - self.point)
+            cut = h.cut(norm, r, 0, weight)
+            W.append(cut)
+
+
 
         B = np.transpose(P) @ np.diag(np.array(W, dtype=np.float64))
         A = B @ P

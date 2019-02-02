@@ -17,14 +17,14 @@ class PetrovGalerkinMethod(MeshlessMethod):
         return gq.polar_gauss_integral(point, radius, lambda p: f(p), angle1, angle2)
 
     def integration_weight(self, central, point, radius):
-        return self.model.domain_operator(num.Function(h.gaussian_with_radius(),{
+        return self.model.domain_operator(num.Function(self.weight_function.sympy(),{
             'xj': point[0],
             'yj': point[1],
             'r': radius
         }), point).eval(point)
 
     def boundary_integration_weight(self, central, point, radius):
-        return num.Function(h.gaussian_with_radius(),{
+        return num.Function(self.weight_function.sympy(),{
             'xj': point[0],
             'yj': point[1],
             'r': radius
