@@ -16,82 +16,85 @@ class PetrovGalerkinMethod(MeshlessMethod):
     def integration(self, point, radius, f, angle1=0, angle2=2*np.pi):
         return gq.polar_gauss_integral(point, radius, lambda p: f(p), angle1, angle2)
 
-    def integration_weight(self, central, point, radius):
-        return self.model.domain_operator(num.Function(self.weight_function.sympy(),{
-            'xj': point[0],
-            'yj': point[1],
-            'r': radius
-        }), point).eval(point)
 
-    def boundary_integration_weight(self, central, point, radius):
-        return num.Function(self.weight_function.sympy(),{
-            'xj': point[0],
-            'yj': point[1],
-            'r': radius
-        }).eval(point)
+    def integration_weight(self,central, point, radius):
+        return self.weight_function.numpy(central[0]-point[0],central[1]-point[1],radius)
 
-    def solve(self):
-        lphi = []
-        b = []
+    def lphi_integration_weight(self, central, point, radius):
+        extra = {
+            "xj": central[0],
+            "yj": central[1],
+            "r": radius
+        }
+        return self.model.domain_integral_weight_operator(self.weight_function.numeric(extra), central, point, radius)
 
-        for i, d in enumerate(self.data):
-            # print(i)
-            cache.reset()
+    def boundary_append(self, i, d, lphi, b):
+        boundary_value = self.model.boundary_operator(self.m2d.numeric_phi, d)
+        matrix_of_arrays = np.array([[cell.eval(d) for cell in row] for row in boundary_value])
+        array_of_matrices = [matrix_of_arrays[:,:,0,i] for i in range(len(self.data))]
+        lphi_dirichlet_element = np.concatenate(array_of_matrices, axis=1)
 
-            duration.duration.start("%d/%d" % (i, len(self.data)))
-            self.m2d.point = d
+        b_dirichlet_element = np.array(self.model.boundary_function(self.m2d.point))#.reshape((self.model.num_dimensions, 1))
 
-            if element_inside_list(d, self.domain_data):
+        radius = self.m2d.r_first(1)
+        if self.model.region.closest_corner_distance(d) > 0:
+            radius = min(self.m2d.r_first(1), self.model.region.closest_corner_distance(d))
 
-                radius = min(self.m2d.r_first(1), self.model.region.distance_from_boundary(d))
+        self.m2d.point = d
+        phi = self.m2d.numeric_phi
+        differentiated_phi = self.model.domain_operator(phi, d)
 
-                def integration_element(integration_point, i):
-                    key = "gauss%s" % (integration_point)
-                    found, value = cache.get(key)
-                    if found:
-                        return value[i]
-                    else:
-                        self.m2d.point = integration_point
-                        phi = self.model.domain_operator(self.m2d.numeric_phi, integration_point)
-                        value = phi.eval(integration_point)[0] * self.integration_weight(d, integration_point, radius)
-                        cache.set(key, value)
-                        return value[i]
+        def domain_integration_element(integration_point, i):
 
-
-                lphi.append(
-                    [self.integration(d, radius, lambda p: integration_element(p, i)) for i in range(len(self.data))])
-
-                b.append(self.integration(d, radius, lambda p: self.integration_weight(d, p, radius)*self.model.domain_function(p)))
-
+            key = "domain integration_element %s %s %s" % (d, integration_point,i)
+            found, value = cache.get(key)
+            if found:
+                return value
             else:
-                if self.model.region.condition(d) == "DIRICHLET":
-                    lphi.append(self.model.boundary_operator(self.m2d.numeric_phi, d).eval(d)[0])
-                    b.append(self.model.boundary_function(self.m2d.point))
-                elif self.model.region.condition(d) == "NEUMANN":
+                weight = self.lphi_integration_weight(d, integration_point, radius)
 
-                    radius = self.m2d.r_first(1)
-                    if self.model.region.closest_corner_distance(d) > 0:
-                        radius = min(self.m2d.r_first(1), self.model.region.closest_corner_distance(d))
-
-                    self.m2d.point = d
-                    phi = self.model.domain_operator(self.m2d.numeric_phi, d)
-
-                    def integration_element(integration_point, i):
-                        if self.model.region.include(integration_point):
-                            return (phi.eval(integration_point)[0] * self.integration_weight(d, integration_point, radius))[i]
-                        else:
-                            return self.model.partial_evaluate(integration_point) * self.boundary_integration_weight(d, integration_point, radius)
-
-                    angles = self.model.region.boundary_integration_limits(d)
-                    lphi.append(
-                        [self.integration(d, radius, lambda p: integration_element(p, i), angles[0], angles[1]) for i in range(len(self.data))])
-
-                    b.append(self.integration(d, radius, lambda p: self.integration_weight(d, p, radius)*self.model.domain_function(p), angles[0], angles[1]))
+                if self.model.region.include(integration_point):
+                    LDB = np.array([[cell.eval(integration_point)[0]  for cell in row] for row in differentiated_phi])[:,:,i]
+                    value = weight*LDB
                 else:
-                    raise Exception("Should not be here! condition(%s) = %s"%(d,self.model.region.condition(d)))
+                    LDB = self.model.boundary_function(integration_point)
+                    value = weight*LDB
+
+                cache.set(key, value)
+                return value
+
+        def boundary_integration_element(integration_point, i):
+            key = "boundary integration_element %s %s %s" % (d, integration_point,i)
+            found, value = cache.get(key)
+            if not found:
+                if self.model.region.include(integration_point):
+                    value = self.model.domain_function(integration_point)
+                else:
+                    value = self.model.boundary_function(integration_point)
+
+                cache.set(key, value)
+
+            dx = integration_point[0] - d[0]
+            dy = integration_point[1] - d[1]
+            return np.multiply(value, self.weight_function.numpy(dx, dy, radius))
+
+        angles = self.model.region.boundary_integration_limits(d)
+        list_of_matrices = [self.integration(d, radius, lambda p: domain_integration_element(p, i), angles[0], angles[1]) for i in range(len(self.data))]
+        lphi_neumann_element = np.concatenate(list_of_matrices, axis=1)
+        b_neumann_element = self.integration(d, radius, lambda p: boundary_integration_element(p, i), angles[0], angles[1])
 
 
-            self.support_radius[i] = self.m2d.ri
-            duration.duration.step()
+        lphi_element = []
+        b_element = []
+        b_shape = (self.model.num_dimensions,1)
+        for dimension in range(self.model.num_dimensions):
+            if self.model.region.condition(d)[dimension] == "DIRICHLET":
+                lphi_element.append(lphi_dirichlet_element[dimension])
+                b_element.append(b_dirichlet_element.reshape(b_shape)[dimension])
+            elif self.model.region.condition(d)[dimension] == "NEUMANN":
+                lphi_element.append(lphi_neumann_element[dimension])
+                b_element.append(b_neumann_element.reshape(b_shape)[dimension])
+            else:
+                raise Exception("Should not be here! condition(%s) = %s"%(d,self.model.region.condition(d)))
 
-        return la.solve(lphi, b)
+        return lphi_element, b_element

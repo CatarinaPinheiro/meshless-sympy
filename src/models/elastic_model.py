@@ -108,3 +108,10 @@ class ElasticModel(Model):
         v = num.Function(self.analytical[1], name="v(%s)"%point)
 
         return [num.Sum(row).eval(point) for row in self.boundary_operator(u,point,v)]
+
+    def domain_integral_weight_operator(self, numeric_function, central, point, radius):
+        dx = numeric_function.derivate("x").eval(point)
+        dy = numeric_function.derivate("y").eval(point)
+
+        return np.array([[dx, dy],
+                         [dy, dx]])

@@ -1,23 +1,23 @@
 import numpy as np
 import scipy.integrate as si
+from numpy.polynomial.legendre import leggauss
 
 
 def polar_gauss_integral(point, radius, f, angle1=0, angle2=2*np.pi):
-    def inner_integral(r, theta):
-        total=0
 
-        for rr in r:
-            for tt in theta:
-                x = np.cos(tt)*rr+point[0]
-                y = np.sin(tt)*rr+point[1]
+    xs, ws = leggauss(5)
+    outer_integral = []
+    for i1,w1 in enumerate(ws):
+        rr = (xs[i1]+1)*radius/2
 
-                total += f([x,y])
+        inner_integral = []
+        for i2,w2 in enumerate(ws):
+            tt = (angle2 - angle1)*xs[i2]/2 + (angle1+angle2)/2
+            x = np.cos(tt)*rr+point[0]
+            y = np.sin(tt)*rr+point[1]
 
-        return total
+            inner_integral.append(np.multiply(f([x,y]),w2))
 
-    def outer_integral(theta):
-        value = si.fixed_quad(inner_integral, 0, radius, args=[theta])[0]
-        return value
+        outer_integral.append(np.sum(inner_integral, axis=0)*w1)
 
-    value = si.fixed_quad(outer_integral, angle1, angle2)[0]
-    return value
+    return np.sum(outer_integral, axis=0)

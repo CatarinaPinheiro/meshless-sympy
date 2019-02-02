@@ -19,8 +19,42 @@ class MeshlessMethod:
         self.m2d = mls.MovingLeastSquares2D(self.data, self.basis, self.weight_function)
         self.support_radius = {}
 
+    def domain_append(self, i, d, lphi, b):
+        radius = min(self.m2d.r_first(1), self.model.region.distance_from_boundary(d))
+
+        def integration_element(integration_point, i):
+            key = "integration_element %s %s %s" % (d, integration_point,i)
+            found, value = cache.get(key)
+            if found:
+                return value
+            else:
+                self.m2d.point = integration_point
+                phi = self.model.domain_operator(self.m2d.numeric_phi, integration_point)
+                LDB = np.array([[cell.eval(integration_point)[0]  for cell in row] for row in phi])[:,:,i]
+                weight = self.integration_weight(d, integration_point, radius)
+                value = weight*LDB
+                cache.set(key, value)
+                return value
+
+        domain_integral = [ self.integration(d, radius, lambda p: integration_element(p, i)) for i in range(len(self.data)) ]
+        lphi_element = np.concatenate(domain_integral, axis=1)
+
+        b_integral = self.integration(d, radius, lambda p: np.multiply(self.integration_weight(d, p, radius),self.model.domain_function(p)))
+        b_element = np.array(b_integral)
+
+        return lphi_element, b_element
+
+    def boundary_append(self, i, d, lphi, b):
+        boundary_value = self.model.boundary_operator(self.m2d.numeric_phi, d)
+        matrix_of_arrays = np.array([[cell.eval(d) for cell in row] for row in boundary_value])
+        array_of_matrices = [matrix_of_arrays[:,:,0,i] for i in range(len(self.data))]
+        lphi_element = np.concatenate(array_of_matrices, axis=1)
+
+        b_element = np.array(self.model.boundary_function(self.m2d.point))
+
+        return lphi_element, b_element
+
     def solve(self):
-        self.phis = []
         lphi = []
         b = []
 
@@ -31,45 +65,17 @@ class MeshlessMethod:
             self.m2d.point = d
 
             if element_inside_list(d, self.domain_data):
-
-                radius = min(self.m2d.r_first(1), self.model.region.distance_from_boundary(d))
-
-                def integration_element(integration_point, i):
-                    key = "gauss%s" % (integration_point)
-                    found, value = cache.get(key)
-                    if found:
-                        return value[:,:,i]
-                    else:
-                        self.m2d.point = integration_point
-                        phi = self.model.domain_operator(self.m2d.numeric_phi, integration_point)
-                        value = np.array([[cell.eval(integration_point)[0] * self.integration_weight(d, integration_point, radius) for cell in row] for row in phi])
-                        cache.set(key, value)
-                        return value[:,:,i]
-
-
-                domain_integral = [ self.integration(d, radius, lambda p: integration_element(p, i)) for i in range(len(self.data)) ]
-                lphi.append(np.concatenate(domain_integral, axis=1))
-
-                boundary_integral = self.integration(d, radius, lambda p: self.integration_weight(d, p, radius)*self.model.domain_function(p))
-                b += [np.array(boundary_integral)]
-
+                lphi_element, b_element = self.domain_append(i, d, lphi, b)
             else:
-
-                boundary_value = self.model.boundary_operator(self.m2d.numeric_phi, d)
-                matrix_of_arrays = np.array([[cell.eval(d) for cell in row] for row in boundary_value])
-                array_of_matrices = [matrix_of_arrays[:,:,0,i] for i in range(len(self.data))]
-                lphi.append(np.concatenate(array_of_matrices, axis=1))
-
-                b += [np.array(self.model.boundary_function(self.m2d.point))]
-
+                lphi_element, b_element = self.boundary_append(i, d, lphi, b)
+            lphi.append(lphi_element)
+            b.append(np.reshape(b_element, (self.model.num_dimensions,1)))
 
             self.support_radius[i] = self.m2d.ri
             duration.duration.step()
             self.m2d.point = d
-            self.phis.append(self.m2d.numeric_phi)
 
         lphi = np.concatenate(lphi, axis=0)
-        b = [r.reshape((self.model.num_dimensions,1)) for r in b]
         b = np.concatenate(b, axis=0)
         return la.solve(lphi, b)
 

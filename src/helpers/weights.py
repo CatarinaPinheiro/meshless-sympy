@@ -1,8 +1,14 @@
 import sympy as sp
 import numpy as np
+import src.helpers.numeric as num
 
 
-class GaussianWithRadius:
+class WeightFunction:
+    def numeric(self, extra={}):
+        return num.Function(self.sympy(),extra)
+
+
+class GaussianWithRadius(WeightFunction):
     def sympy(self):
         x, y, xj, yj, r = sp.var("x y xj yj r")
         c = 100
@@ -19,7 +25,7 @@ class GaussianWithRadius:
         return weight
 
 
-class Spline:
+class Spline(WeightFunction):
     def sympy(self):
         x, y, xj, yj, r = sp.var("x y xj yj r")
         di = sp.sqrt((x-xj)**2 + (y-yj)**2)
@@ -30,7 +36,7 @@ class Spline:
         return 1 - 6*((di/r)**2) + 8*((di/r)**3) - 3*((di/r)**4)
 
 
-class Cossine:
+class Cossine(WeightFunction):
     def sympy(self):
         x, y, xj, yj, r = sp.var("x y xj yj r")
         d2 = (x-xj)**2 + (y-yj)**2
