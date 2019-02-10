@@ -21,14 +21,6 @@ def polar_gauss_integral(point, radius, f, angle1=0, angle2=2*np.pi, n=10):
 
     return np.sum(outer_integral, axis=0)*radius*(angle2 - angle1)/4
 
-
-    # def rect(r,t):
-    #     x = np.cos(t)*r+point[0]
-    #     y = np.sin(t)*r+point[1]
-    #     return x,y
-    #
-    # return si.dblquad(lambda t, r: r*f(rect(r,t)), 0, radius, lambda r: angle1, lambda r: angle2)[0]
-
 def angular_integral(central, radius, f, angle1=0, angle2=np.pi, n=10):
     xs, ws = leggauss(n)
 

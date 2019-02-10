@@ -15,9 +15,6 @@ class PotentialModel(Model):
     def domain_operator(self, numeric, point):
         return [[num.Sum([numeric.derivate("x").derivate("x"), numeric.derivate("y").derivate("y")])]]
 
-    def integral_operator(self, numeric, point):
-        return [numeric.derivate("x").eval(point), numeric.derivate("y").eval(point)]
-
     def domain_function(self, point):
         operators = self.domain_operator(num.Function(self.analytical, name="domain"), point)
         return [[dimension.eval(point) for dimension in operator] for operator in operators]
@@ -56,6 +53,13 @@ class PotentialModel(Model):
                 raise Exception("Incorrect condition")
         return [values]
 
-    def domain_integral_weight_operator(self, numeric_weight, central, point, radius):
-        return np.array([[self.domain_operator(numeric_weight, point)[0][0].eval(point)]])
+    def integral_operator(self, numeric, point):
+        return np.array([[numeric.derivate("x").eval(point)],
+                         [numeric.derivate("y").eval(point)]])
 
+    def boundary_integral_normal(self, point):
+        nx, ny = self.region.normal(point)
+        return np.array([[nx, ny]])
+
+    def given_boundary_function(self, point):
+        return self.boundary_function(point)

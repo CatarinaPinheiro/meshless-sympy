@@ -7,13 +7,16 @@ E = 1
 ni = 0.25
 G = E/(2*(1+ni))
 lmbda = (ni*E)/((1+ni)*(1 - 2*ni))
+D = (E/(1-ni**2))*np.array([[1, ni, 0],
+                            [ni, 1, 0],
+                            [0, 0, (1-ni)/2]])
 
 class ElasticModel(Model):
     def __init__(self, region):
         self.region = region
         x, y = sp.var("x y")
-        # self.analytical = [x,-y/4]
-        self.analytical = [x,sp.Integer(0)]
+        self.analytical = [x,-y/4]
+        # self.analytical = [x,sp.Integer(0)]
         self.num_dimensions = 2
 
     def domain_operator(self, exp, point):
@@ -107,11 +110,28 @@ class ElasticModel(Model):
         u = num.Function(self.analytical[0], name="u(%s)"%point)
         v = num.Function(self.analytical[1], name="v(%s)"%point)
 
-        return [num.Sum(row).eval(point) for row in self.boundary_operator(u,point,v)]
+        return [num.Sum(row).eval(point) for row in self.boundary_operator(u, point, v)]
 
-    def domain_integral_weight_operator(self, numeric_function, central, point, radius):
-        dx = numeric_function.derivate("x").eval(point)
-        dy = numeric_function.derivate("y").eval(point)
+    def given_boundary_function(self, point):
+        ux = num.Function(self.analytical[0], name="ux(%s)"%point).derivate("x").eval(point)
+        uy = num.Function(self.analytical[0], name="uy(%s)"%point).derivate("y").eval(point)
+        vx = num.Function(self.analytical[1], name="vx(%s)"%point).derivate("x").eval(point)
+        vy = num.Function(self.analytical[1], name="vy(%s)"%point).derivate("y").eval(point)
 
-        return np.array([[dx, dy],
-                         [dy, dx]])
+        return self.boundary_integral_normal(point)@np.array([[ux],
+                                                              [vy],
+                                                              [uy+vx]])
+
+    def integral_operator(self, exp, point):
+        zr = np.zeros(exp.shape())
+        dx = exp.derivate("x").eval(point)
+        dy = exp.derivate("y").eval(point)
+        V = np.array([[dx, zr],
+                      [zr, dy],
+                      [dy, dx]])
+        return np.tensordot(D.transpose(),V, axes=1)
+
+    def boundary_integral_normal(self, point):
+        nx, ny = self.region.normal(point)
+        return np.array([[nx, 0, ny],
+                         [0, ny, nx]])@D

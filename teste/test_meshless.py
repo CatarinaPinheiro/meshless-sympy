@@ -29,7 +29,7 @@ elastic_region_example = Rectangle(
         2:    ["NEUMANN",   "NEUMANN"],
         3:    ["NEUMANN",   "NEUMANN"],
         3.49: ["DIRICHLET", "NEUMANN"],
-        3.5:  ["DIRICHLET", "DIRICHLET"],
+        3.51: ["DIRICHLET", "DIRICHLET"],
         4:    ["DIRICHLET", "NEUMANN"]
     })
 
@@ -71,13 +71,14 @@ class TestMeshless(unittest.TestCase):
         corrects = np.reshape([sp.lambdify((x,y),model.analytical,"numpy")(*point) for point in data], (model.num_dimensions*len(data)))
 
         # test if system makes sense
-        print(np.matmul(method.lphi,np.transpose([corrects])) - method.b)
+        print(np.matmul(method.stiffness,np.transpose([corrects])) - method.b)
 
         result = result.reshape(model.num_dimensions*len(data))
 
         diff = corrects - result
 
-        print("diff corrects result", np.array([diff, corrects, result]).T)
+        print("points\n", data)
+        print("diff corrects result\n", np.array([diff, corrects, result]).T)
 
         self.assertAlmostEqual(np.linalg.norm(diff)/len(corrects), 0, 3)
 
@@ -91,7 +92,7 @@ class TestMeshless(unittest.TestCase):
         self.rectangle_template(SubregionMethod, PotentialModel, potential_region_example)
 
     def test_subregion_elasticity(self):
-        self.recFalsetangle_template(SubregionMethod, ElasticModel, elastic_region_example)
+        self.rectangle_template(SubregionMethod, ElasticModel, elastic_region_example)
 
     def test_galerkin_potential(self):
         self.rectangle_template(GalerkinMethod, PotentialModel, potential_region_example)
@@ -99,7 +100,7 @@ class TestMeshless(unittest.TestCase):
     def test_galerkin_elasticity(self):
         self.rectangle_template(GalerkinMethod, ElasticModel, elastic_region_example)
 
-    def test_petrov_galerkin_porential(self):
+    def test_petrov_galerkin_potential(self):
         self.rectangle_template(PetrovGalerkinMethod, PotentialModel, potential_region_example)
 
     def test_petrov_galerkin_elasticity(self):

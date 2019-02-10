@@ -7,7 +7,7 @@ from src.helpers.cache import cache
 from src.helpers.functions import unique_rows
 import src.helpers.duration as duration
 from src.helpers.list import element_inside_list
-from src.helpers.weights import Parabola as Weight
+from src.helpers.weights import GaussianWithRadius as Weight
 from matplotlib import pyplot as plt, cm
 import matplotlib as mpl
 
@@ -20,7 +20,7 @@ class MeshlessMethod:
         self.m2d = mls.MovingLeastSquares2D(self.data, self.basis, self.weight_function)
         self.support_radius = {}
 
-    def domain_append(self, i, d, lphi, b):
+    def domain_append(self, i, d):
         radius = min(self.m2d.r_first(1), self.model.region.distance_from_boundary(d))
 
         def integration_element(integration_point, i):
@@ -39,25 +39,25 @@ class MeshlessMethod:
                 return value
 
         domain_integral = [ self.integration(d, radius, lambda p: integration_element(p, i)) for i in range(len(self.data)) ]
-        lphi_element = np.concatenate(domain_integral, axis=1)
+        stiffness_element = np.concatenate(domain_integral, axis=1)
 
         b_integral = self.integration(d, radius, lambda p: np.multiply(self.weight_function.numpy(p[0]-d[0],p[1]-d[1],radius),self.model.domain_function(p)))
         b_element = np.array(b_integral)
 
-        return lphi_element, b_element
+        return stiffness_element, b_element
 
-    def boundary_append(self, i, d, lphi, b):
+    def boundary_append(self, i, d):
         boundary_value = self.model.boundary_operator(self.m2d.numeric_phi, d)
         matrix_of_arrays = np.array([[cell.eval(d) for cell in row] for row in boundary_value])
         array_of_matrices = [matrix_of_arrays[:,:,0,i] for i in range(len(self.data))]
-        lphi_element = np.concatenate(array_of_matrices, axis=1)
+        stiffness_element = np.concatenate(array_of_matrices, axis=1)
 
         b_element = np.array(self.model.boundary_function(self.m2d.point))
 
-        return lphi_element, b_element
+        return stiffness_element, b_element
 
     def solve(self):
-        lphi = []
+        stiffness = []
         b = []
 
         for i, d in enumerate(self.data):
@@ -67,11 +67,11 @@ class MeshlessMethod:
             self.m2d.point = d
 
             if element_inside_list(d, self.domain_data):
-                lphi_element, b_element = self.domain_append(i, d, lphi, b)
+                stiffness_element, b_element = self.domain_append(i, d)
             else:
-                lphi_element, b_element = self.boundary_append(i, d, lphi, b)
-            print("append", lphi_element, b_element)
-            lphi.append(lphi_element)
+                stiffness_element, b_element = self.boundary_append(i, d)
+            print("append", stiffness_element, b_element)
+            stiffness.append(stiffness_element)
             b.append(np.reshape(b_element, (self.model.num_dimensions,1)))
 
             print(i)
@@ -80,9 +80,9 @@ class MeshlessMethod:
             duration.duration.step()
             self.m2d.point = d
 
-        self.lphi = np.concatenate(lphi, axis=0)
+        self.stiffness = np.concatenate(stiffness, axis=0)
         self.b = np.concatenate(b, axis=0)
-        return la.solve(self.lphi, self.b)
+        return la.solve(self.stiffness, self.b)
 
     @property
     def boundary_data(self):
@@ -125,7 +125,7 @@ class MeshlessMethod:
 
         # phis
         points = np.array(self.data)
-        plt.scatter(points[:,0],points[:,1],s=[500*value for value in self.lphi[point_index] ])
+        plt.scatter(points[:,0],points[:,1],s=[500*value for value in self.stiffness[point_index] ])
 
         # domain points
         inside_array = np.array(self.domain_data)

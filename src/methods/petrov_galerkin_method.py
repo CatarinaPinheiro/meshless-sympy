@@ -1,12 +1,6 @@
 from src.methods.collocation_method import CollocationMethod
 from src.methods.meshless_method import MeshlessMethod
 import src.helpers.integration as gq
-import src.helpers as h
-from src.helpers.cache import cache
-from src.helpers.list import element_inside_list
-import src.helpers.duration as duration
-import src.helpers.numeric as num
-import numpy.linalg as la
 import numpy as np
 
 
@@ -14,33 +8,10 @@ class PetrovGalerkinMethod(MeshlessMethod):
     def __init__(self, basis, model):
         MeshlessMethod.__init__(self, basis, model)
 
-    def integration(self, point, radius, f, angle1=0, angle2=2*np.pi):
-        return gq.polar_gauss_integral(point, radius, lambda p: f(p), angle1, angle2)
-
-
-    def non_differentiated_integration_weight(self,central, point, radius):
-        return self.weight_function.numpy(central[0]-point[0],central[1]-point[1],radius)
-
-    def integration_weight(self,central, point, radius):
-        extra = {
-            "xj": central[0],
-            "yj": central[1],
-            "r": radius
-        }
-        return self.model.domain_integral_weight_operator(self.weight_function.numeric(extra), central, point, radius)
-
-    def lphi_integration_weight(self, central, point, radius):
-        extra = {
-            "xj": central[0],
-            "yj": central[1],
-            "r": radius
-        }
-        return self.model.domain_integral_weight_operator(self.weight_function.numeric(extra), central, point, radius)
-
-    def domain_append(self, i, d, lphi, b):
+    def domain_append(self, i, d):
         radius = min(self.m2d.r_first(1), self.model.region.distance_from_boundary(d))
 
-        def lphi_element(integration_point):
+        def stiffness_element(integration_point):
             self.m2d.point = integration_point
             dphi = np.array(self.model.integral_operator(self.m2d.numeric_phi, integration_point))
 
@@ -50,68 +21,83 @@ class PetrovGalerkinMethod(MeshlessMethod):
                 'r': radius
             }), integration_point)
 
-            return dphi[0]*dw[0]+dphi[1]*dw[1]
+            return np.tensordot(dw.transpose(), dphi, axes=1)
 
-        lphi_element = -gq.polar_gauss_integral(d, radius, lphi_element)
+        stiffness_element = -gq.polar_gauss_integral(d, radius, stiffness_element)
+        print("stiffness_element shape", stiffness_element.shape)
 
         def b_element(integration_point):
-            weight = self.non_differentiated_integration_weight(d, integration_point, radius)
+            weight = self.weight_function.numpy(integration_point[0] - d[0], integration_point[1] - d[1], radius)
             domain_function = np.array(self.model.domain_function(integration_point))
-            return domain_function*weight
+            return weight*domain_function
 
         b_element = gq.polar_gauss_integral(d, radius, b_element)
 
-        return lphi_element, b_element
+        return stiffness_element.swapaxes(1,3).reshape((self.model.num_dimensions, self.model.num_dimensions*len(self.data))), b_element
 
-    def boundary_append(self, i, d, lphi, b):
+    def boundary_append(self, i, d):
         self.m2d.point = d
-        if self.model.region.condition(d)[0] == "DIRICHLET":
-            lphi_element, b_element = CollocationMethod.boundary_append(self, i, d, lphi, b)
-        elif self.model.region.condition(d)[0] == "NEUMANN":
-            radius = self.m2d.r_first(1)
-            def lphi_boundary_element(integration_point):
-                self.m2d.point = integration_point
-                if self.model.region.condition(integration_point)[0] == "NEUMANN":
-                    return None
-                elif self.model.region.condition(integration_point)[0] == "DIRICHLET":
-                    dphi = np.array(self.model.integral_operator(self.m2d.numeric_phi, integration_point))
-                    delta = integration_point - d
-                    weight = self.weight_function.numpy(delta[0], delta[1], radius)
-                    normal = self.model.region.normal(integration_point)
-                    return weight*(dphi[0]*normal[0] + dphi[1]*normal[1])
-
-            def lphi_domain_element(integration_point):
-                self.m2d.point = integration_point
+        stiffness_dirichlet_element, b_dirichlet_element = CollocationMethod.boundary_append(self, i, d)
+        radius = self.m2d.r_first(1)
+        def stiffness_boundary_element(integration_point):
+            self.m2d.point = integration_point
+            if self.model.region.condition(integration_point)[0] == "NEUMANN":
+                return None
+            elif self.model.region.condition(integration_point)[0] == "DIRICHLET":
                 dphi = np.array(self.model.integral_operator(self.m2d.numeric_phi, integration_point))
+                delta = integration_point - d
+                weight = self.weight_function.numpy(delta[0], delta[1], radius)
+                normal = self.model.boundary_integral_normal(integration_point)
+                return weight*np.tensordot(normal, dphi, axes=1)
 
-                dw = self.model.integral_operator(self.weight_function.numeric({
-                    'xj': d[0],
-                    'yj': d[1],
-                    'r': radius
-                }), integration_point)
+        def stiffness_domain_element(integration_point):
+            self.m2d.point = integration_point
+            dphi = np.array(self.model.integral_operator(self.m2d.numeric_phi, integration_point))
 
-                return dphi[0]*dw[0]+dphi[1]*dw[1]
+            dw = self.model.integral_operator(self.weight_function.numeric({
+                'xj': d[0],
+                'yj': d[1],
+                'r': radius
+            }), integration_point)
+
+            return np.tensordot(dw.transpose(), dphi, axes=1)
 
 
-            a1, a2 = self.model.region.boundary_integration_limits(d)
-            lphi_element = gq.angular_integral(d, radius, lphi_boundary_element, a1, a2) - self.integration(d, radius, lphi_domain_element, a1, a2)
+        a1, a2 = self.model.region.boundary_integration_limits(d)
+        stiffness_neumann_area_element = gq.angular_integral(d, radius, stiffness_boundary_element, a1, a2)
+        stiffness_neumann_line_element = gq.polar_gauss_integral(d, radius, stiffness_domain_element, a1, a2)
+        print("stiffness neumann area element shape", np.shape(stiffness_neumann_area_element))
+        print("stiffness neumann line element shape", np.shape(stiffness_neumann_line_element))
+        stiffness_neumann_element = stiffness_neumann_area_element - stiffness_neumann_line_element
+        stiffness_neumann_element = stiffness_neumann_element.swapaxes(1,3).reshape((self.model.num_dimensions, len(self.data)*self.model.num_dimensions))
 
-            def b_boundary_element(integration_point):
-                if self.model.region.condition(integration_point)[0] == "DIRICHLET":
-                    return None
-                elif self.model.region.condition(integration_point)[0] == "NEUMANN":
-                    delta = integration_point - d
-                    weight = self.weight_function.numpy(delta[0], delta[1], radius)
-                    return weight*np.array(self.model.boundary_function(integration_point))
+        def b_boundary_element(integration_point):
+            if self.model.region.condition(integration_point)[0] == "DIRICHLET":
+                return None
+            elif self.model.region.condition(integration_point)[0] == "NEUMANN":
+                delta = integration_point - d
+                weight = self.weight_function.numpy(delta[0], delta[1], radius)
+                return weight*np.array(self.model.given_boundary_function(integration_point))
 
-            def b_domain_element(integration_point):
-                weight = self.weight_function.numpy(integration_point[0] - d[0], integration_point[1] - d[1], radius)
-                domain_function = np.array(self.model.domain_function(integration_point))
-                return domain_function*weight
+        def b_domain_element(integration_point):
+            weight = self.weight_function.numpy(integration_point[0] - d[0], integration_point[1] - d[1], radius)
+            domain_function = np.array(self.model.domain_function(integration_point))
+            return weight*domain_function
 
-            print("b_integrals: ", self.integration(d, radius, b_domain_element, a1, a2), gq.angular_integral(d,radius, b_boundary_element, a1, a2))
-            b_element = self.integration(d, radius, b_domain_element, a1, a2) - gq.angular_integral(d,radius, b_boundary_element, a1, a2)
-        else:
-            raise Exception("point with no condition!")
+        print("b_integrals: ", gq.polar_gauss_integral(d, radius, b_domain_element, a1, a2), gq.angular_integral(d,radius, b_boundary_element, a1, a2))
+        b_neumann_element = gq.polar_gauss_integral(d, radius, b_domain_element, a1, a2) - gq.angular_integral(d,radius, b_boundary_element, a1, a2)
 
-        return lphi_element, b_element
+        stiffness_element = []
+        b_element = []
+        for dimension in range(self.model.num_dimensions):
+            if self.model.region.condition(d)[dimension] == "DIRICHLET":
+                stiffness_element.append(stiffness_dirichlet_element[dimension])
+                b_element.append(b_dirichlet_element[dimension])
+            elif self.model.region.condition(d)[dimension] == "NEUMANN":
+                stiffness_element.append(stiffness_neumann_element[dimension])
+                b_element.append(b_neumann_element[dimension])
+            else:
+                raise Exception("Invalid Condition!")
+
+        print("stiffness shape", np.shape(stiffness_element), stiffness_element)
+        return np.array(stiffness_element), b_element
