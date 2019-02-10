@@ -7,7 +7,7 @@ from src.helpers.cache import cache
 from src.helpers.functions import unique_rows
 import src.helpers.duration as duration
 from src.helpers.list import element_inside_list
-from src.helpers.weights import GaussianWithRadius as Weight
+from src.helpers.weights import Parabola as Weight
 from matplotlib import pyplot as plt, cm
 import matplotlib as mpl
 

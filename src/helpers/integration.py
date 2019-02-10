@@ -1,29 +1,9 @@
 import numpy as np
 import scipy.integrate as si
 from numpy.polynomial.legendre import leggauss
-from matplotlib import pyplot as plt
 
 
-def polar_gauss_integral(point, radius, f, angle1=0, angle2=2*np.pi, n=80):
-
-    # x1 = point[0] - radius
-    # y1 = point[1] - radius
-    # x2 = point[0] + radius
-    # y2 = point[0] + radius
-    #
-    # xs = np.linspace(x1,x2,n,True)
-    # ys = np.linspace(y1,y2,n,True)
-    # count=0
-    # total=0
-    # for x in xs:
-    #     for y in ys:
-    #         if np.linalg.norm(point - np.array([x,y])) < radius:
-    #             count += 1
-    #             total += f(point)
-    #             plt.scatter(x,y)
-    # plt.show()
-    # return total/(n*n)
-
+def polar_gauss_integral(point, radius, f, angle1=0, angle2=2*np.pi, n=10):
     xs, ws = leggauss(n)
     outer_integral = []
     for i1,w1 in enumerate(ws):
@@ -35,13 +15,9 @@ def polar_gauss_integral(point, radius, f, angle1=0, angle2=2*np.pi, n=80):
             x = np.cos(tt)*rr+point[0]
             y = np.sin(tt)*rr+point[1]
 
-            # plt.scatter(x,y)
-
             inner_integral.append(np.multiply(f([x,y]),w2))
 
         outer_integral.append(np.sum(np.array(rr)*inner_integral, axis=0)*w1)
-
-    # plt.show()
 
     return np.sum(outer_integral, axis=0)*radius*(angle2 - angle1)/4
 
@@ -54,25 +30,21 @@ def polar_gauss_integral(point, radius, f, angle1=0, angle2=2*np.pi, n=80):
     # return si.dblquad(lambda t, r: r*f(rect(r,t)), 0, radius, lambda r: angle1, lambda r: angle2)[0]
 
 def angular_integral(central, radius, f, angle1=0, angle2=np.pi, n=10):
-    alphas = np.linspace(0,radius, num=n)
-    values = []
-    total=0
-    for alpha in alphas:
-        delta1 = alpha*radius*np.array([np.cos(angle1), np.sin(angle1)])
-        delta2 = alpha*radius*np.array([np.cos(angle2), np.sin(angle2)])
-        f1 = f(delta1+central)
-        f2 = f(delta2+central)
-        if not f1 is None:
-            values.append(f1)
-            total += 1
+    xs, ws = leggauss(n)
 
-        if not f2 is None:
-            values.append(f2)
-            total += 1
+    integral1 = []
+    integral2 = []
+    for i,w in enumerate(ws):
+        r =radius*0.5*(1+xs[i])
 
-    if total == 0:
-        return 0
+        delta1 = r*np.array([np.cos(angle1), np.sin(angle1)])
+        f1_value = f(delta1+central)
+        if not f1_value is None:
+            integral1.append(f1_value*w)
 
-    dx = 2*radius/total
+        delta2 = r*np.array([np.cos(angle2), np.sin(angle2)])
+        f2_value = f(delta2+central)
+        if not f2_value is None:
+            integral2.append(f2_value*w)
 
-    return dx*np.sum(values, axis=0)
+    return np.sum(integral1+integral2, axis=0)*radius/2

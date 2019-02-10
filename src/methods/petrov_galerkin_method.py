@@ -105,10 +105,11 @@ class PetrovGalerkinMethod(MeshlessMethod):
                     return weight*np.array(self.model.boundary_function(integration_point))
 
             def b_domain_element(integration_point):
-                weight = self.non_differentiated_integration_weight(d, integration_point, radius)
+                weight = self.weight_function.numpy(integration_point[0] - d[0], integration_point[1] - d[1], radius)
                 domain_function = np.array(self.model.domain_function(integration_point))
                 return domain_function*weight
 
+            print("b_integrals: ", self.integration(d, radius, b_domain_element, a1, a2), gq.angular_integral(d,radius, b_boundary_element, a1, a2))
             b_element = self.integration(d, radius, b_domain_element, a1, a2) - gq.angular_integral(d,radius, b_boundary_element, a1, a2)
         else:
             raise Exception("point with no condition!")

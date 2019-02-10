@@ -46,3 +46,13 @@ class Cossine(WeightFunction):
         d2 = dx**2 + dy**2
         return np.cos(0.5*np.pi*d2/r**2)*0.5+0.5
 
+class Parabola(WeightFunction):
+    def sympy(self):
+        x, y, xj, yj, r = sp.var("x y xj yj r")
+        d2 = (x-xj)**2 + (y-yj)**2
+        return -(sp.sqrt(d2) - r)**2
+
+    def numpy(self, dx, dy,r):
+        d2 = dx**2 + dy**2
+        return -(np.sqrt(d2) - r)**2
+
