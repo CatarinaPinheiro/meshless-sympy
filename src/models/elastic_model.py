@@ -12,8 +12,8 @@ class ElasticModel(Model):
     def __init__(self, region):
         self.region = region
         x, y = sp.var("x y")
-        self.analytical = [x,-y/4]
-        # self.analytical = [x,sp.Integer(0)]
+        # self.analytical = [x,-y/4]
+        self.analytical = [x,sp.Integer(0)]
         self.num_dimensions = 2
 
     def domain_operator(self, exp, point):

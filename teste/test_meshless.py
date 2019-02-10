@@ -13,6 +13,7 @@ from src.geometry.regions.circle import Circle
 from src.models.potential_model import PotentialModel
 from src.models.elastic_model import ElasticModel
 from matplotlib import pyplot as plt
+import time
 
 DEBUG_PLOT = False
 
@@ -33,15 +34,15 @@ elastic_region_example = Rectangle(
     })
 
 potential_region_example = Rectangle(
-    x1=1,
-    y1=1,
-    x2=3,
-    y2=3,
+    x1=0,
+    y1=0,
+    x2=2,
+    y2=2,
     parametric_partition={
         1: ["DIRICHLET"],
         2: ["NEUMANN"],
         3: ["DIRICHLET"],
-        4: ["NEUMANN"]
+        4: ["NEUMANN"],
     })
 
 class TestMeshless(unittest.TestCase):
@@ -59,13 +60,24 @@ class TestMeshless(unittest.TestCase):
 
         if DEBUG_PLOT:
             region.plot()
-            method.plot()
-            plt.show()
+            plt.show(block=False)
+            for index, point in enumerate(data):
+                plt.clf()
+                method.plot(index)
+                plt.draw()
+                plt.pause(0.001)
+                time.sleep(0.5)
 
         corrects = np.reshape([sp.lambdify((x,y),model.analytical,"numpy")(*point) for point in data], (model.num_dimensions*len(data)))
+
+        # test if system makes sense
+        print(np.matmul(method.lphi,np.transpose([corrects])) - method.b)
+
         result = result.reshape(model.num_dimensions*len(data))
 
         diff = corrects - result
+
+        print("diff corrects result", np.array([diff, corrects, result]).T)
 
         self.assertAlmostEqual(np.linalg.norm(diff)/len(corrects), 0, 3)
 
@@ -79,7 +91,7 @@ class TestMeshless(unittest.TestCase):
         self.rectangle_template(SubregionMethod, PotentialModel, potential_region_example)
 
     def test_subregion_elasticity(self):
-        self.rectangle_template(SubregionMethod, ElasticModel, elastic_region_example)
+        self.recFalsetangle_template(SubregionMethod, ElasticModel, elastic_region_example)
 
     def test_galerkin_potential(self):
         self.rectangle_template(GalerkinMethod, PotentialModel, potential_region_example)
@@ -96,3 +108,14 @@ class TestMeshless(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+"""
+append [[-1.51153491 -0.24423255 -0.24423255  0.62211627 -0.24423255  0.62211627
+   0.62211627 -0.24423255  0.62211627]] [[0.]] # collocation
+   
+append [[-1.90625654 -0.40241672 -0.40241672  0.83609146 -0.31657631  0.83609146
+   0.87742027 -0.39935715  0.87742027]] [[0.]] # petrov galerking
+   
+append [[-3.93470506 -0.69928747 -0.69928747  1.67548459 -0.68432917  1.67548459
+   1.69044289 -0.71424577  1.69044289]] [[0.]] # galerkin
+"""

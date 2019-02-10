@@ -1,5 +1,4 @@
 import numpy as np
-import src.basis as b
 import sympy as sp
 import src.helpers.functions as h
 import src.helpers.numeric as num
@@ -13,7 +12,7 @@ class MovingLeastSquares2D:
         self.security = security
         self.weight_function = weight_function
         self.preP = np.array([
-            [sp.lambdify(sp.var("x y"), exp, "numpy")(*d) for exp in b.quadratic_2d]
+            [sp.lambdify(sp.var("x y"), exp, "numpy")(*d) for exp in self.basis]
             for d in self.data
         ])
         self.ri = 0
@@ -32,7 +31,7 @@ class MovingLeastSquares2D:
         P = np.array([
             h.cut(np.linalg.norm(np.array(d) - self.point),
                   r,
-                  [0 for _ in b.quadratic_2d],
+                  [0 for _ in self.basis],
                   self.preP[i])
             for i, d in enumerate(self.data)], dtype=np.float64)
 
@@ -57,7 +56,7 @@ class MovingLeastSquares2D:
         P = [
             h.cut(np.linalg.norm(np.array(d) - self.point),
                   r,
-                  [0 for _ in b.quadratic_2d],
+                  [0 for _ in self.basis],
                   self.preP[i])
             for i, d in enumerate(self.data)]
         W = []
@@ -77,24 +76,26 @@ class MovingLeastSquares2D:
 
     @property
     def numeric_phi(self):
+        # self.ri = self.r_min
+        #
+        # while True:
+        #     A, B = self.numeric_AB(self.ri)
+        #     det = np.linalg.det(A)
+        #     if det < 1e-6:
+        #         self.ri *= 1.05
+        #         continue
+        #     else:
+        #         break
+        #
+        # sA, sB, P, sW = self.ABPW(self.ri)
+        sA, sB, P, sW = self.ABPW(self.security*self.r_first(len(self.basis)))
+
         spt = sp.Matrix([self.basis])
-        self.ri = self.r_min
-
-        while True:
-            A, B = self.numeric_AB(self.ri)
-            det = np.linalg.det(A)
-            if det < 1e-6:
-                self.ri *= 1.05
-                continue
-            else:
-                break
-
-        sA, sB, P, sW = self.ABPW(self.ri)
-
         return num.Product([
             num.Matrix(spt, "pt"),
             num.Inverse(sA, "A"),
             sB])
+        # return num.Constant(np.array([[1 if self.point[0] == d[0] and self.point[1] == d[1] else 0 for d in self.data]]), name="phi")
 
     def set_point(self, point):
         self.point = point

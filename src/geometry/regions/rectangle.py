@@ -64,9 +64,13 @@ class Rectangle(Region):
 
 
     def normal(self, point):
-        if point[0] == self.x1 or point[0] == self.x2:
+        if np.abs(point[0] - self.x1) < 1e-7:
+            return (-1,0)
+        elif np.abs(point[0] - self.x2) < 1e-7:
             return (1,0)
-        elif point[1] == self.y1 or point[1] == self.y2:
+        elif np.abs(point[1] - self.y1) < 1e-7:
+            return (0,-1)
+        elif np.abs(point[1] - self.y2) < 1e-7:
             return (0,1)
         else:
             raise Exception("Point %s not in boundary"%point)
@@ -85,17 +89,20 @@ class Rectangle(Region):
                      |             |
                   (x1,y1)--0.5--(x2,y1)
         """
-        if point[0] == self.x1:  # left
+        if np.abs(point[0] - self.x1) < 1e-7:  # left
             return 3 + (self.y2 - point[1]) / (self.y2 - self.y1)
 
-        elif point[0] == self.x2:  # right
+        elif np.abs(point[0] - self.x2) < 1e-7:  # right
             return 1 + (point[1] - self.y1) / (self.y2 - self.y1)
 
-        elif point[1] == self.y1:  # bottom
+        elif np.abs(point[1] - self.y1) < 1e-7:  # bottom
             return (point[0] - self.x1) / (self.x2 - self.x1)
 
-        elif point[1] == self.y2:  # top
+        elif np.abs(point[1] - self.y2) < 1e-7:  # top
             return 2 + (self.x2 - point[0]) / (self.x2 - self.x1)
+
+        else:
+            raise Exception("point %s not in boundary! \n rectangle((%s,%s),(%s,%s))"%(point, self.x1, self.y1, self.x2, self.y2))
 
     def boundary_snap(self, point):
         # TODO generalize
@@ -110,6 +117,8 @@ class Rectangle(Region):
 
     def plot(self):
         plt.plot([self.x1,self.x1,self.x2,self.x2, self.x1],[self.y1,self.y2,self.y2,self.y1, self.y1])
+
+
 
     def closest_corner_distance(self, point):
         return min([np.linalg.norm(np.array(point) - np.array(corner)) for corner in [[self.x1,self.y1],

@@ -9,10 +9,14 @@ class PotentialModel(Model):
         self.region = region
         x, y = sp.var("x y")
         self.analytical = 18*y*y-8*x
+        # self.analytical = x+y
         self.num_dimensions = 1
 
     def domain_operator(self, numeric, point):
         return [[num.Sum([numeric.derivate("x").derivate("x"), numeric.derivate("y").derivate("y")])]]
+
+    def integral_operator(self, numeric, point):
+        return [numeric.derivate("x").eval(point), numeric.derivate("y").eval(point)]
 
     def domain_function(self, point):
         operators = self.domain_operator(num.Function(self.analytical, name="domain"), point)
