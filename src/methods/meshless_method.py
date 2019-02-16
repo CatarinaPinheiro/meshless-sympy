@@ -41,7 +41,7 @@ class MeshlessMethod:
         domain_integral = [ self.integration(d, radius, lambda p: integration_element(p, i)) for i in range(len(self.data)) ]
         stiffness_element = np.concatenate(domain_integral, axis=1)
 
-        b_integral = self.integration(d, radius, lambda p: np.multiply(self.weight_function.numpy(p[0]-d[0],p[1]-d[1],radius),self.model.domain_function(p)))
+        b_integral = self.integration(d, radius, lambda p: np.multiply(self.integration_weight(d,p,radius), self.model.domain_function(p)))
         b_element = np.array(b_integral)
 
         return stiffness_element, b_element
