@@ -145,7 +145,7 @@ class ElasticModel(Model):
         Ltphi = np.array([[dphidx, zeroph],
                           [zeroph, dphidy],
                           [dphidy, dphidx]])
-        return np.tensordot(Lw@D,Ltphi, axes=1)
+        return -np.tensordot(Lw@D,Ltphi, axes=1)
 
     def petrov_galerkin_stiffness_boundary(self, phi, w, integration_point):
         nx, ny = self.region.normal(integration_point)

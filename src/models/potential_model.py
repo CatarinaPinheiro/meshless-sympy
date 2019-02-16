@@ -74,7 +74,7 @@ class PotentialModel(Model):
 
         dphi = np.array([[dphidx],
                          [dphidy]])
-        return -np.tensordot(dw, dphi, axes=1)
+        return np.tensordot(dw, dphi, axes=1)
 
     def petrov_galerkin_stiffness_boundary(self, phi, w, integration_point):
         nx, ny = self.region.normal(integration_point)
@@ -83,9 +83,9 @@ class PotentialModel(Model):
         dphidy = phi.derivate("y").eval(integration_point)
 
         dphi = np.array([[dphidx],
-                         [dphidy]])
+                        [dphidy]])
 
-        return np.tensordot(w.eval(integration_point)*N, dphi, axes=1)
+        return -np.tensordot(w.eval(integration_point)*N, dphi, axes=1)
 
     def petrov_galerkin_independent_domain(self, w, integration_point):
         return -w.eval(integration_point)*np.array(self.domain_function(integration_point))
