@@ -131,7 +131,55 @@ class ElasticModel(Model):
                       [dy, dx]])
         return np.tensordot(D.transpose(),V, axes=1)
 
-    def boundary_integral_normal(self, point):
-        nx, ny = self.region.normal(point)
-        return np.array([[nx, 0, ny],
-                         [0, ny, nx]])@D
+    def petrov_galerkin_stiffness_domain(self, phi, w, integration_point):
+        zero = np.zeros(w.shape())
+        dwdx = w.derivate("x").eval(integration_point)
+        dwdy = w.derivate("y").eval(integration_point)
+        Lw = np.array([[dwdx, zero, dwdy],
+                       [zero, dwdy, dwdx]])
+
+        zeroph = np.zeros(phi.shape())
+        dphidx = phi.derivate("x").eval(integration_point)
+        dphidy = phi.derivate("y").eval(integration_point)
+
+        Ltphi = np.array([[dphidx, zeroph],
+                          [zeroph, dphidy],
+                          [dphidy, dphidx]])
+        return np.tensordot(Lw@D,Ltphi, axes=1)
+
+    def petrov_galerkin_stiffness_boundary(self, phi, w, integration_point):
+        nx, ny = self.region.normal(integration_point)
+        N = np.array([[nx, 0, ny],
+                      [0, ny, nx]])
+        zeroph = np.zeros(phi.shape())
+        dphidx = phi.derivate("x").eval(integration_point)
+        dphidy = phi.derivate("y").eval(integration_point)
+
+        Ltphi = np.array([[dphidx, zeroph],
+                          [zeroph, dphidy],
+                          [dphidy, dphidx]])
+
+        return np.tensordot(w.eval(integration_point)*N@D, Ltphi, axes=1)
+
+    def petrov_galerkin_independent_domain(self, w, integration_point):
+        return w.eval(integration_point)*np.array(self.domain_function(integration_point))
+
+    def petrov_galerkin_independent_boundary(self, w, integration_point):
+        nx, ny = self.region.normal(integration_point)
+        N = np.array([[nx, 0, ny],
+                      [0, ny, nx]])
+
+        u = num.Function(self.analytical[0], name="u(%s)"%integration_point)
+        v = num.Function(self.analytical[1], name="v(%s)"%integration_point)
+
+        ux = u.derivate("x").eval(integration_point)
+        uy = u.derivate("y").eval(integration_point)
+
+        vx = v.derivate("x").eval(integration_point)
+        vy = v.derivate("y").eval(integration_point)
+
+        Ltu = np.array([[ux],
+                        [vy],
+                        [uy+vx]])
+        return -w.eval(integration_point)*N@D@Ltu
+

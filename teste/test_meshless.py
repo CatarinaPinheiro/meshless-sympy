@@ -25,6 +25,7 @@ elastic_region_example = Rectangle(
     dx=30,
     dy=15,
     parametric_partition={
+        0.01: ["DIRICHLET", "NEUMANN"],
         1:    ["NEUMANN",   "NEUMANN"],
         2:    ["NEUMANN",   "NEUMANN"],
         3:    ["NEUMANN",   "NEUMANN"],
@@ -66,7 +67,7 @@ class TestMeshless(unittest.TestCase):
                 method.plot(index)
                 plt.draw()
                 plt.pause(0.001)
-                time.sleep(0.5)
+                time.sleep(5)
 
         corrects = np.reshape([sp.lambdify((x,y),model.analytical,"numpy")(*point) for point in data], (model.num_dimensions*len(data)))
 
@@ -76,9 +77,7 @@ class TestMeshless(unittest.TestCase):
         result = result.reshape(model.num_dimensions*len(data))
 
         diff = corrects - result
-
-        print("points\n", data)
-        print("diff corrects result\n", np.array([diff, corrects, result]).T)
+        print(diff)
 
         self.assertAlmostEqual(np.linalg.norm(diff)/len(corrects), 0, 3)
 

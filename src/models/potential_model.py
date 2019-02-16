@@ -63,3 +63,43 @@ class PotentialModel(Model):
 
     def given_boundary_function(self, point):
         return self.boundary_function(point)
+
+    def petrov_galerkin_stiffness_domain(self, phi, w, integration_point):
+        dwdx = w.derivate("x").eval(integration_point)
+        dwdy = w.derivate("y").eval(integration_point)
+        dw = np.array([[dwdx, dwdy]])
+
+        dphidx = phi.derivate("x").eval(integration_point)
+        dphidy = phi.derivate("y").eval(integration_point)
+
+        dphi = np.array([[dphidx],
+                         [dphidy]])
+        return -np.tensordot(dw, dphi, axes=1)
+
+    def petrov_galerkin_stiffness_boundary(self, phi, w, integration_point):
+        nx, ny = self.region.normal(integration_point)
+        N = np.array([[nx, ny]])
+        dphidx = phi.derivate("x").eval(integration_point)
+        dphidy = phi.derivate("y").eval(integration_point)
+
+        dphi = np.array([[dphidx],
+                         [dphidy]])
+
+        return np.tensordot(w.eval(integration_point)*N, dphi, axes=1)
+
+    def petrov_galerkin_independent_domain(self, w, integration_point):
+        return -w.eval(integration_point)*np.array(self.domain_function(integration_point))
+
+    def petrov_galerkin_independent_boundary(self, w, integration_point):
+        nx, ny = self.region.normal(integration_point)
+        N = np.array([[nx, ny]])
+
+        u = num.Function(self.analytical, name="u(%s)"%integration_point)
+
+        ux = u.derivate("x").eval(integration_point)
+        uy = u.derivate("y").eval(integration_point)
+
+        du = np.array([[ux],
+                       [uy]])
+        return w.eval(integration_point)*N@du
+
