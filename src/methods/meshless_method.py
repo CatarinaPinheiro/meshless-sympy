@@ -23,36 +23,41 @@ class MeshlessMethod:
     def domain_append(self, i, d):
         radius = min(self.m2d.r_first(1), self.model.region.distance_from_boundary(d))
 
-        def integration_element(integration_point, i):
-            key = "integration_element %s %s %s" % (d, integration_point,i)
+        def stiffness_element(integration_point):
+            key = "stiffeness element %s %s" % (d, integration_point)
             found, value = cache.get(key)
             if found:
                 return value
-            else:
-                self.m2d.point = integration_point
-                phi = self.model.domain_operator(self.m2d.numeric_phi, integration_point)
-                LDB = np.array([[cell.eval(integration_point)[0]  for cell in row] for row in phi])[:,:,i]
-                weight = self.integration_weight(d, integration_point, radius)
-                value = weight*LDB
 
-                cache.set(key, value)
+            self.m2d.point = integration_point
+            weight = self.integration_weight(d, integration_point, radius)
+            Lphi = self.model.stiffness_domain_operator(self.m2d.numeric_phi, integration_point)
+            value = weight*Lphi
+
+            cache.set(key, value)
+            return value
+
+        def independent_element(integration_point):
+            key = "independent element %s %s" % (d, integration_point)
+            found, value = cache.get(key)
+            if found:
                 return value
 
-        domain_integral = [ self.integration(d, radius, lambda p: integration_element(p, i)) for i in range(len(self.data)) ]
-        stiffness_element = np.concatenate(domain_integral, axis=1)
+            weight = self.integration_weight(d,integration_point,radius)
+            b = self.model.independent_domain_function(integration_point)
+            value = weight*b
 
-        b_integral = self.integration(d, radius, lambda p: np.multiply(self.integration_weight(d,p,radius), self.model.domain_function(p)))
-        b_element = np.array(b_integral)
+            cache.set(key, value)
+            return value
+
+        stiffness_element = self.integration(d, radius, stiffness_element)
+        b_element = self.integration(d, radius, independent_element)
 
         return stiffness_element, b_element
 
     def boundary_append(self, i, d):
-        boundary_value = self.model.boundary_operator(self.m2d.numeric_phi, d)
-        matrix_of_arrays = np.array([[cell.eval(d) for cell in row] for row in boundary_value])
-        array_of_matrices = [matrix_of_arrays[:,:,0,i] for i in range(len(self.data))]
-        stiffness_element = np.concatenate(array_of_matrices, axis=1)
-
-        b_element = np.array(self.model.boundary_function(self.m2d.point))
+        stiffness_element = self.model.stiffness_boundary_operator(self.m2d.numeric_phi, d)
+        b_element = self.model.independent_boundary_function(self.m2d.point)
 
         return stiffness_element, b_element
 
@@ -70,9 +75,11 @@ class MeshlessMethod:
                 stiffness_element, b_element = self.domain_append(i, d)
             else:
                 stiffness_element, b_element = self.boundary_append(i, d)
-            print("append", stiffness_element, b_element)
+
+            print("stiffness_element.shape", stiffness_element.shape)
             stiffness.append(stiffness_element)
-            b.append(np.reshape(b_element, (self.model.num_dimensions,1)))
+            print("b_element.shape", b_element.shape)
+            b.append(b_element)
 
             print(i)
 
@@ -80,9 +87,9 @@ class MeshlessMethod:
             duration.duration.step()
             self.m2d.point = d
 
-        self.stiffness = np.concatenate(stiffness, axis=0)
+        self.stiffness = np.moveaxis(np.concatenate(stiffness, axis=0), 2, 0)
         self.b = np.concatenate(b, axis=0)
-        return la.solve(self.stiffness, self.b)
+        return la.inv(self.stiffness)@self.b
 
     @property
     def boundary_data(self):

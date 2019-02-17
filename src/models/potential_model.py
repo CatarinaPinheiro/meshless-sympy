@@ -13,23 +13,22 @@ class PotentialModel(Model):
         self.num_dimensions = 1
 
     def domain_operator(self, numeric, point):
-        return [[num.Sum([numeric.derivate("x").derivate("x"), numeric.derivate("y").derivate("y")])]]
+        dxx = numeric.derivate("x").derivate("x").eval(point)
+        dyy = numeric.derivate("y").derivate("y").eval(point)
+        return dxx+dyy
 
     def domain_function(self, point):
-        operators = self.domain_operator(num.Function(self.analytical, name="domain"), point)
-        return [[dimension.eval(point) for dimension in operator] for operator in operators]
+        return self.domain_operator(num.Function(self.analytical, name="domain"), point)
 
     def boundary_function(self, point):
         x, y = sp.var("x y")
         normal = self.region.normal(point)
 
-        values = []
-        for cond in self.region.condition(point):
-            if cond == "NEUMANN":
-                values.append(sp.lambdify((x,y),self.analytical.diff(x)*normal[0]+self.analytical.diff(y)*normal[1],"numpy")(*point))
-            elif cond == "DIRICHLET":
-                values.append(sp.lambdify((x,y),self.analytical,"numpy")(*point))
-        return values
+        cond = self.region.condition(point)[0]
+        if cond == "NEUMANN":
+            return sp.lambdify((x,y),self.analytical.diff(x)*normal[0]+self.analytical.diff(y)*normal[1],"numpy")(*point)
+        elif cond == "DIRICHLET":
+            return sp.lambdify((x,y),self.analytical,"numpy")(*point)
 
     def boundary_operator(self, num, point):
         """
@@ -38,20 +37,20 @@ class PotentialModel(Model):
         DIRICHLET:
             f(p) # constraints function value
         """
-        normal = self.region.normal(point)
-        values = []
-        for condition in self.region.condition(point):
-            if condition == "NEUMANN":
-                values.append(Sum([
-                    Product([ Constant(np.array( [[ normal[0] ]] )), num.derivate("x")]),
-                    Product([ Constant(np.array( [[ normal[1] ]] )), num.derivate("y")])
-                ]))
-            elif condition == "DIRICHLET":
-                values.append(num)
+        nx, ny = self.region.normal(point)
+        normal = np.array([[nx, ny]])
+        dx = num.derivate("x").eval(point)
+        dy = num.derivate("y").eval(point)
+        gradient = np.array([[dx],
+                             [dy]])
 
-            else:
-                raise Exception("Incorrect condition")
-        return [values]
+        condition = self.region.condition(point)[0]
+        if condition == "NEUMANN":
+            return np.tensordot(normal, gradient, axes=(1,0))
+        elif condition == "DIRICHLET":
+            return num.eval(point)
+        else:
+            raise Exception("Incorrect condition")
 
     def integral_operator(self, numeric, point):
         return np.array([[numeric.derivate("x").eval(point)],
@@ -64,6 +63,23 @@ class PotentialModel(Model):
     def given_boundary_function(self, point):
         return self.boundary_function(point)
 
+    # ======================= Meshless coefficients =======================
+    def stiffness_domain_operator(self, phi, point):
+        op = self.domain_operator(phi, point)
+        size = op.shape[1]
+        return op.reshape((1,size,1))
+
+    def stiffness_boundary_operator(self, phi, point):
+        op = self.boundary_operator(phi, point)
+        size = op.shape[-1]
+        return op.reshape((1,size,1))
+
+    def independent_domain_function(self, point):
+        return np.array([[self.domain_function(point)]])
+
+    def independent_boundary_function(self, point):
+        return np.array([[self.boundary_function(point)]])
+
     def petrov_galerkin_stiffness_domain(self, phi, w, integration_point):
         dwdx = w.derivate("x").eval(integration_point)
         dwdy = w.derivate("y").eval(integration_point)
@@ -74,7 +90,8 @@ class PotentialModel(Model):
 
         dphi = np.array([[dphidx],
                          [dphidy]])
-        return np.tensordot(dw, dphi, axes=1)
+        size = phi.shape()[1]
+        return np.tensordot(dw, dphi, axes=1).swapaxes(1,3).reshape((1,size,1))
 
     def petrov_galerkin_stiffness_boundary(self, phi, w, integration_point):
         nx, ny = self.region.normal(integration_point)
@@ -85,10 +102,11 @@ class PotentialModel(Model):
         dphi = np.array([[dphidx],
                         [dphidy]])
 
-        return -np.tensordot(w.eval(integration_point)*N, dphi, axes=1)
+        size = phi.shape()[1]
+        return -np.tensordot(w.eval(integration_point)*N, dphi, axes=1).swapaxes(1,3).reshape((1,size,1))
 
     def petrov_galerkin_independent_domain(self, w, integration_point):
-        return -w.eval(integration_point)*np.array(self.domain_function(integration_point))
+        return -w.eval(integration_point)*np.array([[self.domain_function(integration_point)]])
 
     def petrov_galerkin_independent_boundary(self, w, integration_point):
         nx, ny = self.region.normal(integration_point)

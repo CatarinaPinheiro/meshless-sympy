@@ -36,7 +36,7 @@ class PetrovGalerkinMethod(MeshlessMethod):
 
         b_element = gq.polar_gauss_integral(d, radius, b_element)
 
-        return stiffness_element.swapaxes(1,3).reshape((self.model.num_dimensions, self.model.num_dimensions*len(self.data))), b_element
+        return stiffness_element, b_element
 
     def boundary_append(self, i, d):
         self.m2d.point = d
@@ -78,7 +78,7 @@ class PetrovGalerkinMethod(MeshlessMethod):
         stiffness_neumann_area_element = gq.angular_integral(d, radius, stiffness_boundary_element, a1, a2)
         stiffness_neumann_line_element = gq.polar_gauss_integral(d, radius, stiffness_domain_element, a1, a2)
         stiffness_neumann_element = stiffness_neumann_area_element + stiffness_neumann_line_element
-        stiffness_neumann_element = stiffness_neumann_element.swapaxes(1,3).reshape((self.model.num_dimensions, len(self.data)*self.model.num_dimensions))
+        stiffness_neumann_element = stiffness_neumann_element
 
         def b_boundary_element(integration_point):
             w = self.weight_function.numeric({
@@ -118,4 +118,4 @@ class PetrovGalerkinMethod(MeshlessMethod):
             else:
                 raise Exception("Invalid Condition!")
 
-        return np.array(stiffness_element), b_element
+        return np.array(stiffness_element), np.array(b_element)
