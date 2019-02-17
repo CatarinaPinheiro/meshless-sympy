@@ -59,6 +59,7 @@ class TestMeshless(unittest.TestCase):
             basis=quadratic_2d)
 
         result = method.solve()
+        print("result", result.shape)
 
         if DEBUG_PLOT:
             region.plot()

@@ -3,13 +3,6 @@ import src.helpers.numeric as num
 import sympy as sp
 import numpy as np
 
-E = 1
-ni = 0.25
-G = E/(2*(1+ni))
-lmbda = (ni*E)/((1+ni)*(1 - 2*ni))
-D = (E/(1-ni**2))*np.array([[1, ni, 0],
-                            [ni, 1, 0],
-                            [0, 0, (1-ni)/2]])
 
 class ElasticModel(Model):
     def __init__(self, region):
@@ -19,86 +12,87 @@ class ElasticModel(Model):
         # self.analytical = [x,sp.Integer(0)]
         self.num_dimensions = 2
 
+        self.E = 1
+        self.ni = 0.25
+        self.G = self.E/(2*(1+self.ni))
+        self.lmbda = (self.ni*self.E)/((1+self.ni)*(1 - 2*self.ni))
+        self.D = (self.E/(1-self.ni**2))*np.array([[1, self.ni, 0],
+                                                   [self.ni, 1, 0],
+                                                   [0, 0, (1-self.ni)/2]]).reshape((3,3,1))
+
     def domain_operator(self, exp, point):
 
         phi_xx = exp.derivate("x").derivate("x")
         phi_yy = exp.derivate("y").derivate("y")
         phi_xy = exp.derivate("x").derivate("y")
 
-        shear = (lmbda+G)*(1-ni/(1-ni))
+        shear = (self.lmbda+self.G)*(1-self.ni/(1-self.ni))
 
         K11 = num.Sum([
-            num.Product([num.Constant(np.array([[G+shear]])), phi_xx]),
-            num.Product([num.Constant(np.array([[G]])), phi_yy])
+            num.Product([num.Constant(np.array([[self.G+shear]])), phi_xx]),
+            num.Product([num.Constant(np.array([[self.G]])), phi_yy])
         ]).eval(point)
 
         K21 = K12 = num.Product([num.Constant(np.array([[shear]])), phi_xy]).eval(point)
 
         K22 = num.Sum([
             num.Product([num.Constant(np.array([[shear]])), phi_yy]),
-            num.Product([num.Constant(np.array([[G]])), phi_xx])
+            num.Product([num.Constant(np.array([[self.G]])), phi_xx])
         ]).eval(point)
 
         return np.array([[K11,K12],
                          [K21,K22]])
 
-    def boundary_operator(self, u, point, v=None):
+    def boundary_operator(self, u, integration_point, v=None):
         """
         NEUMANN:
             ∇f(p).n # computes directional derivative
         DIRICHLET:
             f(p) # constraints function value
         """
-        normal = self.region.normal(point)
-
         if v is None:
             v = u
 
-        u_x = u.derivate("x")
-        u_y = u.derivate("y")
+        ux = u.derivate("x").eval(integration_point)
+        uy = u.derivate("y").eval(integration_point)
 
-        v_x = v.derivate("x")
-        v_y = v.derivate("y")
+        vx = v.derivate("x").eval(integration_point)
+        vy = v.derivate("y").eval(integration_point)
 
-        frac = (1-ni)/2
+        nx, ny = self.region.normal(integration_point)
+        N = np.array([[nx, 0, ny],
+                      [0, ny, nx]])
 
-        multiplier = E/(1-ni**2)
 
-        conditions = self.region.condition(point)
+        zr = np.zeros(u.shape())
+        Lt = np.array([[ux, zr],
+                       [zr, vy],
+                       [uy, vx]])
+        neumann_case = np.tensordot(N, np.tensordot(self.D, Lt, axes=(1,0)), axes=(1,0))
+        neumann_case = np.moveaxis(neumann_case, 2, -1)
+        neumann_case = np.moveaxis(neumann_case, 1, -1)
+        neumann_case = neumann_case.reshape((2,2*u.shape()[1], self.D.shape[2]))
 
-        shape = u.shape()
+        uv = np.array(u.eval(integration_point))
+        vv = np.array(v.eval(integration_point))
+        dirichlet_case = np.array([[uv.ravel(), np.zeros(uv.size)],
+                                   [np.zeros(vv.size), vv.ravel()]]).swapaxes(1,2).repeat(self.D.shape[2], axis=2).reshape(neumann_case.shape)
 
+
+        conditions = self.region.condition(integration_point)
         if conditions[0] == "DIRICHLET":
-            K11 = u.eval(point)
-            K12 = np.zeros(shape)
+            K1 = dirichlet_case[0]
         elif conditions[0] == "NEUMANN":
-            K11 = num.Sum([
-                num.Product([num.Constant(np.array([[multiplier*normal[0]]])), u_x]),
-                num.Product([num.Constant(np.array([[multiplier*frac*normal[1]]])), u_y])
-            ]).eval(point)
-
-            K12 = num.Sum([
-                num.Product([num.Constant(np.array([[multiplier*ni*normal[0]]])), v_y]),
-                num.Product([num.Constant(np.array([[multiplier*frac*normal[1]]])), v_x])
-            ]).eval(point)
+            K1 = neumann_case[0]
 
         if conditions[1] == "DIRICHLET":
-            K21 = np.zeros(shape)
-            K22 = v.eval(point)
+            K2 = dirichlet_case[1]
         elif conditions[1] == "NEUMANN":
-            K21 = num.Sum([
-                num.Product([num.Constant(np.array([[multiplier*ni*normal[1]]])), u_x]),
-                num.Product([num.Constant(np.array([[multiplier*frac*normal[0]]])), u_y])
-            ]).eval(point)
-
-            K22 = num.Sum([
-                num.Product([num.Constant(np.array([[multiplier*normal[1]]])), v_y]),
-                num.Product([num.Constant(np.array([[multiplier*frac*normal[0]]])), v_x])
-            ]).eval(point)
+            K2 = neumann_case[1]
 
 
-        return np.array([[K11,K12],
-                         [K21,K22]])
+        return np.array([K1,
+                         K2])
 
     def domain_function(self, point):
         u = num.Function(self.analytical[0], name="u(%s)"%point).eval(point)
@@ -128,7 +122,7 @@ class ElasticModel(Model):
         V = np.array([[dx, zr],
                       [zr, dy],
                       [dy, dx]])
-        return np.tensordot(D.transpose(),V, axes=1)
+        return np.tensordot(self.D.transpose(),V, axes=1)
 
     def stiffness_domain_operator(self, phi, point):
         op = self.domain_operator(phi, point)
@@ -136,16 +130,15 @@ class ElasticModel(Model):
         return op.swapaxes(1, 3).reshape(2, 2*size, 1)
 
     def stiffness_boundary_operator(self, phi, point):
-        op = self.boundary_operator(phi, point)
-        size = op.shape[3]
-        return op.swapaxes(1, 3).reshape(2, 2*size, 1)
+        return self.boundary_operator(phi, point)
 
     def independent_domain_function(self, point):
         return np.array([[0],
                          [0]])
 
     def independent_boundary_function(self, point):
-        return np.reshape(self.boundary_function(point), (2,1))
+        func = self.boundary_function(point)
+        return np.reshape(func, (2,func.shape[1]))
 
     def petrov_galerkin_stiffness_domain(self, phi, w, integration_point):
         zero = np.zeros(w.shape())
@@ -161,9 +154,8 @@ class ElasticModel(Model):
         Ltphi = np.array([[dphidx, zeroph],
                           [zeroph, dphidy],
                           [dphidy, dphidx]])
-        result = -np.tensordot(Lw@D,Ltphi, axes=1)
-        depth = result.shape[3]
-        return result.swapaxes(1,3).reshape((2, 2*depth, 1))
+        result = -np.tensordot(np.tensordot(Lw, self.D, axes=(1,0)),Ltphi, axes=(1,0))
+        return result.swapaxes(1, 4).reshape((2, 2*result.shape[4], result.shape[1]))
 
     def petrov_galerkin_stiffness_boundary(self, phi, w, integration_point):
         nx, ny = self.region.normal(integration_point)
@@ -177,12 +169,11 @@ class ElasticModel(Model):
                           [zeroph, dphidy],
                           [dphidy, dphidx]])
 
-        result = np.tensordot(w.eval(integration_point)*N@D, Ltphi, axes=1)
-        depth = result.shape[3]
-        return result.swapaxes(1,3).reshape((2, 2*depth, 1))
+        result = np.tensordot(w.eval(integration_point)*np.tensordot(N, self.D, axes=(1, 0)), Ltphi, axes=(1, 0))
+        return result.swapaxes(1, 4).reshape((2, 2*result.shape[4], result.shape[1]))
 
     def petrov_galerkin_independent_domain(self, w, integration_point):
-        return w.eval(integration_point)*np.array([0,0]).reshape((2,1))
+        return w.eval(integration_point)*np.array([0,0]).repeat(self.D.shape[2], axis=0).reshape(2,self.D.shape[2])
 
     def petrov_galerkin_independent_boundary(self, w, integration_point):
         nx, ny = self.region.normal(integration_point)
@@ -201,5 +192,5 @@ class ElasticModel(Model):
         Ltu = np.array([[ux],
                         [vy],
                         [uy+vx]])
-        return -w.eval(integration_point)*N@D@Ltu
+        return -w.eval(integration_point)*np.tensordot(N, np.tensordot(self.D, Ltu, axes=(1,0)), axes=(1,0)).reshape((2,self.D.shape[2]))
 
