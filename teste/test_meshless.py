@@ -12,6 +12,7 @@ from src.geometry.regions.rectangle import Rectangle
 from src.geometry.regions.circle import Circle
 from src.models.potential_model import PotentialModel
 from src.models.elastic_model import ElasticModel
+from src.models.viscoelastic_model import ViscoelasticModel
 from matplotlib import pyplot as plt
 import time
 
@@ -105,6 +106,8 @@ class TestMeshless(unittest.TestCase):
     def test_petrov_galerkin_elasticity(self):
         self.rectangle_template(PetrovGalerkinMethod, ElasticModel, elastic_region_example)
 
+    def test_petrov_galerkin_viscoelasticity(self):
+        self.rectangle_template(PetrovGalerkinMethod, ViscoelasticModel, elastic_region_example)
 
 if __name__ == '__main__':
     unittest.main()
