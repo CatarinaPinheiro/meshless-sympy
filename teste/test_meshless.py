@@ -9,6 +9,7 @@ import src.helpers.numeric as num
 import numpy as np
 import sympy as sp
 from src.geometry.regions.rectangle import Rectangle
+import mpmath as mp
 from src.geometry.regions.circle import Circle
 from src.models.potential_model import PotentialModel
 from src.models.elastic_model import ElasticModel
@@ -33,6 +34,18 @@ elastic_region_example = Rectangle(
         3.49: ["DIRICHLET", "NEUMANN"],
         3.51: ["DIRICHLET", "DIRICHLET"],
         4:    ["DIRICHLET", "NEUMANN"]
+    })
+
+viscoelastic_region_example = Rectangle(
+    x1=0,
+    y1=0,
+    x2=2,
+    y2=2,
+    parametric_partition={
+        1:    ["DIRICHLET",   "NEUMANN"],
+        2:    ["NEUMANN",     "NEUMANN"],
+        3:    ["DIRICHLET",   "NEUMANN"],
+        4:    ["NEUMANN",   "DIRICHLET"]
     })
 
 potential_region_example = Rectangle(
@@ -83,11 +96,34 @@ class TestMeshless(unittest.TestCase):
 
         self.assertAlmostEqual(np.linalg.norm(diff)/len(corrects), 0, 3)
 
+    def visco_rectangle_template(self, method_class, model_class, region):
+        data = region.cartesian
+
+        model = model_class(region=region)
+
+        method = method_class(
+            model=model,
+            basis=quadratic_2d)
+
+        result = method.solve()
+
+        def nearest_indices(t):
+            return (np.array(model.s)-t).argmin()
+
+        fts = [[
+            mp.invertlaplace(lambda t: result[nearest_indices(t)][i][0], x, method='stehfest', degree=model.iterations)
+            for x in range(1, model.time+1)
+        for i in range(result.shape[1])]]
+        print(fts)
+
     def test_collocation_potential(self):
         self.rectangle_template(CollocationMethod, PotentialModel, potential_region_example)
 
     def test_collocation_elasticity(self):
         self.rectangle_template(CollocationMethod, ElasticModel, elastic_region_example)
+
+    def test_collocation_viscoelasticity(self):
+        self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, elastic_region_example)
 
     def test_subregion_potential(self):
         self.rectangle_template(SubregionMethod, PotentialModel, potential_region_example)
@@ -95,11 +131,17 @@ class TestMeshless(unittest.TestCase):
     def test_subregion_elasticity(self):
         self.rectangle_template(SubregionMethod, ElasticModel, elastic_region_example)
 
+    def test_subregion_viscoelasticity(self):
+        self.visco_rectangle_template(SubregionMethod, ViscoelasticModel, elastic_region_example)
+
     def test_galerkin_potential(self):
         self.rectangle_template(GalerkinMethod, PotentialModel, potential_region_example)
 
     def test_galerkin_elasticity(self):
         self.rectangle_template(GalerkinMethod, ElasticModel, elastic_region_example)
+
+    def test_galerkin_viscoelasticity(self):
+        self.visco_rectangle_template(GalerkinMethod, ViscoelasticModel, elastic_region_example)
 
     def test_petrov_galerkin_potential(self):
         self.rectangle_template(PetrovGalerkinMethod, PotentialModel, potential_region_example)
@@ -108,7 +150,7 @@ class TestMeshless(unittest.TestCase):
         self.rectangle_template(PetrovGalerkinMethod, ElasticModel, elastic_region_example)
 
     def test_petrov_galerkin_viscoelasticity(self):
-        self.rectangle_template(PetrovGalerkinMethod, ViscoelasticModel, elastic_region_example)
+        self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticModel, viscoelastic_region_example)
 
 if __name__ == '__main__':
     unittest.main()

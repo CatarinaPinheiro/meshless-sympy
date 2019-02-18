@@ -88,7 +88,9 @@ class MeshlessMethod:
             self.m2d.point = d
 
         self.stiffness = np.moveaxis(np.concatenate(stiffness, axis=0), 2, 0)
-        self.b = np.concatenate(b, axis=0)
+        self.b = np.expand_dims(np.concatenate(b, axis=0).transpose(), 2)
+        print(self.stiffness.shape)
+        print(self.b.shape)
         return la.inv(self.stiffness)@self.b
 
     @property
