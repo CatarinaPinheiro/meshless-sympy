@@ -26,7 +26,6 @@ class ViscoelasticModel(ElasticModel):
                                                    [self.ni, ones, zeros],
                                                    [zeros, ones, (1-self.ni)/2]])
 
-
         x = sp.var("x")
         t = np.arange(1,self.time + 1).repeat(self.iterations)
         ht = 1

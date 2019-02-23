@@ -8,7 +8,7 @@ class ElasticModel(Model):
     def __init__(self, region):
         self.region = region
         x, y = sp.var("x y")
-        self.analytical = [x,-y/4]
+        self.analytical = [sp.Matrix([x]), sp.Matrix([-y/4])]
         # self.analytical = [x,sp.Integer(0)]
         self.num_dimensions = 2
 
@@ -99,8 +99,7 @@ class ElasticModel(Model):
             raise Exception("condition(%s) = %s"%(integration_point, conditions[1]))
 
 
-        return np.array([K1,
-                         K2])
+        return np.array([K1, K2])
 
     def domain_function(self, point):
         u = num.Function(self.analytical[0], name="u(%s)"%point).eval(point)
