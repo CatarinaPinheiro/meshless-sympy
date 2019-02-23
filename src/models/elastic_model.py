@@ -43,7 +43,7 @@ class ElasticModel(Model):
         return np.array([[K11,K12],
                          [K21,K22]])
 
-    def boundary_operator(self, u, integration_point, v=None):
+    def boundary_operator(self, u, integration_point, v=None, repeat=False):
         """
         NEUMANN:
             ∇f(p).n # computes directional derivative
@@ -76,7 +76,11 @@ class ElasticModel(Model):
         uv = np.array(u.eval(integration_point))
         vv = np.array(v.eval(integration_point))
         dirichlet_case = np.array([[uv.ravel(), np.zeros(uv.size)],
-                                   [np.zeros(vv.size), vv.ravel()]]).swapaxes(1,2).repeat(self.D.shape[2], axis=2).reshape(neumann_case.shape)
+                                   [np.zeros(vv.size), vv.ravel()]])
+        dirichlet_case = dirichlet_case.swapaxes(1,2)
+        if repeat:
+            dirichlet_case = dirichlet_case.repeat(self.D.shape[2], axis=2)
+        dirichlet_case = dirichlet_case.reshape(neumann_case.shape)
 
 
         conditions = self.region.condition(integration_point)
@@ -84,11 +88,15 @@ class ElasticModel(Model):
             K1 = dirichlet_case[0]
         elif conditions[0] == "NEUMANN":
             K1 = neumann_case[0]
+        else:
+            raise Exception("condition(%s) = %s"%(integration_point, conditions[0]))
 
         if conditions[1] == "DIRICHLET":
             K2 = dirichlet_case[1]
         elif conditions[1] == "NEUMANN":
             K2 = neumann_case[1]
+        else:
+            raise Exception("condition(%s) = %s"%(integration_point, conditions[1]))
 
 
         return np.array([K1,
@@ -130,7 +138,7 @@ class ElasticModel(Model):
         return op.swapaxes(1, 3).reshape(2, 2*size, 1)
 
     def stiffness_boundary_operator(self, phi, point):
-        return self.boundary_operator(phi, point)
+        return self.boundary_operator(phi, point, repeat=True)
 
     def independent_domain_function(self, point):
         return np.array([[0],
@@ -189,8 +197,9 @@ class ElasticModel(Model):
         vx = v.derivate("x").eval(integration_point)
         vy = v.derivate("y").eval(integration_point)
 
-        Ltu = np.array([[ux],
-                        [vy],
-                        [uy+vx]])
-        return -w.eval(integration_point)*np.tensordot(N, np.tensordot(self.D, Ltu, axes=(1,0)), axes=(1,0)).reshape((2,self.D.shape[2]))
+        Ltu = np.array([[ux.ravel()],
+                        [vy.ravel()],
+                        [(uy+vx).ravel()]])
+        # return -w.eval(integration_point)*np.tensordot(N, np.tensordot(self.D, Ltu, axes=(1,0)), axes=(1,0)).reshape((2,self.D.shape[2]))
+        return -w.eval(integration_point)*np.tensordot(N, np.moveaxis(np.moveaxis(self.D, 2, 0) @ np.moveaxis(Ltu, 2, 0), 0, 2), axes=1).reshape((2,self.D.shape[2]))
 

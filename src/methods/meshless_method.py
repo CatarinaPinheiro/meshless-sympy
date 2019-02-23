@@ -91,7 +91,7 @@ class MeshlessMethod:
         self.b = np.expand_dims(np.concatenate(b, axis=0).transpose(), 2)
         print(self.stiffness.shape)
         print(self.b.shape)
-        return la.inv(self.stiffness)@self.b
+        return la.inv(self.stiffness)@self.b.astype(np.float64)
 
     @property
     def boundary_data(self):

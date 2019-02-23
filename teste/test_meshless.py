@@ -42,10 +42,10 @@ viscoelastic_region_example = Rectangle(
     x2=2,
     y2=2,
     parametric_partition={
-        1:    ["DIRICHLET",   "NEUMANN"],
+        1:    ["NEUMANN",   "DIRICHLET"],
         2:    ["NEUMANN",     "NEUMANN"],
-        3:    ["DIRICHLET",   "NEUMANN"],
-        4:    ["NEUMANN",   "DIRICHLET"]
+        3:    ["NEUMANN",   "DIRICHLET"],
+        4:    ["DIRICHLET",   "NEUMANN"]
     })
 
 potential_region_example = Rectangle(
@@ -110,11 +110,22 @@ class TestMeshless(unittest.TestCase):
         def nearest_indices(t):
             return (np.array(model.s)-t).argmin()
 
-        fts = [[
-            mp.invertlaplace(lambda t: result[nearest_indices(t)][i][0], x, method='stehfest', degree=model.iterations)
-            for x in range(1, model.time+1)
-        for i in range(result.shape[1])]]
-        print(fts)
+        fts = np.array([
+            [mp.invertlaplace(lambda t: result[nearest_indices(t)][i][0], x, method='stehfest', degree=model.iterations)
+            for x in range(1, model.time+1)]
+        for i in range(result.shape[1])], dtype=np.float64)
+
+
+        for point_index, point in enumerate(data):
+            t = np.arange(1,model.time+1)
+            analytical = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[::model.iterations]
+            calculated = fts[2*point_index]
+            print(point)
+            print(calculated, analytical)
+            plt.plot(t, analytical, 'bs', t, calculated, 'g^')
+            plt.show()
+
+
 
     def test_collocation_potential(self):
         self.rectangle_template(CollocationMethod, PotentialModel, potential_region_example)
