@@ -2,14 +2,14 @@ from src.models.elastic_model import ElasticModel
 import numpy as np
 import sympy as sp
 
-q0 = 0.96
-q1 = 4
-K = 4.17
-p = 2
+q0 = 0.96e9
+q1 = 4e9
+K = 4.17e9
+p = 2e6
 p1 = 2.08333333
 
 class ViscoelasticModel(ElasticModel):
-    def __init__(self, region, time=10, iterations=10):
+    def __init__(self, region, time=10, iterations=12):
         ElasticModel.__init__(self, region)
 
         self.iterations = iterations
@@ -38,5 +38,17 @@ class ViscoelasticModel(ElasticModel):
             exp1 = (3*K+2*q0)/(q0*(6*K+q0))
             return ht*p*x*(exp1+exp2*exp3)
 
-        self.analytical = [sp.Matrix([ux(tt) for tt in t]), sp.Matrix(np.ones([self.time * self.iterations,1]))]
+        self.analytical = [sp.Matrix([ux(tt) for tt in t]), sp.Matrix(np.zeros([self.time * self.iterations]))]
         # self.analytical = [sp.Matrix(np.zeros([self.time * self.iterations,1])), sp.Matrix(np.zeros([self.time * self.iterations,1]))]
+
+    def petrov_galerkin_independent_boundary(self, w, integration_point):
+        if integration_point[0] > 1.99:
+            return -w.eval(integration_point)*np.array([p/self.s, np.zeros(self.s.shape)])
+        return np.zeros([2,self.time*self.iterations])
+
+    # def independent_domain_function(self, point):
+    #     if point[0] > 1.99:
+    #         return np.array([p/self.s, np.zeros(self.s.shape)])
+    #     else:
+    #         return np.zeros([2,self.time*self.iterations])
+

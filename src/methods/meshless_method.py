@@ -80,6 +80,7 @@ class MeshlessMethod:
             stiffness.append(stiffness_element)
             print("b_element.shape", b_element.shape)
             b.append(b_element)
+            print("max", np.abs(b_element).max(axis=1))
 
             print(i)
 
@@ -91,6 +92,7 @@ class MeshlessMethod:
         self.b = np.expand_dims(np.concatenate(b, axis=0).transpose(), 2)
         print(self.stiffness.shape)
         print(self.b.shape)
+        print(self.b.max(axis=0))
         return la.inv(self.stiffness)@self.b.astype(np.float64)
 
     @property
