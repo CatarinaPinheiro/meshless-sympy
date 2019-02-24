@@ -3,7 +3,7 @@ import functools as ft
 import sympy as sp
 from src.helpers.cache import cache
 from src.helpers.duration import duration
-
+import random
 
 class Numeric():
     def eval_cached(self, stored, subs):
@@ -176,7 +176,7 @@ class Constant:
 
 
 class Function(Numeric):
-    def __init__(self, expression, extra={'_': 0}, name="f"):
+    def __init__(self, expression, extra={'_': 0}, name=str(random.random())):
         self.expression = expression
         self.name = name
         self.extra = extra

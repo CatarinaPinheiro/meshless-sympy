@@ -108,7 +108,7 @@ class TestMeshless(unittest.TestCase):
         result = method.solve()
 
         def nearest_indices(t):
-            return (np.array(model.s)-t).argmin()
+            return np.abs(model.s-t).argmin()
 
         fts = np.array([
             [mp.invertlaplace(lambda t: result[nearest_indices(t)][i][0], x, method='stehfest', degree=model.iterations)

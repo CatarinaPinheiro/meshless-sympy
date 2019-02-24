@@ -9,7 +9,7 @@ p = 2
 p1 = 2.08333333
 
 class ViscoelasticModel(ElasticModel):
-    def __init__(self, region, time=20, iterations=10):
+    def __init__(self, region, time=10, iterations=10):
         ElasticModel.__init__(self, region)
 
         self.iterations = iterations
@@ -26,13 +26,17 @@ class ViscoelasticModel(ElasticModel):
                                                    [self.ni, ones, zeros],
                                                    [zeros, ones, (1-self.ni)/2]])
 
-        x = sp.var("x")
+        x,y = sp.var("x y")
         t = np.arange(1,self.time + 1).repeat(self.iterations)
-        ht = 1
-        exp4 = sp.exp(-q0*t/q1)/(q0*q1)
-        exp5 = sp.exp(-(6*K+q0)*t/(6*K*p1+q1))*3/((6*K+q0)*(6*K*p1+q1))
-        exp3 = exp4+exp5
-        exp2 = (p1*q0 - q1)/2
-        exp1 = (3*K+2*q0)/(q0*(6*K+q0))
-        ux = ht*p*x*(exp1+exp2*exp3)
-        self.analytical = [ux, sp.Matrix(np.zeros([self.time * self.iterations,1]))]
+
+        def ux(t):
+            ht = 1
+            exp4 = sp.exp(-q0*t/q1)/(q0*q1)
+            exp5 = sp.exp(-(6*K+q0)*t/(6*K*p1+q1))*3/((6*K+q0)*(6*K*p1+q1))
+            exp3 = exp4+exp5
+            exp2 = (p1*q0 - q1)/2
+            exp1 = (3*K+2*q0)/(q0*(6*K+q0))
+            return ht*p*x*(exp1+exp2*exp3)
+
+        self.analytical = [sp.Matrix([ux(tt) for tt in t]), sp.Matrix(np.ones([self.time * self.iterations,1]))]
+        # self.analytical = [sp.Matrix(np.zeros([self.time * self.iterations,1])), sp.Matrix(np.zeros([self.time * self.iterations,1]))]
