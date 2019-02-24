@@ -135,13 +135,12 @@ class ElasticModel(Model):
             reshape(3,3,time_points, space_points).\
             swapaxes(0,3).swapaxes(1,2)
         neumann_case = (N@D@Lt).swapaxes(0,1).\
-            swapaxes(0,3).\
+            swapaxes(0,3).swapaxes(0,2).\
             reshape([2,2*space_points, time_points])
 
         uv = np.array(phi.eval(integration_point))
         dirichlet_case = np.array([[uv.ravel(), np.zeros(uv.size)],
                                    [np.zeros(uv.size), uv.ravel()]]).\
-            reshape([2,2,space_points]).\
             repeat(time_points, axis=2).\
             reshape([2,2,space_points, time_points]).\
             swapaxes(1,2).\
@@ -224,7 +223,7 @@ class ElasticModel(Model):
 
         D = self.D.repeat(space_points, axis=2).\
             reshape([3,3,time_points, space_points]).\
-            swapaxes(0,3).swapaxes(1,2)
+            swapaxes(0,3).swapaxes(1,2).swapaxes(2,3)
 
         Ltphi = np.array([[dphidx, zeroph],
                           [zeroph, dphidy],
@@ -234,7 +233,7 @@ class ElasticModel(Model):
             reshape([3,2,space_points, time_points]). \
             swapaxes(0,2).swapaxes(1,3)
 
-        return (-Lw@D@Ltphi).swapaxes(0,1).swapaxes(0,3).reshape(2, 2*space_points, time_points)
+        return (-Lw@D@Ltphi).swapaxes(0,1).swapaxes(0,3).swapaxes(0,2).reshape(2, 2*space_points, time_points)
 
     def petrov_galerkin_stiffness_boundary(self, phi, w, integration_point):
         nx, ny = self.region.normal(integration_point)
@@ -249,7 +248,7 @@ class ElasticModel(Model):
 
         D = self.D.repeat(space_points, axis=2). \
             reshape([3,3,time_points, space_points]). \
-            swapaxes(0,3).swapaxes(1,2)
+            swapaxes(0,2).swapaxes(1,3).swapaxes(0,1)
 
         Ltphi = np.array([[dphidx, zeroph],
                           [zeroph, dphidy],
@@ -261,7 +260,7 @@ class ElasticModel(Model):
 
 
         result = w.eval(integration_point)*N@D@Ltphi
-        return result.swapaxes(0,1).swapaxes(0,3).reshape(2, 2*space_points, time_points)
+        return result.swapaxes(2,3).swapaxes(0,1).swapaxes(0,3).reshape(2, 2*space_points, time_points)
 
     def petrov_galerkin_independent_domain(self, w, integration_point):
         return w.eval(integration_point)*np.array([0,0]).repeat(self.D.shape[2], axis=0).reshape(2,self.D.shape[2])

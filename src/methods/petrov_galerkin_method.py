@@ -25,7 +25,7 @@ class PetrovGalerkinMethod(MeshlessMethod):
 
         stiffness_element = gq.polar_gauss_integral(d, radius, stiffness_element)
 
-        def b_element(integration_point):
+        def independent_element(integration_point):
             w = self.weight_function.numeric({
                 'xj': d[0],
                 'yj': d[1],
@@ -34,13 +34,13 @@ class PetrovGalerkinMethod(MeshlessMethod):
 
             return self.model.petrov_galerkin_independent_domain(w, integration_point)
 
-        b_element = gq.polar_gauss_integral(d, radius, b_element)
+        independent_element = gq.polar_gauss_integral(d, radius, independent_element)
 
-        return stiffness_element, b_element
+        return stiffness_element, independent_element
 
     def boundary_append(self, i, d):
         self.m2d.point = d
-        stiffness_dirichlet_element, b_dirichlet_element = CollocationMethod.boundary_append(self, i, d)
+        stiffness_dirichlet_element, independent_dirichlet_element = CollocationMethod.boundary_append(self, i, d)
         radius = self.m2d.r_first(1)
 
         def stiffness_boundary_element(integration_point):
@@ -75,12 +75,12 @@ class PetrovGalerkinMethod(MeshlessMethod):
 
 
         a1, a2 = self.model.region.boundary_integration_limits(d)
-        stiffness_neumann_area_element = gq.angular_integral(d, radius, stiffness_boundary_element, a1, a2)
-        stiffness_neumann_line_element = gq.polar_gauss_integral(d, radius, stiffness_domain_element, a1, a2)
+        stiffness_neumann_line_element = gq.angular_integral(d, radius, stiffness_boundary_element, a1, a2)
+        stiffness_neumann_area_element = gq.polar_gauss_integral(d, radius, stiffness_domain_element, a1, a2)
         stiffness_neumann_element = stiffness_neumann_area_element + stiffness_neumann_line_element
         stiffness_neumann_element = stiffness_neumann_element
 
-        def b_boundary_element(integration_point):
+        def independent_boundary_element(integration_point):
             w = self.weight_function.numeric({
                 'xj': d[0],
                 'yj': d[1],
@@ -95,7 +95,7 @@ class PetrovGalerkinMethod(MeshlessMethod):
 
             return result
 
-        def b_domain_element(integration_point):
+        def independent_domain_element(integration_point):
             w = self.weight_function.numeric({
                 'xj': d[0],
                 'yj': d[1],
@@ -104,18 +104,18 @@ class PetrovGalerkinMethod(MeshlessMethod):
 
             return self.model.petrov_galerkin_independent_domain(w, integration_point)
 
-        b_neumann_element = gq.polar_gauss_integral(d, radius, b_domain_element, a1, a2) + gq.angular_integral(d,radius, b_boundary_element, a1, a2)
+        independent_neumann_element = gq.polar_gauss_integral(d, radius, independent_domain_element, a1, a2) + gq.angular_integral(d,radius, independent_boundary_element, a1, a2)
 
         stiffness_element = []
-        b_element = []
+        independent_element = []
         for dimension in range(self.model.num_dimensions):
             if self.model.region.condition(d)[dimension] == "DIRICHLET":
                 stiffness_element.append(stiffness_dirichlet_element[dimension])
-                b_element.append(b_dirichlet_element[dimension])
+                independent_element.append(independent_dirichlet_element[dimension])
             elif self.model.region.condition(d)[dimension] == "NEUMANN":
                 stiffness_element.append(stiffness_neumann_element[dimension])
-                b_element.append(b_neumann_element[dimension])
+                independent_element.append(independent_neumann_element[dimension])
             else:
                 raise Exception("Invalid Condition!")
 
-        return np.array(stiffness_element), np.array(b_element)
+        return np.array(stiffness_element), np.array(independent_element)
