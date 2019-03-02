@@ -44,7 +44,7 @@ viscoelastic_region_example = Rectangle(
     y2=2,
     parametric_partition={
         1: ["NEUMANN",   "DIRICHLET"],
-        2: ["NEUMANN",   "DIRICHLET"],
+        2.01: ["NEUMANN",   "DIRICHLET"],
         3: ["NEUMANN",   "DIRICHLET"],
         4: ["DIRICHLET", "DIRICHLET"],
         # 5:    ["DIRICHLET", "DIRICHLET"]
@@ -94,7 +94,7 @@ class TestMeshless(unittest.TestCase):
         result = result.reshape(model.num_dimensions*len(data))
 
         diff = corrects - result
-        print(diff)
+        print('diff', diff)
 
         self.assertAlmostEqual(np.linalg.norm(diff)/len(corrects), 0, 3)
 
@@ -107,12 +107,13 @@ class TestMeshless(unittest.TestCase):
         method = method_class(
             model=model,
             basis=quadratic_2d)
-        cache_path = "result.npy"
-        if os.path.exists(cache_path):
-            result = np.load(cache_path)
-        else:
-            result = method.solve()
-            np.save(cache_path, result)
+        # cache_path = "result.npy"
+        # if os.path.exists(cache_path):
+        #     result = np.load(cache_path)
+        # else:
+        #     result = method.solve()
+        #     np.save(cache_path, result)
+        result = method.solve()
         print(result)
 
         def nearest_indices(t):
@@ -125,13 +126,14 @@ class TestMeshless(unittest.TestCase):
 
 
         for point_index, point in enumerate(data):
-            t = np.arange(0.5, calculated_x.size-1)
             analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[::model.iterations].ravel()
             analytical_y = num.Function(model.analytical[1], name="analytical uy(%s)").eval(point)[::model.iterations].ravel()
             calculated_x = fts[2*point_index].ravel()
             calculated_y = fts[2*point_index+1].ravel()
             print(point)
+            print('calculated_x, point diff, analytical', [calculated_x,np.diff(calculated_x), analytical_x,])
 
+            plt.plot(point[0], point[1], "r^-")
             plt.plot(point[0]+np.diff(calculated_x), point[1]+np.diff(calculated_y), "b^-")
             plt.plot(point[0]+analytical_x, point[1]+analytical_y, "gs-")
 
@@ -142,6 +144,7 @@ class TestMeshless(unittest.TestCase):
             analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[::model.iterations].ravel()
             calculated_x = fts[2*point_index].ravel()
             print(point)
+            t = np.arange(0.5, calculated_x.size-1)
             plt.plot(t, 1.5*np.diff(np.diff(calculated_x))[0]+np.diff(calculated_x), "b^-")
             plt.plot(calculated_x, "r^-")
             plt.plot(np.diff(calculated_x), "b^-")
