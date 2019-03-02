@@ -125,6 +125,7 @@ class TestMeshless(unittest.TestCase):
 
 
         for point_index, point in enumerate(data):
+            t = np.arange(0.5, calculated_x.size-1)
             analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[::model.iterations].ravel()
             analytical_y = num.Function(model.analytical[1], name="analytical uy(%s)").eval(point)[::model.iterations].ravel()
             calculated_x = fts[2*point_index].ravel()
@@ -141,7 +142,7 @@ class TestMeshless(unittest.TestCase):
             analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[::model.iterations].ravel()
             calculated_x = fts[2*point_index].ravel()
             print(point)
-            plt.plot(np.arange(0.5, calculated_x.size-1), 1.5*np.diff(np.diff(calculated_x))[0]+np.diff(calculated_x), "b^-")
+            plt.plot(t, 1.5*np.diff(np.diff(calculated_x))[0]+np.diff(calculated_x), "b^-")
             plt.plot(calculated_x, "r^-")
             plt.plot(np.diff(calculated_x), "b^-")
             plt.plot(analytical_x, "gs-")

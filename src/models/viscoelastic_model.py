@@ -9,7 +9,7 @@ p = 2e6
 p1 = 2.08333333
 
 class ViscoelasticModel(ElasticModel):
-    def __init__(self, region, time=10, iterations=12):
+    def __init__(self, region, time=40, iterations=12):
         ElasticModel.__init__(self, region)
 
         self.iterations = iterations
