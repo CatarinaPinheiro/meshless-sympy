@@ -8,5 +8,10 @@ class TestRegion(unittest.TestCase):
         self.assertEqual(len(rectangle.boundary_points), 8)
         self.assertEqual(len(rectangle.all_points), 9)
 
+    def test_condition(self):
+        rectangle = Rectangle(model="potential")
+        self.assertEqual(rectangle.condition([0,0.1]) == "NEUMANN")
+        self.assertEqual(rectangle.condition([0.1,0]) == "DIRICHLET")
+
 if __name__ == '__main__':
     unittest.main()
