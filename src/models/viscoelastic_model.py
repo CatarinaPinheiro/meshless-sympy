@@ -43,11 +43,11 @@ class ViscoelasticModel(ElasticModel):
 
         def ux(t):
             ht = 1
-            exp4 = sp.exp(-q0*t/q1)/(q0*q1)
-            exp5 = sp.exp(-(6*K+q0)*t/(6*K*p1+q1))*3/((6*K+q0)*(6*K*p1+q1))
+            exp4 = sp.exp(-(E1*E2/(E1+E2))*t/(F*E1/(E1+E2)))/((E1*E2/(E1+E2))*(F*E1/(E1+E2)))
+            exp5 = sp.exp(-(6*K+(E1*E2/(E1+E2)))*t/(6*K*(F/(E1+E2))+(F*E1/(E1+E2))))*3/((6*K+(E1*E2/(E1+E2)))*(6*K*(F/(E1+E2))+(F*E1/(E1+E2))))
             exp3 = exp4+exp5
-            exp2 = (p1*q0 - q1)/2
-            exp1 = (3*K+2*q0)/(q0*(6*K+q0))
+            exp2 = ((F/(E1+E2))*(E1*E2/(E1+E2)) - (F*E1/(E1+E2)))/2
+            exp1 = (3*K+2*(E1*E2/(E1+E2)))/((E1*E2/(E1+E2))*(6*K+(E1*E2/(E1+E2))))
             return ht*p*x*(exp1+exp2*exp3)
 
         self.analytical = [sp.Matrix([ux(tt) for tt in t]), sp.Matrix(np.zeros([self.time * self.iterations]))]
