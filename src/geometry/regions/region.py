@@ -1,29 +1,70 @@
 import numpy as np
+import json
+import matplotlib.pyplot as plt
+
 
 class Region:
-    def setup(self):
-        self.width = self.x2-self.x1
-        self.height = self.y2-self.y1
+    def __init__(self, path):
+        # Aqui dentro irei receber uma string com um caminho até o json para carregar o load
+        objects = self.load(path)
+        self.boundary_points = np.array(objects["boundary_points"])
+        self.boundary_condition = objects["conditions"]
+        self.domain_points = np.array(objects["domain_points"])
+        self.all_points = np.concatenate([self.domain_points, self.boundary_points], axis=0)
 
-        self.segments = [[self.x1 + self.dx*i for i in range(int(1 + self.width/self.dx))],
-                        [self.y1 + self.dy*i for i in range(int(1 + self.height/self.dy))]]
-
-        self.inside = [[self.x1 + self.dx*i for i in range(1, int(self.width/self.dx))],
-                    [self.y1 + self.dy*i for i in range(1, int(self.height/self.dy))]]
-
-        self.inside_cartesian = [[x, y] for x in self.inside[0] for y in self.inside[1] if self.include([x, y])]
-        self.boundary_cartesian = (
-                [[x, self.y1] for x in self.segments[0][1:-1]] +
-                [[x, self.y2] for x in self.segments[0][1:-1]] +
-                [[self.x1, y] for y in self.segments[1]] +
-                [[self.x2, y] for y in self.segments[1]])
-        self.cartesian = self.inside_cartesian + [self.boundary_snap(point) for point in self.boundary_cartesian]
-
-        self.center = (self.x1+self.x2)/2, (self.y1+self.y2)/2
-
-
+    def load(self, path):
+        # Aqui dentro irei carregar um arquivo json
+        # Após fazer o carregamento do arquivo irei alterar uma propriedade chamada "geometry"
+        # Irei alterar as propriedades: all_points,domain_points, boundary_Points,conditions
+        file = open(path, "r")
+        text = file.read()
+        file.close()
+        return json.loads(text)
 
     def condition(self, point):
-        alpha = self.boundary_point_to_parameter(point)
-        key = min([k for k in self.parametric_partition.keys() if k >= alpha])
-        return self.parametric_partition[key]
+        for index, p1 in enumerate(self.boundary_points):
+            p2 = self.boundary_points[(index + 1) % len(self.boundary_points)]
+            d1 = np.linalg.norm(point - p1)
+            d2 = np.linalg.norm(point - p2)
+            d = np.linalg.norm(p1 - p2)
+            if d1 + d2 - d < 1e-6:
+                return self.boundary_condition[index]
+        raise Exception("Point %s is not in boundary" % point)
+
+    def normal(self, point):
+        for index, p1 in enumerate(self.boundary_points):
+            p2 = self.boundary_points[(index + 1) % len(self.boundary_points)]
+            d1 = np.linalg.norm(point - p1)
+            d2 = np.linalg.norm(point - p2)
+            d = np.linalg.norm(p1 - p2)
+            if d1 + d2 - d < 1e-6:
+                p = p2 - p1
+                return np.array([p[1], -p[0]])
+        raise Exception("Point %s is not in boundary" % point)
+
+    def boundary_integration_limits(self, point):
+        for index, p in enumerate(self.boundary_points):
+            pnext = self.boundary_points[(index + 1) % len(self.boundary_points)]
+            pprev = self.boundary_points[(index - 1) % len(self.boundary_points)]
+            d = np.linalg.norm(point - p)
+            if d < 1e-6:
+                return [np.arctan2((pnext[1] - p[1]), (pnext[0] - p[0])),
+                        np.arctan2((pprev[1] - p[1]), (pprev[0] - p[0]))]
+        raise Exception("Point %s is not in boundary" % point)
+
+    def distance_from_boundary(self, point):
+        distances = []
+        for index, p1 in enumerate(self.boundary_points):
+            p2 = self.boundary_points[(index + 1) % len(self.boundary_points)]
+            d1 = np.linalg.norm(point - p1)
+            d2 = np.linalg.norm(point - p2)
+            d = np.linalg.norm(p1 - p2)
+            area = np.linalg.det([[point[0], point[1], 1],
+                                  [p1[0],    p1[1],    1],
+                                  [p2[0],    p2[1],    1]])
+            dist = area / d
+            distances.append(dist)
+        return min(distances)
+
+    def plot(self):
+        plt.plot(self.boundary_points[:,0], self.boundary_points[:,1])

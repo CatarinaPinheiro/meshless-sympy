@@ -97,15 +97,15 @@ class MeshlessMethod:
 
     @property
     def boundary_data(self):
-        return self.model.region.boundary_snap(self.model.region.boundary_cartesian)
+        return self.model.region.boundary_points
 
     @property
     def data(self):
-        return self.model.region.cartesian
+        return self.model.region.all_points
 
     @property
     def domain_data(self):
-        return self.model.region.inside_cartesian
+        return self.model.region.domain_points
 
     def plot(self, point_index=0):
         # # circular plots
@@ -143,7 +143,7 @@ class MeshlessMethod:
         plt.plot(inside_array[:, 0], inside_array[:, 1], 'o')
         #
         # boundary points
-        boundary_array = np.array([self.model.region.boundary_snap(point) for point in self.boundary_data])
+        boundary_array = self.model.region.boundary_points
         plt.plot(boundary_array[:, 0], boundary_array[:, 1], 'o')
 
         for index, point in enumerate(boundary_array):

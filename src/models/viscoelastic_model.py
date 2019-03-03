@@ -67,7 +67,7 @@ class ViscoelasticModel(ElasticModel):
         return np.zeros([2,self.time*self.iterations])
 
     def independent_boundary_function(self, point):
-        if point[0] > self.region.x2 - 1e-3:
+        if point[0] > 2 - 1e-3:
             return np.array([self.p/self.s, np.zeros(self.s.shape)])
         else:
             return np.zeros([2,self.time*self.iterations])
