@@ -26,5 +26,9 @@ class TestRegion(unittest.TestCase):
         self.assertAlmostEqual(rectangle.boundary_integration_limits([0,0])[0], 0, 5)
         self.assertAlmostEqual(rectangle.boundary_integration_limits([0,0])[1], np.pi/2, 5)
 
+    def test_distance_from_boundary(self):
+        rectangle = Rectangle(model="potential")
+        self.assertAlmostEqual(rectangle.distance_from_boundary([0.123, 0.456]), 0.123, 5)
+
 if __name__ == '__main__':
     unittest.main()
