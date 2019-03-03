@@ -10,8 +10,15 @@ class TestRegion(unittest.TestCase):
 
     def test_condition(self):
         rectangle = Rectangle(model="potential")
-        self.assertEqual(rectangle.condition([0,0.1]) == "NEUMANN")
-        self.assertEqual(rectangle.condition([0.1,0]) == "DIRICHLET")
+        self.assertEqual(rectangle.condition([0, 0.1]) == "NEUMANN")
+        self.assertEqual(rectangle.condition([0.1, 0]) == "DIRICHLET")
+
+    def test_normal(self):
+        rectangle = Rectangle(model="potential")
+        self.assertAlmostEqual(rectangle.normal([0, 0.1])[0], -1, 5)
+        self.assertAlmostEqual(rectangle.normal([0, 0.1])[1],  0, 5)
+        self.assertAlmostEqual(rectangle.normal([0.1, 0])[0],  0, 5)
+        self.assertAlmostEqual(rectangle.normal([0.1, 0])[1], -1, 5)
 
 if __name__ == '__main__':
     unittest.main()
