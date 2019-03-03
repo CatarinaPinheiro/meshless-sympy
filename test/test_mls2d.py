@@ -2,7 +2,7 @@ import unittest
 import src.basis as b
 import numpy as np
 import src.methods.mls2d as m
-import teste.helpers.test_functions as ef
+import test.helpers.test_functions as ef
 from src.helpers.weights import GaussianWithRadius as Weight
 
 

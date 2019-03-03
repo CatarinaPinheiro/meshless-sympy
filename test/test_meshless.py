@@ -11,7 +11,6 @@ import numpy as np
 import sympy as sp
 from src.geometry.regions.rectangle import Rectangle
 import mpmath as mp
-from src.geometry.regions.circle import Circle
 from src.models.potential_model import PotentialModel
 from src.models.elastic_model import ElasticModel
 from src.models.viscoelastic_model import ViscoelasticModel

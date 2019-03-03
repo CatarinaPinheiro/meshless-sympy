@@ -1,0 +1,72 @@
+@startuml
+
+title Meshless - sympy
+
+enum BoundaryCondition{
+    DIRICHLET,
+    NEUMANN
+}
+
+class PolygonRegion {
+  +all_points: ndarray<N, 2>
+  +boundary_points: ndarray<N, 2>
+  +domain_points: ndarray<N, 2>
+  +boundary_condition(point: ndarray<2>): array<BoundaryCondition>
+  +distance_from_boundary(point: ndarray<2>): float
+  +normal(point: ndarray<2>): ndarray<2>
+  +include(point: ndarray<2>): bool
+  #load(path: str)
+  + plot()
+}
+class RectangularRegion
+class CircularRegion
+
+PolygonRegion <|-down- RectangularRegion
+PolygonRegion <|-down- CircularRegion
+
+class TestMeshless
+
+class MeshlessMethod {
+    - domain_append(index: int, point: ndarray<2>): ndarray<D, N, T>, ndarray<D, 1, T>
+    - boundary_append()
+    + stiffness_matrix: ndarray<T, N, N>
+    + independent_vector: ndarray<T, N, 1>
+    + solve()
+    + plot()
+
+}
+class CollocationMethod
+class SubregionMethod
+class GalerkinMethod
+class PetrovGalerkinMethod
+
+MeshlessMethod <|-down- CollocationMethod
+MeshlessMethod <|-down- SubregionMethod
+MeshlessMethod <|-down- GalerkinMethod
+MeshlessMethod <|-down- PetrovGalerkinMethod
+
+class PDEModel {
+    + plot()
+    + {abstract} analytical
+    + {abstract} stiffness_boundary_operator()
+    + {abstract} stiffness_domain_operator()
+    + {abstract} independent_boundary_function()
+    + {abstract} independent_domain_function()
+    + {abstract} petrov_galerkin_stiffness_boundary()
+    + {abstract} petrov_galerkin_stiffness_domain()
+    + {abstract} petrov_galerkin_independent_boundary()
+    + {abstract} petrov_galerkin_independent_domain()
+}
+class PotentialModel
+class ElasticModel
+class ViscoelasticModel
+
+PDEModel <|-down- PotentialModel
+PDEModel <|-down- ElasticModel
+PDEModel <|-down- ViscoelasticModel
+
+TestMeshless -- MeshlessMethod
+MeshlessMethod -- PDEModel
+PDEModel -- PolygonRegion
+
+@enduml
