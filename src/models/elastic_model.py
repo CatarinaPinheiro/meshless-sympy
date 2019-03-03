@@ -13,35 +13,11 @@ class ElasticModel(Model):
         self.num_dimensions = 2
 
         self.E = 1
-        self.ni = 0.25
+        self.ni = np.array([0.25])
         self.G = self.E/(2*(1+self.ni))
-        self.lmbda = (self.ni*self.E)/((1+self.ni)*(1 - 2*self.ni))
         self.D = (self.E/(1-self.ni**2))*np.array([[1, self.ni, 0],
                                                    [self.ni, 1, 0],
                                                    [0, 0, (1-self.ni)/2]]).reshape((3,3,1))
-
-    def domain_operator(self, exp, point):
-
-        phi_xx = exp.derivate("x").derivate("x")
-        phi_yy = exp.derivate("y").derivate("y")
-        phi_xy = exp.derivate("x").derivate("y")
-
-        shear = (self.lmbda+self.G)*(1-self.ni/(1-self.ni))
-
-        K11 = num.Sum([
-            num.Product([num.Constant(np.array([[self.G+shear]])), phi_xx]),
-            num.Product([num.Constant(np.array([[self.G]])), phi_yy])
-        ]).eval(point)
-
-        K21 = K12 = num.Product([num.Constant(np.array([[shear]])), phi_xy]).eval(point)
-
-        K22 = num.Sum([
-            num.Product([num.Constant(np.array([[shear]])), phi_yy]),
-            num.Product([num.Constant(np.array([[self.G]])), phi_xx])
-        ]).eval(point)
-
-        return np.array([[K11,K12],
-                         [K21,K22]])
 
     def independent_boundary_operator(self, u, v, integration_point):
         """
@@ -195,13 +171,24 @@ class ElasticModel(Model):
         return self.D.transpose()@V
 
     def stiffness_domain_operator(self, phi, point):
-        op = self.domain_operator(phi, point)
-        size = op.shape[3]
-        return op.swapaxes(1, 3).reshape(2, 2*size, 1)
+        phi_xx = phi.derivate("x").derivate("x").eval(point)
+        phi_yy = phi.derivate("y").derivate("y").eval(point)
+        phi_xy = phi.derivate("x").derivate("y").eval(point)
+
+        c1 = np.expand_dims(self.E/(2*(1-self.ni**2)), 1)
+        c2 = np.expand_dims(self.E*(2-self.ni)/(2*(1-self.ni**2)), 1)
+        K11 = c2@phi_xx + c1@phi_yy
+        K12 = K21 = c1@phi_xy
+        K22 = c2@phi_yy + c1@phi_xx
+
+        time_size = c1.size
+        space_size = phi_xx.size
+
+        return np.array([[K11, K12],
+                         [K21, K22]]).swapaxes(2,3).swapaxes(1,2).reshape(2, 2*space_size, time_size)
 
     def independent_domain_function(self, point):
-        return np.array([[0],
-                         [0]])
+        return np.zeros([2, self.ni.size])
 
     def independent_boundary_function(self, point):
         func = self.boundary_function(point)

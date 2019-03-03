@@ -2,11 +2,6 @@ from src.models.elastic_model import ElasticModel
 import numpy as np
 import sympy as sp
 
-q0 = 2.4967983368e9
-q1 = 2.085e9
-K = 4.17e9
-p = 2e6
-p1 = 0.801025846
 
 class ViscoelasticModel(ElasticModel):
     def __init__(self, region, time=40, iterations=10):
@@ -14,17 +9,34 @@ class ViscoelasticModel(ElasticModel):
 
         self.iterations = iterations
         self.time = time
+        s = self.s = np.array([np.log(2)*i/t for i in range(1, self.iterations+1) for t in range(1, self.time+1)])
 
-        self.s = np.array([np.log(2)*i/t for i in range(1, self.iterations+1) for t in range(1, self.time+1)])
-        self.E = 9*(q0+q1*self.s)*K/(6*K*(p1+1/self.s)+q0+q1*self.s)
-        self.ni = ((p1+1/self.s)*3*K - q0 - q1*self.s)/(6*K*(p1+1/self.s)+q0+q1*self.s)
-        ones = np.ones(self.ni.shape)
-        zeros = np.zeros(self.ni.shape)
-        self.G = self.E/(2*(1+self.ni))
-        self.lmbda = (self.ni*self.E)/((1+self.ni)*(1 - 2*self.ni))
-        self.D = (self.E/(1-self.ni**2))*np.array([[ones, self.ni, zeros],
-                                                   [self.ni, ones, zeros],
-                                                   [zeros, zeros, (1-self.ni)/2]])
+        ones = np.ones(s.shape)
+        zeros = np.zeros(s.shape)
+
+        p = self.p = 2e6
+        F = 8e9
+        G = 1.92e9
+        K = 4.17e9
+        E1 = 9*K*G/(3*K+G)
+        E2 = E1
+
+        p1 = F/E1
+        p0 = 1+E2/E1
+        q0 = E2
+        q1 = F
+
+        L1 = q0 + q1*s
+        L2 = 3*K
+
+        P1 = p0 + p1*s
+        P2 = ones
+
+        E = self.E = 3*L1*L2/(2*P1*L2 + L1*P2)
+        ni = self.ni = (P1*L2 - L1*P2)/(2*P1*L2 + L1*P2)
+        self.D = (E/(1-ni**2))*np.array([[ones, ni, zeros],
+                                         [ni, ones, zeros],
+                                         [zeros, zeros, (1-ni)/2]])
 
         x, y = sp.var("x y")
         t = np.arange(1, self.time + 1).repeat(self.iterations)
@@ -43,14 +55,20 @@ class ViscoelasticModel(ElasticModel):
 
     def petrov_galerkin_independent_boundary(self, w, integration_point):
         if integration_point[0] > 1.99:
-            print('Integration ', w.eval(integration_point)*np.array([p/self.s, np.zeros(self.s.shape)]))
-            return -w.eval(integration_point)*np.array([p/self.s, np.zeros(self.s.shape)])
+            print('Integration ', w.eval(integration_point)*np.array([self.p/self.s, np.zeros(self.s.shape)]))
+            return -w.eval(integration_point)*np.array([self.p/self.s, np.zeros(self.s.shape)])
         else:
             return np.zeros([2,self.time*self.iterations])
 
-    # def independent_domain_function(self, point):
-    #     if point[0] > 1.99:
-    #         return np.array([p/self.s, np.zeros(self.s.shape)])
-    #     else:
-    #         return np.zeros([2,self.time*self.iterations])
+    def petrov_galerkin_independent_domain(self, w, integration_point):
+        return np.zeros([2,self.time*self.iterations])
+
+    def independent_domain_function(self, point):
+        return np.zeros([2,self.time*self.iterations])
+
+    def independent_boundary_function(self, point):
+        if point[0] > self.region.x2 - 1e-3:
+            return np.array([self.p/self.s, np.zeros(self.s.shape)])
+        else:
+            return np.zeros([2,self.time*self.iterations])
 
