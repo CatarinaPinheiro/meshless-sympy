@@ -1,5 +1,6 @@
 import unittest
 from src.geometry.regions.rectangle import Rectangle
+import numpy as np
 
 class TestRegion(unittest.TestCase):
     def test_load(self):
@@ -19,6 +20,11 @@ class TestRegion(unittest.TestCase):
         self.assertAlmostEqual(rectangle.normal([0, 0.1])[1],  0, 5)
         self.assertAlmostEqual(rectangle.normal([0.1, 0])[0],  0, 5)
         self.assertAlmostEqual(rectangle.normal([0.1, 0])[1], -1, 5)
+
+    def test_integration_limits(self):
+        rectangle = Rectangle(model="potential")
+        self.assertAlmostEqual(rectangle.boundary_integration_limits([0,0])[0], 0, 5)
+        self.assertAlmostEqual(rectangle.boundary_integration_limits([0,0])[1], np.pi/2, 5)
 
 if __name__ == '__main__':
     unittest.main()
