@@ -20,54 +20,19 @@ import time
 
 DEBUG_PLOT = False
 
-elastic_region_example = Rectangle(
-    x1=0,
-    y1=-15,
-    x2=60,
-    y2=15,
-    dx=30,
-    dy=15,
-    parametric_partition={
-        0.01: ["DIRICHLET", "NEUMANN"],
-        1:    ["NEUMANN",   "NEUMANN"],
-        2:    ["NEUMANN",   "NEUMANN"],
-        3:    ["NEUMANN",   "NEUMANN"],
-        3.49: ["DIRICHLET", "NEUMANN"],
-        3.51: ["DIRICHLET", "DIRICHLET"],
-        4:    ["DIRICHLET", "NEUMANN"]
-    })
+elastic_region_example_rectangle = Rectangle(model='elastic')
+elastic_region_example_circle = Circle(model='elastic')
 
-viscoelastic_region_example = Rectangle(
-    x1=0,
-    y1=0,
-    x2=2,
-    y2=2,
-    dx=1,
-    dy=1,
-    parametric_partition={
-        1.01: ["NEUMANN",   "DIRICHLET"],
-        1.99: ["NEUMANN",   "NEUMANN"],
-        2.99: ["NEUMANN",   "DIRICHLET"],
-        5:    ["DIRICHLET", "DIRICHLET"],
-        # 5:    ["DIRICHLET", "DIRICHLET"]
-    })
+viscoelastic_region_example_rectangle = Rectangle(model='viscoelastic')
+viscoelastic_region_example_circle = Circle(model='viscoelastic')
 
-potential_region_example = Rectangle(
-    x1=0,
-    y1=0,
-    x2=2,
-    y2=2,
-    parametric_partition={
-        1: ["DIRICHLET"],
-        2: ["NEUMANN"],
-        3: ["DIRICHLET"],
-        4: ["NEUMANN"],
-    })
+potential_region_example_rectangle = Rectangle(model='potential')
+potential_region_example_circle = Circle(model='potential')
 
 class TestMeshless(unittest.TestCase):
 
     def rectangle_template(self, method_class, model_class, region):
-        data = region.cartesian
+        data = region.all_points
 
         model = model_class(region=region)
 
@@ -102,7 +67,7 @@ class TestMeshless(unittest.TestCase):
         self.assertAlmostEqual(np.linalg.norm(diff)/len(corrects), 0, 3)
 
     def visco_rectangle_template(self, method_class, model_class, region):
-        data = region.cartesian
+        data = region.all_points
 
         model = model_class(region=region)
 
