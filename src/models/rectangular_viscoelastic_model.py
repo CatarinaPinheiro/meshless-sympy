@@ -1,11 +1,11 @@
-from src.models.elastic_model import ElasticModel
+from src.models.plane_stress_elastic_model import PlaneStressElasticModel
 import numpy as np
 import sympy as sp
 
 
-class RectangularViscoelasticModel(ElasticModel):
+class PlaneStressViscoelasticModel(PlaneStressElasticModel):
     def __init__(self, region, time=40, iterations=10):
-        ElasticModel.__init__(self, region)
+        PlaneStressElasticModel.__init__(self, region)
 
         self.iterations = iterations
         self.time = time
