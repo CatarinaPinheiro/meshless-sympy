@@ -45,13 +45,14 @@ class CircularViscoelasticModel(ElasticModel):
 
         def ux(t):
             ht = 1
+            r = sp.sqrt(x*x+y*y)
             exp4 = 1/((F*E1/(E1 + E2)) - (F*E2*E1/((E1 + E2)*(E1 + E2))))
             exp8 = ((E1 + E2)/(F*E1))*sp.exp(-(E2*t/F))
             exp7 = (exp4 - exp8)
-            exp6 = (rmax**2)*(F*E1/(E1+E2) - F*E1*E2/((E1+E2)*(E1+E2)))/(E1*E2*x/(E1+E2))
+            exp6 = (rmax**2)*(F*E1/(E1+E2) - F*E1*E2/((E1+E2)*(E1+E2)))/(E1*E2*r/(E1+E2))
             exp5 = (1/((6*K*F/(E1+E2)) + (F*E1/(E1+E2))))*sp.exp(-(6*K+(E1*E2/(E1+E2)))*t/((6*K*(F/(E1+E2))) + (F*E1/(E1+E2))))
             exp3 = exp4-exp5
-            exp2 = 3*x*((F*E1/(E1 + E2)) - F*E2*E1/((E1+E2)*(E1+E2)))/(6*K + (E2*E1/(E1+E2)))
+            exp2 = 3*r*((F*E1/(E1 + E2)) - F*E2*E1/((E1+E2)*(E1+E2)))/(6*K + (E2*E1/(E1+E2)))
             exp1 = (ht*p*(rmin**2))/(rmax**2 - rmin**2)
 
             return exp1*(exp2*exp3 + exp6*exp7)

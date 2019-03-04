@@ -63,8 +63,8 @@ class TestMeshless(unittest.TestCase):
         self.assertAlmostEqual(np.linalg.norm(diff) / len(corrects), 0, 3)
 
     def visco_template(self, method_class, model_class, region):
-        region.plot()
-        plt.show()
+        # region.plot()
+        # plt.show()
         data = region.all_points
 
         model = model_class(region=region)
