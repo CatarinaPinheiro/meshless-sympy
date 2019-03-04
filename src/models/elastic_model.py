@@ -61,22 +61,24 @@ class ElasticModel(Model):
         dirichlet_case = np.array([[uv.ravel(), np.zeros(uv.size)],
                                    [np.zeros(vv.size), vv.ravel()]])
 
-
         conditions = self.region.condition(integration_point)
         if conditions[0] == "DIRICHLET":
-            K1 = dirichlet_case[0]
+            normal_case = dirichlet_case
         elif conditions[0] == "NEUMANN":
-            K1 = neumann_case[0]
+            normal_case = neumann_case
         else:
-            raise Exception("condition(%s) = %s"%(integration_point, conditions[0]))
+            raise Exception("condition(%s) = %s" % (integration_point, conditions[0]))
 
         if conditions[1] == "DIRICHLET":
-            K2 = dirichlet_case[1]
+            tangent_case = dirichlet_case
         elif conditions[1] == "NEUMANN":
-            K2 = neumann_case[1]
+            tangent_case = neumann_case
         else:
-            raise Exception("condition(%s) = %s"%(integration_point, conditions[1]))
+            raise Exception("condition(%s) = %s" % (integration_point, conditions[1]))
 
+        normal = np.abs(self.region.normal(integration_point))
+        K1 = normal[0] * normal_case[0] + normal[1] * tangent_case[0]
+        K2 = normal[1] * normal_case[1] + normal[0] * tangent_case[1]
 
         return np.array([K1, K2])
 
@@ -123,19 +125,25 @@ class ElasticModel(Model):
             reshape([2,2*space_points, time_points])
 
         conditions = self.region.condition(integration_point)
+
+
         if conditions[0] == "DIRICHLET":
-            K1 = dirichlet_case[0]
+            normal_case = dirichlet_case
         elif conditions[0] == "NEUMANN":
-            K1 = neumann_case[0]
+            normal_case = neumann_case
         else:
             raise Exception("condition(%s) = %s"%(integration_point, conditions[0]))
 
         if conditions[1] == "DIRICHLET":
-            K2 = dirichlet_case[1]
+            tangent_case = dirichlet_case
         elif conditions[1] == "NEUMANN":
-            K2 = neumann_case[1]
+            tangent_case = neumann_case
         else:
             raise Exception("condition(%s) = %s"%(integration_point, conditions[1]))
+
+        normal = np.abs(self.region.normal(integration_point))
+        K1 = normal[0]*normal_case[0]+normal[1]*tangent_case[0]
+        K2 = normal[1]*normal_case[1]+normal[0]*tangent_case[1]
 
 
         return np.array([K1, K2])

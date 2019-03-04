@@ -9,10 +9,21 @@ class TestRegion(unittest.TestCase):
         self.assertEqual(len(rectangle.boundary_points), 8)
         self.assertEqual(len(rectangle.all_points), 9)
 
+        rectangle = Rectangle(model="viscoelastic")
+        self.assertEqual(len(rectangle.domain_points), 1)
+        self.assertEqual(len(rectangle.boundary_points), 8)
+        self.assertEqual(len(rectangle.all_points), 9)
+
     def test_condition(self):
         rectangle = Rectangle(model="potential")
-        self.assertEqual(rectangle.condition([0, 0.1]) == "NEUMANN")
-        self.assertEqual(rectangle.condition([0.1, 0]) == "DIRICHLET")
+        self.assertEqual(rectangle.condition([0, 0.1])[0], "NEUMANN")
+        self.assertEqual(rectangle.condition([0.1, 0])[0], "DIRICHLET")
+
+        rectangle = Rectangle(model="viscoelastic")
+        self.assertEqual(rectangle.condition([0, 0.1])[0], "DIRICHLET")
+        self.assertEqual(rectangle.condition([0.1, 0])[0], "DIRICHLET")
+        self.assertEqual(rectangle.condition([0, 0.1])[1], "NEUMANN")
+        self.assertEqual(rectangle.condition([0.1, 0])[1], "NEUMANN")
 
     def test_normal(self):
         rectangle = Rectangle(model="potential")
