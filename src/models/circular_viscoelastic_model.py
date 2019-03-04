@@ -17,9 +17,9 @@ class CircularViscoelasticModel(ElasticModel):
         p = self.p = 2e6
         rmin = 0.5
         rmax = 1
-        F = 8e9
-        G = 1.92e9
-        K = 4.17e9
+        F = 315e9
+        G = 78.85e9
+        K = 170.83e9
         E1 = 9*K*G/(3*K+G)
         E2 = E1
 
