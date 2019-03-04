@@ -3,7 +3,7 @@ import numpy as np
 import sympy as sp
 
 
-class ViscoelasticModel(ElasticModel):
+class RectangularViscoelasticModel(ElasticModel):
     def __init__(self, region, time=40, iterations=10):
         ElasticModel.__init__(self, region)
 

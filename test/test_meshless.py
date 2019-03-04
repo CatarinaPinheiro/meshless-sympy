@@ -10,10 +10,11 @@ import src.helpers.numeric as num
 import numpy as np
 import sympy as sp
 from src.geometry.regions.rectangle import Rectangle
+from src.geometry.regions.circle import Circle
 import mpmath as mp
 from src.models.potential_model import PotentialModel
 from src.models.elastic_model import ElasticModel
-from src.models.viscoelastic_model import ViscoelasticModel
+from src.models.rectangular_viscoelastic_model import RectangularViscoelasticModel
 from matplotlib import pyplot as plt
 import time
 
@@ -128,10 +129,10 @@ class TestMeshless(unittest.TestCase):
         self.rectangle_template(CollocationMethod, ElasticModel, Circle(model='elastic'))
 
     def test_collocation_viscoelasticity_rectangular(self):
-        self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, Rectangle(model='viscoelastic'))
+        self.visco_rectangle_template(CollocationMethod, RectangularViscoelasticModel, Rectangle(model='viscoelastic'))
 
     def test_collocation_viscoelasticity_circular(self):
-        self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, Circle(model='viscoelastic'))
+        self.visco_rectangle_template(CollocationMethod, RectangularViscoelasticModel, Circle(model='viscoelastic'))
 
     def test_subregion_potential_rectangular(self):
         self.rectangle_template(SubregionMethod, PotentialModel, Rectangle(model='potential'))
@@ -146,10 +147,10 @@ class TestMeshless(unittest.TestCase):
         self.rectangle_template(SubregionMethod, ElasticModel, Circle(model='elastic'))
 
     def test_subregion_viscoelasticity_rectangular(self):
-        self.visco_rectangle_template(SubregionMethod, ViscoelasticModel, Rectangle(model='viscoelastic'))
+        self.visco_rectangle_template(SubregionMethod, RectangularViscoelasticModel, Rectangle(model='viscoelastic'))
 
     def test_subregion_viscoelasticity_circular(self):
-        self.visco_rectangle_template(SubregionMethod, ViscoelasticModel, Circle(model='viscoelastic'))
+        self.visco_rectangle_template(SubregionMethod, RectangularViscoelasticModel, Circle(model='viscoelastic'))
 
     def test_galerkin_potential_rectangular(self):
         self.rectangle_template(GalerkinMethod, PotentialModel, Rectangle(model='potential'))
@@ -164,10 +165,10 @@ class TestMeshless(unittest.TestCase):
         self.rectangle_template(GalerkinMethod, ElasticModel, Circle(model='elastic'))
 
     def test_galerkin_viscoelasticity_rectangular(self):
-        self.visco_rectangle_template(GalerkinMethod, ViscoelasticModel, Rectangle(model='viscoelastic'))
+        self.visco_rectangle_template(GalerkinMethod, RectangularViscoelasticModel, Rectangle(model='viscoelastic'))
 
     def test_galerkin_viscoelasticity_circular(self):
-        self.visco_rectangle_template(GalerkinMethod, ViscoelasticModel, Circle(model='viscoelastic'))
+        self.visco_rectangle_template(GalerkinMethod, RectangularViscoelasticModel, Circle(model='viscoelastic'))
 
     def test_petrov_galerkin_potential_rectangular(self):
         self.rectangle_template(PetrovGalerkinMethod, PotentialModel, Rectangle(model='potential'))
@@ -182,10 +183,10 @@ class TestMeshless(unittest.TestCase):
         self.rectangle_template(PetrovGalerkinMethod, ElasticModel, Circle(model='elastic'))
 
     def test_petrov_galerkin_viscoelasticity_rectangular(self):
-        self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticModel, Rectangle(model='viscoelastic'))
+        self.visco_rectangle_template(PetrovGalerkinMethod, RectangularViscoelasticModel, Rectangle(model='viscoelastic'))
 
     def test_petrov_galerkin_viscoelasticity_circular(self):
-        self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticModel, Circle(model='viscoelastic'))
+        self.visco_rectangle_template(PetrovGalerkinMethod, RectangularViscoelasticModel, Circle(model='viscoelastic'))
 
 
 if __name__ == '__main__':
