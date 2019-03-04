@@ -76,19 +76,19 @@ class MovingLeastSquares2D:
 
     @property
     def numeric_phi(self):
-        # self.ri = self.r_min
-        #
-        # while True:
-        #     A, B = self.numeric_AB(self.ri)
-        #     det = np.linalg.det(A)
-        #     if det < 1e-6:
-        #         self.ri *= 1.05
-        #         continue
-        #     else:
-        #         break
-        #
-        # sA, sB, P, sW = self.ABPW(self.ri)
-        sA, sB, P, sW = self.ABPW(self.security*self.r_first(len(self.basis)))
+        self.ri = self.r_min
+
+        while True:
+            A, B = self.numeric_AB(self.ri)
+            det = np.linalg.det(A)
+            if det < 1e-6:
+                self.ri *= 1.05
+                continue
+            else:
+                break
+
+        sA, sB, P, sW = self.ABPW(self.ri)
+        #sA, sB, P, sW = self.ABPW(self.security*self.r_first(len(self.basis)))
 
         spt = sp.Matrix([self.basis])
         return num.Product([

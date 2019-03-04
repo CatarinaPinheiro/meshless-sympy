@@ -54,7 +54,7 @@ class CircularViscoelasticModel(ElasticModel):
         # self.analytical = [sp.Matrix(np.zeros([self.time * self.iterations,1])), sp.Matrix(np.zeros([self.time * self.iterations,1]))]
 
     def petrov_galerkin_independent_boundary(self, w, integration_point):
-        if integration_point[0] > 1.99:
+        if np.linalg.norm(integration_point) < 1 - 1e-3:
             print('Integration ', w.eval(integration_point)*np.array([self.p/self.s, np.zeros(self.s.shape)]))
             return -w.eval(integration_point)*np.array([self.p/self.s, np.zeros(self.s.shape)])
         else:
