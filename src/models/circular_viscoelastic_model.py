@@ -1,11 +1,11 @@
-from src.models.elastic_model import ElasticModel
+from src.models.plane_strain_elastic_model import PlaneStrainElasticModel
 import numpy as np
 import sympy as sp
 
 
-class CircularViscoelasticModel(ElasticModel):
+class PlaneStrainViscoelasticModel(PlaneStrainElasticModel):
     def __init__(self, region, time=40, iterations=10):
-        ElasticModel.__init__(self, region)
+        PlaneStrainElasticModel.__init__(self, region)
 
         self.iterations = iterations
         self.time = time
@@ -14,7 +14,7 @@ class CircularViscoelasticModel(ElasticModel):
         ones = np.ones(s.shape)
         zeros = np.zeros(s.shape)
 
-        p = self.p = 2e6
+        p = self.p = 1e6
         rmin = 0.5
         rmax = 1
         F = 315e9
