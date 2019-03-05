@@ -8,17 +8,28 @@ class PlaneStrainElasticModel(Model):
     def __init__(self, region):
         self.region = region
         x, y = sp.var("x y")
-        self.analytical = [sp.Matrix([x]), sp.Matrix([-y / 4])]
+        G = 78.85e9
+        K = 170.83e9
+        self.E = 9 * K * G / (3 * K + G)
+        self.ni = np.array([(3*K - 2*G)/(2*(3*K + G))])
+        self.p = 1e-6
+
+
         # self.analytical = [x,sp.Integer(0)]
+
+        self.rmin = 0.5
+        self.rmax = 1
+        u = (self.p * self.rmin ** 2 / (self.rmax **2 - self.rmin ** 2)) * ((1 + self.ni) / self.E) * (sp.sqrt(x * x + y * y)*(1 - 2 * self.ni) + ((self.rmax ** 2) / (sp.sqrt(x * x + y * y))))
+
+        self.analytical = [sp.Matrix(u), sp.Matrix(np.zeros([1]))]
+
         self.num_dimensions = 2
 
-        self.E = 1
-        self.ni = np.array([0.25])
+        1 - self.ni
         self.G = self.E / (2 * (1 + self.ni))
-        self.D = (self.E / ((1 + self.ni) * (1 - 2 * self.ni))) * np.array([[(1 - self.ni), self.ni, 0],
-                                                                            [self.ni, (1 - self.ni), 0],
-                                                                            [0, 0, (1 - 2 * self.ni) / 2]]).reshape(
-            (3, 3, 1))
+        self.D = (self.E / ((1 + self.ni) * (1 - 2 * self.ni))) * np.array([[, self.ni, 0],
+                                                                            [self.ni, 1 - self.ni, 0],
+                                                                            [0, 0, (1 - 2 * self.ni) / 2]]).reshape((3, 3, 1))
 
     def independent_boundary_operator(self, u, v, integration_point):
         """
