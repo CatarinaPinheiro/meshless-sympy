@@ -17,8 +17,7 @@ class PlaneStrainElasticModel(Model):
         self.G = self.E / (2 * (1 + self.ni))
         self.D = (self.E / ((1 + self.ni) * (1 - 2 * self.ni))) * np.array([[(1 - self.ni), self.ni, 0],
                                                                             [self.ni, (1 - self.ni), 0],
-                                                                            [0, 0, (1 - 2 * self.ni) / 2]]).reshape(
-            (3, 3, 1))
+                                                                            [0, 0, (1 - 2 * self.ni) / 2]], dtype=np.float64).reshape((3, 3, 1))
 
     def independent_boundary_operator(self, u, v, integration_point):
         """

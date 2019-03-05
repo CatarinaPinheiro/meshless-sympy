@@ -20,10 +20,6 @@ from src.models.circular_viscoelastic_model import PlaneStrainViscoelasticModel
 from matplotlib import pyplot as plt
 import time
 
-DEBUG_PLOT = False
-
-
-
 class TestMeshless(unittest.TestCase):
 
     def template(self, method_class, model_class, region):
@@ -38,15 +34,10 @@ class TestMeshless(unittest.TestCase):
         result = method.solve()
         print("result", result.shape)
 
-        if DEBUG_PLOT:
-            region.plot()
-            plt.show(block=False)
-            for index, point in enumerate(data):
-                plt.clf()
-                method.plot(index)
-                plt.draw()
-                plt.pause(0.001)
-                time.sleep(5)
+        region.plot()
+        plt.scatter(data[:, 0], data[:, 1])
+        plt.scatter(data[:, 0] + result.reshape(int(result.size/2), 2)[:, 0],data[:, 1] + result.reshape(int(result.size/2), 2)[:, 1])
+        plt.show()
 
         corrects = np.reshape([sp.lambdify((x, y), model.analytical, "numpy")(*point) for point in data],
                               (model.num_dimensions * len(data)))

@@ -67,4 +67,4 @@ class Region:
         return min(distances)
 
     def plot(self):
-        plt.fill(self.boundary_points[:,0], self.boundary_points[:,1], "^-")
+        plt.fill(self.boundary_points[:,0], self.boundary_points[:,1], "^-", alpha=0.1)
