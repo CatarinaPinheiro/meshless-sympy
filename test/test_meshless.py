@@ -38,15 +38,35 @@ class TestMeshless(unittest.TestCase):
         result = method.solve()
         print("result", result.shape)
 
-        if DEBUG_PLOT:
-            region.plot()
-            plt.show(block=False)
+        region.plot()
+        if model.coordinate_system == "polar":
+            plt.scatter(data[:, 0], data[:, 1])
+            x = data[:,0]
+            y = data[:,1]
+            norm = np.sqrt(x*x+y*y)
+            x_norm = x/norm
+            y_norm = y/norm
+            r = result.reshape(int(result.size/model.num_dimensions), model.num_dimensions)[:, 0]
+            plt.scatter(data[:, 0] + r*x_norm, data[:, 1] + y_norm*r)
+
             for index, point in enumerate(data):
-                plt.clf()
-                method.plot(index)
-                plt.draw()
-                plt.pause(0.001)
-                time.sleep(5)
+                analytical_r = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)
+                x = point[0]
+                y = point[1]
+                norm = np.sqrt(x*x+y*y)
+                x_norm = x/norm
+                y_norm = y/norm
+                plt.plot(point[0] + analytical_r*x_norm, point[1] + y_norm*analytical_r, "r^")
+        elif model.coordinate_system == "rectangular":
+            plt.scatter(data[:, 0], data[:, 1], "s")
+            computed = result.reshape(int(result.size/2), 2)
+            plt.scatter((data+computed)[:,0], (data+computed)[:,1])
+
+            for index, point in enumerate(data):
+                analytical_x = num.Function(model.analytical[0], name="analytical u(%s)").eval(point)
+                analytical_y = num.Function(model.analytical[1], name="analytical v(%s)").eval(point)
+                plt.plot(point[0] + analytical_x, point[1] + analytical_y, "r^")
+        plt.show()
 
         corrects = np.reshape([sp.lambdify((x, y), model.analytical, "numpy")(*point) for point in data],
                               (model.num_dimensions * len(data)))

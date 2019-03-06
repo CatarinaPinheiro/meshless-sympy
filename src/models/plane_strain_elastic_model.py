@@ -8,91 +8,30 @@ class PlaneStrainElasticModel(Model):
     def __init__(self, region):
         self.region = region
         x, y = sp.var("x y")
-        G = 78.85e9
+        G = np.array([78.85e9])
         K = 170.83e9
         self.E = 9 * K * G / (3 * K + G)
         self.ni = np.array([(3*K - 2*G)/(2*(3*K + G))])
-        self.p = 1e-6
+        self.p = 1e6
+        self.lmbda = K - 2*G/3
 
 
         # self.analytical = [x,sp.Integer(0)]
 
         self.rmin = 0.5
         self.rmax = 1
-        u = (self.p * self.rmin ** 2 / (self.rmax **2 - self.rmin ** 2)) * ((1 + self.ni) / self.E) * (sp.sqrt(x * x + y * y)*(1 - 2 * self.ni) + ((self.rmax ** 2) / (sp.sqrt(x * x + y * y))))
+        r = sp.sqrt(x*x+y*y)
+        u = (self.p * self.rmin ** 2 / (self.rmax **2 - self.rmin ** 2)) * ((1 + self.ni) / self.E) * (r*(1 - 2 * self.ni) + (self.rmax ** 2) /r)
 
         self.analytical = [sp.Matrix(u), sp.Matrix(np.zeros([1]))]
 
         self.num_dimensions = 2
+        self.coordinate_system = "polar"
 
-        1 - self.ni
-        self.G = self.E / (2 * (1 + self.ni))
-        self.D = (self.E / ((1 + self.ni) * (1 - 2 * self.ni))) * np.array([[, self.ni, 0],
+        self.G = G
+        self.D = (self.E / ((1 + self.ni) * (1 - 2 * self.ni))) * np.array([[1-self.ni, self.ni, 0],
                                                                             [self.ni, 1 - self.ni, 0],
-                                                                            [0, 0, (1 - 2 * self.ni) / 2]]).reshape((3, 3, 1))
-
-    def independent_boundary_operator(self, u, v, integration_point):
-        """
-        NEUMANN:
-            ∇f(p).n # computes directional derivative
-        DIRICHLET:
-            f(p) # constraints function value
-        """
-
-        time_points = self.D.shape[2]
-
-        ux = u.derivate("x").eval(integration_point)
-        uy = u.derivate("y").eval(integration_point)
-
-        vx = v.derivate("x").eval(integration_point)
-        vy = v.derivate("y").eval(integration_point)
-
-        nx, ny = self.region.normal(integration_point)
-        N = np.array([[nx, 0, ny],
-                      [0, ny, nx]])
-
-        zr = np.zeros(ux.shape)
-
-        print(ux.shape, uy.shape)
-        print(vx.shape, vy.shape)
-        Lt = np.array([[ux, zr],
-                       [zr, vy],
-                       [uy, vx]]). \
-            astype(np.float64). \
-            reshape([3, 2, time_points])
-        Lt = np.moveaxis(Lt, 2, 0)
-
-        D = np.moveaxis(self.D, 2, 0)
-        neumann_case = np.moveaxis(N @ D @ Lt, 0, -1)
-
-        uv = np.array(u.eval(integration_point))
-        vv = np.array(v.eval(integration_point))
-
-        print(uv.ravel().shape, vv.ravel().shape)
-        print(np.zeros(uv.size).shape, np.zeros(vv.size).shape)
-        dirichlet_case = np.array([[uv.ravel(), np.zeros(uv.size)],
-                                   [np.zeros(vv.size), vv.ravel()]])
-
-        conditions = self.region.condition(integration_point)
-        if conditions[0] == "DIRICHLET":
-            normal_case = dirichlet_case
-        elif conditions[0] == "NEUMANN":
-            normal_case = neumann_case
-        else:
-            raise Exception("condition(%s) = %s" % (integration_point, conditions[0]))
-
-        if conditions[1] == "DIRICHLET":
-            tangent_case = dirichlet_case
-        elif conditions[1] == "NEUMANN":
-            tangent_case = neumann_case
-        else:
-            raise Exception("condition(%s) = %s" % (integration_point, conditions[1]))
-
-        normal = np.abs(self.region.normal(integration_point))
-        K1 = normal[0] * normal_case[0] + normal[1] * tangent_case[0]
-        K2 = normal[1] * normal_case[1] + normal[0] * tangent_case[1]
-
-        return np.array([K1, K2])
+                                                                            [0, 0, (1 - 2 * self.ni) / 2]], dtype=np.float64).reshape((3, 3, 1))
 
     def stiffness_boundary_operator(self, phi, integration_point):
         """
@@ -139,63 +78,29 @@ class PlaneStrainElasticModel(Model):
         conditions = self.region.condition(integration_point)
 
         if conditions[0] == "DIRICHLET":
-            normal_case = dirichlet_case
+            K1 = dirichlet_case[0]
         elif conditions[0] == "NEUMANN":
-            normal_case = neumann_case
+            K1 = neumann_case[0]
         else:
             raise Exception("condition(%s) = %s" % (integration_point, conditions[0]))
 
         if conditions[1] == "DIRICHLET":
-            tangent_case = dirichlet_case
+            K2 = dirichlet_case[1]
         elif conditions[1] == "NEUMANN":
-            tangent_case = neumann_case
+            K2 = neumann_case[1]
         else:
             raise Exception("condition(%s) = %s" % (integration_point, conditions[1]))
 
-        normal = np.abs(self.region.normal(integration_point))
-        K1 = normal[0] * normal_case[0] + normal[1] * tangent_case[0]
-        K2 = normal[1] * normal_case[1] + normal[0] * tangent_case[1]
-
         return np.array([K1, K2])
-
-    def domain_function(self, point):
-        u = num.Function(self.analytical[0], name="u(%s)" % point).eval(point)
-        v = num.Function(self.analytical[1], name="v(%s)" % point).eval(point)
-        return np.array([u, v])
-
-    def boundary_function(self, point):
-        u = num.Function(self.analytical[0], name="u(%s)" % point)
-        v = num.Function(self.analytical[1], name="v(%s)" % point)
-
-        return np.sum(self.independent_boundary_operator(u, v, point), axis=1)
-
-    def given_boundary_function(self, point):
-        ux = num.Function(self.analytical[0], name="ux(%s)" % point).derivate("x").eval(point)
-        uy = num.Function(self.analytical[0], name="uy(%s)" % point).derivate("y").eval(point)
-        vx = num.Function(self.analytical[1], name="vx(%s)" % point).derivate("x").eval(point)
-        vy = num.Function(self.analytical[1], name="vy(%s)" % point).derivate("y").eval(point)
-
-        return self.boundary_integral_normal(point) @ np.array([[ux],
-                                                                [vy],
-                                                                [uy + vx]])
-
-    def integral_operator(self, exp, point):
-        zr = np.zeros(exp.shape())
-        dx = exp.derivate("x").eval(point)
-        dy = exp.derivate("y").eval(point)
-        V = np.array([[dx, zr],
-                      [zr, dy],
-                      [dy, dx]])
-        return self.D.transpose() @ V
 
     def stiffness_domain_operator(self, phi, point):
         phi_xx = phi.derivate("x").derivate("x").eval(point)
         phi_yy = phi.derivate("y").derivate("y").eval(point)
         phi_xy = phi.derivate("x").derivate("y").eval(point)
 
-        c1 = np.expand_dims(self.E / ((1 + self.ni) * (1 - 2 * self.ni)), 1)
-        c2 = np.expand_dims(self.E * (1 - self.ni) / ((1 + self.ni) * (1 - 2 * self.ni)), 1)
-        c3 = np.expand_dims(self.E / (2 * (1 + self.ni)), 1)
+        c1 = np.expand_dims(self.lmbda+self.G, 1)
+        c2 = np.expand_dims(self.lmbda+2*self.G, 1)
+        c3 = np.expand_dims(self.G, 1)
         K11 = c2 @ phi_xx + c3 @ phi_yy
         K12 = K21 = c1 @ phi_xy
         K22 = c2 @ phi_yy + c3 @ phi_xx
@@ -210,8 +115,10 @@ class PlaneStrainElasticModel(Model):
         return np.zeros([2, self.ni.size])
 
     def independent_boundary_function(self, point):
-        func = self.boundary_function(point)
-        return np.reshape(func, (2, func.shape[1]))
+        if np.linalg.norm(point) < self.rmin + 1e-3 and self.region.condition(point)[0] == "NEUMANN":
+            return np.array([[self.p], [0]])
+        else:
+            return np.zeros([2, self.ni.size])
 
     def petrov_galerkin_stiffness_domain(self, phi, w, integration_point):
         zero = np.zeros(w.shape())
