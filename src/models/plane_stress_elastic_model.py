@@ -11,6 +11,7 @@ class PlaneStressElasticModel(Model):
         self.analytical = [sp.Matrix([x]), sp.Matrix([-y/4])]
         # self.analytical = [x,sp.Integer(0)]
         self.num_dimensions = 2
+        self.coordinate_system = "rectangular"
 
         self.E = 1
         self.ni = np.array([0.25])
@@ -62,23 +63,20 @@ class PlaneStressElasticModel(Model):
                                    [np.zeros(vv.size), vv.ravel()]])
 
         conditions = self.region.condition(integration_point)
+
         if conditions[0] == "DIRICHLET":
-            normal_case = dirichlet_case
+            K1 = dirichlet_case[0]
         elif conditions[0] == "NEUMANN":
-            normal_case = neumann_case
+            K1 = neumann_case[0]
         else:
             raise Exception("condition(%s) = %s" % (integration_point, conditions[0]))
 
         if conditions[1] == "DIRICHLET":
-            tangent_case = dirichlet_case
+            K2 = dirichlet_case[1]
         elif conditions[1] == "NEUMANN":
-            tangent_case = neumann_case
+            K2 = neumann_case[1]
         else:
             raise Exception("condition(%s) = %s" % (integration_point, conditions[1]))
-
-        normal = np.abs(self.region.normal(integration_point))
-        K1 = normal[0] * normal_case[0] + normal[1] * tangent_case[0]
-        K2 = normal[1] * normal_case[1] + normal[0] * tangent_case[1]
 
         return np.array([K1, K2])
 
@@ -126,25 +124,19 @@ class PlaneStressElasticModel(Model):
 
         conditions = self.region.condition(integration_point)
 
-
         if conditions[0] == "DIRICHLET":
-            normal_case = dirichlet_case
+            K1 = dirichlet_case[0]
         elif conditions[0] == "NEUMANN":
-            normal_case = neumann_case
+            K1 = neumann_case[0]
         else:
-            raise Exception("condition(%s) = %s"%(integration_point, conditions[0]))
+            raise Exception("condition(%s) = %s" % (integration_point, conditions[0]))
 
         if conditions[1] == "DIRICHLET":
-            tangent_case = dirichlet_case
+            K2 = dirichlet_case[1]
         elif conditions[1] == "NEUMANN":
-            tangent_case = neumann_case
+            K2 = neumann_case[1]
         else:
-            raise Exception("condition(%s) = %s"%(integration_point, conditions[1]))
-
-        normal = np.abs(self.region.normal(integration_point))
-        K1 = normal[0]*normal_case[0]+normal[1]*tangent_case[0]
-        K2 = normal[1]*normal_case[1]+normal[0]*tangent_case[1]
-
+            raise Exception("condition(%s) = %s" % (integration_point, conditions[1]))
 
         return np.array([K1, K2])
 

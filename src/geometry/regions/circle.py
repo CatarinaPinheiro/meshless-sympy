@@ -21,9 +21,9 @@ class Circle(Region):
                                                [[rmin*np.cos(t), rmin*np.sin(t)] for t in np.flip(ts)[0:-1]]], axis=0)
 
         self.all_points = np.concatenate([self.domain_points, self.boundary_points], axis=0)
-        self.boundary_condition = ([["DIRICHLET", "NEUMANN"] for _ in rs[0:-1]] +
-                                   [["NEUMANN",   "NEUMANN"] for _ in ts[0:-1]] +
-                                   [["DIRICHLET", "NEUMANN"] for _ in rs[0:-1]] +
-                                   [["NEUMANN",   "NEUMANN"] for _ in ts[0:-1]])
+        self.boundary_condition = ([["NEUMANN"] for _ in rs[0:-1]] +
+                                   [["NEUMANN"] for _ in ts[0:-1]] +
+                                   [["NEUMANN"] for _ in rs[0:-1]] +
+                                   [["NEUMANN"] for _ in ts[0:-1]])
 
 

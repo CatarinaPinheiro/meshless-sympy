@@ -1,25 +1,27 @@
 {
   "boundary_points": [
-    [0, 0],
-    [1, 0],
-    [2, 0],
-    [2, 1],
-    [2, 2],
-    [1, 2],
-    [0, 2],
-    [0, 1]
+    [0, -15],
+    [30, -15],
+    [60, -15],
+    [60, 0],
+    [60, 15],
+    [30, 15],
+    [0, 15],
+    [0, 1],
+    [0, -1]
   ],
   "conditions": [
-    ["DIRICHLET", "NEUMANN"],
-    ["DIRICHLET", "NEUMANN"],
+    ["NEUMANN", "NEUMANN"],
+    ["NEUMANN", "NEUMANN"],
+    ["NEUMANN", "NEUMANN"],
+    ["NEUMANN", "NEUMANN"],
     ["NEUMANN", "NEUMANN"],
     ["NEUMANN", "NEUMANN"],
     ["DIRICHLET", "NEUMANN"],
-    ["DIRICHLET", "NEUMANN"],
-    ["DIRICHLET", "NEUMANN"],
+    ["DIRICHLET", "DIRICHLET"],
     ["DIRICHLET", "NEUMANN"]
   ],
   "domain_points": [
-    [1, 1]
+    [30, 0]
   ]
 }
