@@ -11,6 +11,7 @@ class PlaneStressElasticModel(Model):
         self.analytical = [sp.Matrix([x]), sp.Matrix([-y/4])]
         # self.analytical = [x,sp.Integer(0)]
         self.num_dimensions = 2
+        self.coordinate_system = "rectangular"
 
         self.E = 1
         self.ni = np.array([0.25])

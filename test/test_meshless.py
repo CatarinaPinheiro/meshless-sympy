@@ -58,7 +58,7 @@ class TestMeshless(unittest.TestCase):
                 y_norm = y/norm
                 plt.plot(point[0] + analytical_r*x_norm, point[1] + y_norm*analytical_r, "r^")
         elif model.coordinate_system == "rectangular":
-            plt.scatter(data[:, 0], data[:, 1], "s")
+            plt.scatter(data[:, 0], data[:, 1])
             computed = result.reshape(int(result.size/2), 2)
             plt.scatter((data+computed)[:,0], (data+computed)[:,1])
 

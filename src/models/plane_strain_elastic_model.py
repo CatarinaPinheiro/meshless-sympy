@@ -117,6 +117,9 @@ class PlaneStrainElasticModel(Model):
     def independent_boundary_function(self, point):
         if np.linalg.norm(point) < self.rmin + 1e-3 and self.region.condition(point)[0] == "NEUMANN":
             return np.array([[self.p], [0]])
+        elif np.linalg.norm(point) > self.rmax - 1e-3 and self.region.condition(point)[0] == "DIRICHLET":
+            analytical = num.Function(self.analytical[0], name="analytical u(%s)"%point).eval(point)
+            return np.array([[analytical], [0]])
         else:
             return np.zeros([2, self.ni.size])
 
