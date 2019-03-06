@@ -68,7 +68,3 @@ class Region:
 
     def plot(self):
         plt.fill(self.boundary_points[:,0], self.boundary_points[:,1], "^-", alpha=0.1)
-        for index, p1 in enumerate(self.boundary_points):
-            p2 = self.boundary_points[(index + 1) % len(self.boundary_points)]
-            p = (p1+p2)/2
-            plt.text(p[0], p[1], str(self.condition(p1)))

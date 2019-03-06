@@ -8,67 +8,115 @@ class PlaneStrainElasticModel(Model):
     def __init__(self, region):
         self.region = region
         x, y = sp.var("x y")
-        G = 78.85e9
+        G = np.array([78.85e9])
         K = 170.83e9
         self.E = 9 * K * G / (3 * K + G)
         self.ni = np.array([(3*K - 2*G)/(2*(3*K + G))])
         self.p = 1e6
+        self.lmbda = K - 2*G/3
 
 
         self.rmin = 0.5
         self.rmax = 1
-        self.lmbda = self.E*self.ni/((1+self.ni)*(1-2*self.ni))
         r = sp.sqrt(x*x+y*y)
-        u = (self.p * self.rmin ** 2 / (self.rmax **2 - self.rmin ** 2)) * ((1 + self.ni) / self.E) * ((1 - 2 * self.ni)*r + (self.rmax ** 2) / r)
+        u = (self.p * self.rmin ** 2 / (self.rmax **2 - self.rmin ** 2)) * ((1 + self.ni) / self.E) * (r*(1 - 2 * self.ni) + (self.rmax ** 2) /r)
 
         self.analytical = u
 
-        self.num_dimensions = 1
+        self.num_dimensions = 2
         self.coordinate_system = "polar"
 
-        1 - self.ni
-        self.G = self.E / (2 * (1 + self.ni))
-        self.D = (self.E / ((1 + self.ni) * (1 - 2 * self.ni))) * np.array([[1 - self.ni, self.ni, 0],
+        self.G = G
+        self.D = (self.E / ((1 + self.ni) * (1 - 2 * self.ni))) * np.array([[1-self.ni, self.ni, 0],
                                                                             [self.ni, 1 - self.ni, 0],
                                                                             [0, 0, (1 - 2 * self.ni) / 2]], dtype=np.float64).reshape((3, 3, 1))
 
     def stiffness_boundary_operator(self, phi, integration_point):
-        r = np.linalg.norm(integration_point)
-        dxdr = integration_point[0]/r
-        dudx = phi.derivate("x").eval(integration_point)
-        dudy = phi.derivate("y").eval(integration_point)
-        dudr = dudx*dxdr
+        """
+        NEUMANN:
+            ∇f(p).n # computes directional derivative
+        DIRICHLET:
+            f(p) # constraints function value
+        """
 
-        space_size = phi.shape()[1]
-        time_size = self.ni.size
+        phix = phi.derivate("x").eval(integration_point)
+        phiy = phi.derivate("y").eval(integration_point)
 
-        condition = self.region.condition(integration_point)[0]
-        if condition == "DIRICHLET":
-            return phi.eval(integration_point).resize([1, space_size, time_size])
-        elif condition == "NEUMANN":
-            mul = self.lmbda - 2*self.G
-            return mul*dudr.reshape([1, space_size, time_size])
+        nx, ny = self.region.normal(integration_point)
+        N = np.array([[nx, 0, ny],
+                      [0, ny, nx]])
 
-    def stiffness_domain_operator(self, phi, integration_point):
-        r = np.linalg.norm(integration_point)
-        dxdr = integration_point[0]/r
-        u = phi.eval(integration_point)
-        dudr = phi.derivate("x").eval(integration_point)*dxdr
-        d2udr2 = phi.derivate("x").derivate("x").eval(integration_point)*dxdr*dxdr
+        zero = np.zeros(phi.shape())
+        space_points = phix.shape[1]
+        time_points = self.D.shape[2]
 
-        space_size = phi.shape()[1]
-        time_size = self.ni.size
-        mul = self.lmbda - 2*self.G
-        return (mul*((1+1/r**2)*dudr - (1/r**2)*u + r*d2udr2)).reshape([1, space_size, time_size])
+        Lt = np.array([[phix, zero],
+                       [zero, phiy],
+                       [phiy, phix]]). \
+            reshape([3, 2, space_points]). \
+            repeat(time_points, axis=2). \
+            reshape([3, 2, space_points, time_points]). \
+            swapaxes(0, 2).swapaxes(1, 3)
+
+        D = self.D.repeat(space_points, axis=2). \
+            reshape(3, 3, time_points, space_points). \
+            swapaxes(0, 3).swapaxes(1, 2)
+        neumann_case = (N @ D @ Lt).swapaxes(0, 1). \
+            swapaxes(0, 3).swapaxes(0, 2). \
+            reshape([2, 2 * space_points, time_points])
+
+        uv = np.array(phi.eval(integration_point))
+        dirichlet_case = np.array([[uv.ravel(), np.zeros(uv.size)],
+                                   [np.zeros(uv.size), uv.ravel()]]). \
+            repeat(time_points, axis=2). \
+            reshape([2, 2, space_points, time_points]). \
+            swapaxes(1, 2). \
+            reshape([2, 2 * space_points, time_points])
+
+        conditions = self.region.condition(integration_point)
+
+        if conditions[0] == "DIRICHLET":
+            K1 = dirichlet_case[0]
+        elif conditions[0] == "NEUMANN":
+            K1 = neumann_case[0]
+        else:
+            raise Exception("condition(%s) = %s" % (integration_point, conditions[0]))
+
+        if conditions[1] == "DIRICHLET":
+            K2 = dirichlet_case[1]
+        elif conditions[1] == "NEUMANN":
+            K2 = neumann_case[1]
+        else:
+            raise Exception("condition(%s) = %s" % (integration_point, conditions[1]))
+
+        return np.array([K1, K2])
+
+    def stiffness_domain_operator(self, phi, point):
+        phi_xx = phi.derivate("x").derivate("x").eval(point)
+        phi_yy = phi.derivate("y").derivate("y").eval(point)
+        phi_xy = phi.derivate("x").derivate("y").eval(point)
+
+        c1 = np.expand_dims(self.lmbda+self.G, 1)
+        c2 = np.expand_dims(self.lmbda+2*self.G, 1)
+        c3 = np.expand_dims(self.G, 1)
+        K11 = c2 @ phi_xx + c3 @ phi_yy
+        K12 = K21 = c1 @ phi_xy
+        K22 = c2 @ phi_yy + c3 @ phi_xx
+
+        time_size = c1.size
+        space_size = phi_xx.size
+
+        return np.array([[K11, K12],
+                         [K21, K22]]).swapaxes(2, 3).swapaxes(1, 2).reshape(2, 2 * space_size, time_size)
 
     def independent_domain_function(self, point):
         return np.zeros([1, self.ni.size])
 
     def independent_boundary_function(self, point):
-        if np.linalg.norm(point) < self.rmin + 1e-6 and self.region.condition(point)[0] == "NEUMANN":
-            return np.array([[self.p]])
+        if np.linalg.norm(point) < self.rmin + 1e-3 and self.region.condition(point)[0] == "NEUMANN":
+            return np.array([[self.p], [0]])
         else:
-            return np.zeros([1, self.ni.size])
+            return np.zeros([2, self.ni.size])
 
     def petrov_galerkin_stiffness_domain(self, phi, w, integration_point):
         zero = np.zeros(w.shape())

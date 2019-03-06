@@ -54,7 +54,7 @@ class TestMeshless(unittest.TestCase):
                 y_norm = y/norm
                 plt.plot(point[0] + analytical_r*x_norm, point[1] + y_norm*analytical_r, "r^")
         elif model.coordinate_system == "rectangular":
-            plt.scatter(data[:, 0], data[:, 1])
+            plt.scatter(data[:, 0], data[:, 1], "s")
             computed = result.reshape(int(result.size/2), 2)
             plt.scatter((data+computed)[:,0], (data+computed)[:,1])
 
@@ -63,11 +63,6 @@ class TestMeshless(unittest.TestCase):
                 analytical_y = num.Function(model.analytical[1], name="analytical v(%s)").eval(point)
                 plt.plot(point[0] + analytical_x, point[1] + analytical_y, "r^")
         plt.show()
-
-        if model.num_dimensions == 2:
-            corrects_u = [num.Function(model.analytical[0], name="analytical u(%s)").eval(point) for point in data]
-            corrects_v = [num.Function(model.analytical[1], name="analytical v(%s)").eval(point) for point in data]
-            corrects = np.concatenate([[corrects_u[index], corrects_v[index]] for index in range(len(data))]).reshape([1, 2*len(data), 1])
 
 
         # test if system makes sense
