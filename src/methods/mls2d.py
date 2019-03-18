@@ -94,7 +94,7 @@ class MovingLeastSquares2D:
         return num.Product([
             num.Matrix(spt, "pt"),
             num.Inverse(sA, "A"),
-            sB], name="phi%d(%s)"%(self.i, self.point))
+            sB], name="phi(%s)"%(self.point))
         # return num.Constant(np.array([[1 if self.point[0] == d[0] and self.point[1] == d[1] else 0 for d in self.data]]), name="phi")
 
     def set_point(self, point):

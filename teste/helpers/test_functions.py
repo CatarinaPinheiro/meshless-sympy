@@ -24,7 +24,7 @@ class LinearExample(ExampleFunction):
 
 class PolynomialExample(ExampleFunction):
     def eval(self, point):
-        return point[0] ** 2 + point[1] ** 2
+        return point[0] ** 3 + point[1] ** 2
 
     def derivate_x(self, point):
         return 2*point[0]

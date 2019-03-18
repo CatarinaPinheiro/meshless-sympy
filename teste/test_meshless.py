@@ -1,6 +1,6 @@
 import unittest
 
-from src.basis import *
+from src.helpers.basis import *
 from src.methods.collocation_method import CollocationMethod
 from src.methods.galerkin_method import GalerkinMethod
 from src.methods.petrov_galerkin_method import PetrovGalerkinMethod
@@ -26,30 +26,30 @@ elastic_region_example = Rectangle(
     # dx=6,
     # dy=6,
     parametric_partition={
-        0.01: ["DIRICHLET", "NEUMANN"],
-        1:    ["NEUMANN",   "NEUMANN"],
-        2:    ["NEUMANN",   "NEUMANN"],
-        3:    ["NEUMANN",   "NEUMANN"],
-        3.49: ["DIRICHLET", "NEUMANN"],
-        3.51: ["DIRICHLET", "DIRICHLET"],
-        4:    ["DIRICHLET", "NEUMANN"]
-        # 5: ["DIRICHLET", "DIRICHLET"]
+        # 0.01: ["DIRICHLET", "NEUMANN"],
+        # 1:    ["NEUMANN",   "NEUMANN"],
+        # 2:    ["NEUMANN",   "NEUMANN"],
+        # 3:    ["NEUMANN",   "NEUMANN"],
+        # 3.49: ["DIRICHLET", "NEUMANN"],
+        # 3.51: ["DIRICHLET", "DIRICHLET"],
+        # 4:    ["DIRICHLET", "NEUMANN"]
+        5: ["DIRICHLET", "DIRICHLET"]
     })
 
 crimped_beam_region_example = Rectangle(
     x1=0,
-    y1=-6,
-    x2=48,
-    y2=6,
-    dx=3,
-    dy=3,
+    y1=-0.48,
+    x2=0.48,
+    y2=0.48,
+    dx=0.12,
+    dy=0.12,
     parametric_partition={
-        # 0.01: ["DIRICHLET", "NEUMANN"],
-        # 2.99: ["NEUMANN", "NEUMANN"],
-        # 3.49: ["DIRICHLET", "NEUMANN"],
-        # 3.51: ["DIRICHLET", "DIRICHLET"],
-        # 4.01: ["DIRICHLET", "NEUMANN"]
-        5: ["DIRICHLET", "DIRICHLET"]
+        0.01: ["DIRICHLET", "NEUMANN"],
+        2.99: ["NEUMANN", "NEUMANN"],
+        3.49: ["DIRICHLET", "NEUMANN"],
+        3.51: ["DIRICHLET", "DIRICHLET"],
+        4.01: ["DIRICHLET", "NEUMANN"]
+        # 5: ["DIRICHLET", "DIRICHLET"]
     })
 
 viscoelastic_region_example = Rectangle(

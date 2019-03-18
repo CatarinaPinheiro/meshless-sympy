@@ -8,7 +8,7 @@ class PotentialModel(Model):
     def __init__(self, region):
         self.region = region
         x, y = sp.var("x y")
-        self.analytical = 18*y*y-8*x
+        self.analytical = 18*y*y*y-8
         # self.analytical = x+y
         self.num_dimensions = 1
 

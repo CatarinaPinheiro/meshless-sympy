@@ -1,5 +1,5 @@
 import unittest
-import src.basis as b
+import src.helpers.basis as b
 import numpy as np
 import src.methods.mls2d as m
 import teste.helpers.test_functions as ef
