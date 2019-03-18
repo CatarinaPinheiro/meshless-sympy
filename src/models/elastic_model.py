@@ -8,7 +8,7 @@ class ElasticModel(Model):
     def __init__(self, region):
         self.region = region
         x, y = sp.var("x y")
-        self.analytical = [sp.Matrix([x]), sp.Matrix([-y/4])]
+        self.analytical = [sp.Matrix([x*x*x]), sp.Matrix([-y/4])]
         # self.analytical = [x,sp.Integer(0)]
         self.num_dimensions = 2
 
@@ -114,9 +114,25 @@ class ElasticModel(Model):
             swapaxes(0,3).swapaxes(0,2).\
             reshape([2,2*space_points, time_points])
 
-        uv = np.array(phi.eval(integration_point))
-        dirichlet_case = np.array([[uv.ravel(), np.zeros(uv.size)],
-                                   [np.zeros(uv.size), uv.ravel()]]).\
+        # a = self.D[0,0]
+        # b = self.D[0,1]
+        # c = self.D[1,0]
+        # d = self.D[1,1]
+        # e = self.D[2,2]
+        # time_points = self.ni.size
+        # space_points = phix.size
+        # m1 = a*phix+b*phiy
+        # m2 = c*phix+d*phiy
+        # m3 = e*(phix+phiy)
+        # multiplication = np.array([nx*m1+ny*m3, ny*m2 + nx*m3]).reshape([2, space_points])
+        # first_row = np.array([multiplication[0], np.zeros(space_points)]).transpose().ravel()
+        # second_row = np.array([np.zeros(space_points), multiplication[1]]).transpose().ravel()
+        # neumann_case2 = np.array([first_row, second_row]).reshape([2, 2*space_points, 1])
+        # diff = neumann_case - neumann_case2
+
+        phi = phi.eval(integration_point)
+        dirichlet_case = np.array([[phi.ravel(), np.zeros(phi.size)],
+                                   [np.zeros(phi.size), phi.ravel()]]).\
             repeat(time_points, axis=2).\
             reshape([2,2,space_points, time_points]).\
             swapaxes(1,2).\
@@ -151,44 +167,56 @@ class ElasticModel(Model):
 
         return np.sum(self.independent_boundary_operator(u, v, point), axis=1)
 
-    def given_boundary_function(self, point):
-        ux = num.Function(self.analytical[0], name="ux(%s)"%point).derivate("x").eval(point)
-        uy = num.Function(self.analytical[0], name="uy(%s)"%point).derivate("y").eval(point)
-        vx = num.Function(self.analytical[1], name="vx(%s)"%point).derivate("x").eval(point)
-        vy = num.Function(self.analytical[1], name="vy(%s)"%point).derivate("y").eval(point)
-
-        return self.boundary_integral_normal(point)@np.array([[ux],
-                                                              [vy],
-                                                              [uy+vx]])
-
-    def integral_operator(self, exp, point):
-        zr = np.zeros(exp.shape())
-        dx = exp.derivate("x").eval(point)
-        dy = exp.derivate("y").eval(point)
-        V = np.array([[dx, zr],
-                      [zr, dy],
-                      [dy, dx]])
-        return self.D.transpose()@V
-
     def stiffness_domain_operator(self, phi, point):
-        phi_xx = phi.derivate("x").derivate("x").eval(point)
-        phi_yy = phi.derivate("y").derivate("y").eval(point)
-        phi_xy = phi.derivate("x").derivate("y").eval(point)
+        # phi_xx = phi.derivate("x").derivate("x").eval(point)
+        # phi_yy = phi.derivate("y").derivate("y").eval(point)
+        # phi_xy = phi.derivate("x").derivate("y").eval(point)
+        #
+        # c1 = np.expand_dims(self.E/(2*(1-self.ni**2)), 1)
+        # c2 = np.expand_dims(self.E*(2-self.ni)/(2*(1-self.ni**2)), 1)
+        # K11 = c2@phi_xx + c1@phi_yy
+        # K12 = K21 = c1@phi_xy
+        # K22 = c2@phi_yy + c1@phi_xx
+        #
+        # time_size = c1.size
+        # space_size = phi_xx.size
+        #
+        # return np.array([[K11, K12],
+        #                  [K21, K22]]).swapaxes(2,3).swapaxes(1,2).reshape(2, 2*space_size, time_size)
 
-        c1 = np.expand_dims(self.E/(2*(1-self.ni**2)), 1)
-        c2 = np.expand_dims(self.E*(2-self.ni)/(2*(1-self.ni**2)), 1)
-        K11 = c2@phi_xx + c1@phi_yy
-        K12 = K21 = c1@phi_xy
-        K22 = c2@phi_yy + c1@phi_xx
+        a = self.D[0, 0]
+        b = self.D[0, 1]
+        c = self.D[1, 0]
+        d = self.D[1, 1]
+        e = self.D[2, 2]
+        phixx = phi.derivate("x").derivate("x").eval(point)
+        phiyy = phi.derivate("y").derivate("y").eval(point)
+        phixy = phi.derivate("x").derivate("y").eval(point)
 
-        time_size = c1.size
-        space_size = phi_xx.size
-
-        return np.array([[K11, K12],
-                         [K21, K22]]).swapaxes(2,3).swapaxes(1,2).reshape(2, 2*space_size, time_size)
+        # L.D.Lt.u
+        space_size = phixx.size
+        multiplication = np.array([a*phixx+b*phixy+e*(phiyy+phixy), c*phixy+d*phiyy+e*(phixy+phixx)]).reshape([2, space_size])
+        first_row = np.array([multiplication[0], np.zeros(space_size)]).transpose().ravel()
+        second_row = np.array([np.zeros(space_size), multiplication[1]]).transpose().ravel()
+        return np.array([first_row, second_row]).reshape([2, 2*space_size, 1])
 
     def independent_domain_function(self, point):
-        return np.zeros([2, self.ni.size])
+        a = self.D[0, 0]
+        b = self.D[0, 1]
+        c = self.D[1, 0]
+        d = self.D[1, 1]
+        e = self.D[2, 2]
+        u = num.Function(self.analytical[0], name="u(%s)"%point)
+        v = num.Function(self.analytical[1], name="v(%s)"%point)
+        uxx = u.derivate("x").derivate("x").eval(point)
+        uyy = u.derivate("y").derivate("y").eval(point)
+        uxy = u.derivate("x").derivate("y").eval(point)
+        vxy = v.derivate("x").derivate("y").eval(point)
+        vxx = v.derivate("x").derivate("x").eval(point)
+        vyy = v.derivate("y").derivate("y").eval(point)
+
+        # L.D.Lt.u
+        return np.array([a*uxx+b*vxy+e*(uyy+vxy), c*uxy+d*vyy+e*(uxy+vxx)]).reshape([2, 1])
 
     def independent_boundary_function(self, point):
         func = self.boundary_function(point)

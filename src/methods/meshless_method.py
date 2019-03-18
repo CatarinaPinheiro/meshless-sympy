@@ -66,6 +66,7 @@ class MeshlessMethod:
         b = []
 
         for i, d in enumerate(self.data):
+            self.m2d.i = i
             cache.reset()
 
             duration.duration.start("%d/%d" % (i, len(self.data)))
@@ -134,9 +135,9 @@ class MeshlessMethod:
             xs, ys = self.data[point_index][0]+r*np.cos(angles), self.data[point_index][1]+r*np.sin(angles)
             plt.plot(xs,ys)
 
-        # phis
-        points = np.array(self.data)
-        plt.scatter(points[:,0],points[:,1],s=[500*value for value in self.stiffness[point_index] ])
+        # # phis
+        # points = np.array(self.data)
+        # plt.scatter(points[:,0],points[:,1],s=[500*value for value in self.stiffness[point_index] ])
 
         # domain points
         inside_array = np.array(self.domain_data)
@@ -157,13 +158,13 @@ class MeshlessMethod:
 
 
         # matrix
-        norm = mpl.colors.Normalize(vmin=self.b.min(), vmax=self.b.max())
-        cmap = cm.hot
-        m = cm.ScalarMappable(norm=norm, cmap=cmap)
-        for index, point in enumerate(self.data):
-            plt.text(point[0], point[1], str(self.b[index])+"\n")
+       # norm = mpl.colors.Normalize(vmin=self.b.min(), vmax=self.b.max())
+       # cmap = cm.hot
+       # m = cm.ScalarMappable(norm=norm, cmap=cmap)
+       # for index, point in enumerate(self.data):
+       #     plt.text(point[0], point[1], str(self.b[index])+"\n")
 
         # default point
-        plt.scatter(points[point_index][0], points[point_index][1])
+        # plt.scatter(points[point_index][0], points[point_index][1])
 
 

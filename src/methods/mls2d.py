@@ -5,7 +5,7 @@ import src.helpers.numeric as num
 
 
 class MovingLeastSquares2D:
-    def __init__(self, data, basis, weight_function, security=1.5):
+    def __init__(self, data, basis, weight_function, security=1.8):
         self.basis = basis
         self.data = data
         self.point = np.zeros(np.shape(data[0]))
@@ -76,25 +76,25 @@ class MovingLeastSquares2D:
 
     @property
     def numeric_phi(self):
-        # self.ri = self.r_min
-        #
-        # while True:
-        #     A, B = self.numeric_AB(self.ri)
-        #     det = np.linalg.det(A)
-        #     if det < 1e-6:
-        #         self.ri *= 1.05
-        #         continue
-        #     else:
-        #         break
-        #
-        # sA, sB, P, sW = self.ABPW(self.ri)
-        sA, sB, P, sW = self.ABPW(self.security*self.r_first(len(self.basis)))
+        self.ri = self.r_min
+
+        while True:
+            A, B = self.numeric_AB(self.ri)
+            det = np.linalg.det(A)
+            if det < 1e-6:
+                self.ri *= 1.05
+                continue
+            else:
+                break
+
+        sA, sB, P, sW = self.ABPW(self.ri)
+        # sA, sB, P, sW = self.ABPW(self.security*self.r_first(len(self.basis)))
 
         spt = sp.Matrix([self.basis])
         return num.Product([
             num.Matrix(spt, "pt"),
             num.Inverse(sA, "A"),
-            sB])
+            sB], name="phi%d(%s)"%(self.i, self.point))
         # return num.Constant(np.array([[1 if self.point[0] == d[0] and self.point[1] == d[1] else 0 for d in self.data]]), name="phi")
 
     def set_point(self, point):
