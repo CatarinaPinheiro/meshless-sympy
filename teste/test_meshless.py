@@ -21,24 +21,24 @@ elastic_region_example = Rectangle(
     y1=-15,
     x2=60,
     y2=15,
-    dx=30,
-    dy=15,
-    # dx=6,
-    # dy=6,
+    # dx=15,
+    # dy=15,
+    dx=3,
+    dy=3,
     parametric_partition={
-        # 0.01: ["DIRICHLET", "NEUMANN"],
-        # 1:    ["NEUMANN",   "NEUMANN"],
-        # 2:    ["NEUMANN",   "NEUMANN"],
-        # 3:    ["NEUMANN",   "NEUMANN"],
-        # 3.49: ["DIRICHLET", "NEUMANN"],
-        # 3.51: ["DIRICHLET", "DIRICHLET"],
-        # 4:    ["DIRICHLET", "NEUMANN"]
-        5: ["DIRICHLET", "DIRICHLET"]
+        0.01: ["DIRICHLET", "NEUMANN"],
+        1:    ["NEUMANN",   "NEUMANN"],
+        2:    ["NEUMANN",   "NEUMANN"],
+        3:    ["NEUMANN",   "NEUMANN"],
+        3.49: ["DIRICHLET", "NEUMANN"],
+        3.51: ["DIRICHLET", "DIRICHLET"],
+        4:    ["DIRICHLET", "NEUMANN"]
+        # 5: ["DIRICHLET", "DIRICHLET"]
     })
 
 crimped_beam_region_example = Rectangle(
     x1=0,
-    y1=-0.48,
+    y1=0,
     x2=0.48,
     y2=0.48,
     dx=0.12,

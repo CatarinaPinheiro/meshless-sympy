@@ -4,6 +4,7 @@ from numpy import linalg as la
 import src.methods.mls2d as mls
 import numpy as np
 from src.helpers.cache import cache
+import scipy as sci
 from src.helpers.functions import unique_rows
 import src.helpers.duration as duration
 from src.helpers.list import element_inside_list
@@ -94,7 +95,13 @@ class MeshlessMethod:
         print(self.stiffness.shape)
         print(self.b.shape)
         print(self.b.max(axis=0))
-        return la.inv(self.stiffness)@self.b.astype(np.float64)
+        print("cond(stiffness)", np.linalg.cond(self.stiffness))
+        return la.pinv(self.stiffness, rcond=1e-9)@self.b.astype(np.float64)
+        # return sci.sparse.linalg.inv(self.stiffness)@self.b.astype(np.float64)
+        # size = 104
+        # return sci.sparse.linalg.lsmr(A=self.stiffness.reshape([size, size]),
+        #                               b=self.b.astype(np.float64).reshape([1, size]),
+        #                               show=True)[0]
 
     @property
     def boundary_data(self):

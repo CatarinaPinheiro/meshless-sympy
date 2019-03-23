@@ -70,7 +70,7 @@ class Inverse(Numeric):
 
     def eval_computed(self, subs):
         duration.start("Inverse::eval %s%s"%(self,subs))
-        value = np.linalg.inv(self.original.eval(subs))
+        value = np.linalg.pinv(self.original.eval(subs))
         duration.step()
         return value
     
