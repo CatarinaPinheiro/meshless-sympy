@@ -4,15 +4,16 @@ import src.helpers.numeric as num
 
 
 class ExampleFunction:
-    def __init__(self, n):
+    def __init__(self, n, size=10):
         self.n = n
+        self.size = size
 
     @property
     def data(self):
         points = []
         for i in range(self.n):
             for j in range(self.n):
-                points.append([i, j, self.eval([i, j])])
+                points.append([i/self.size, j/self.size, self.eval([i/self.size, j/self.size])])
         return np.array(points)
 
 
@@ -29,7 +30,7 @@ class PolynomialExample(ExampleFunction):
         return point[0] ** 3 + point[1] ** 2
 
     def derivate_x(self, point):
-        return 2*point[0]
+        return 3*point[0]**2
 
 
 class ExponentialExample(ExampleFunction):

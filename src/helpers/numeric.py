@@ -7,58 +7,51 @@ import random
 import numexpr as ne
 
 class Numeric():
-    def eval_cached(self, stored, subs):
-        return stored
+    # def eval_cached(self, stored, subs):
+    #     return stored
+    #
+    # def eval_computed(self, subs):
+    #     raise Exception("Method not implemented")
+    #
+    # def eval(self, subs):
+    #     found, stored = cache.get(self.cache_str(subs))
+    #     if found:
+    #         # cached = self.eval_cached(stored, subs)
+    #         # computed = self.eval_computed(subs)
+    #         # if (type(cached) == np.ndarray):
+    #         #     if (cached != computed).any():
+    #         #         print(cached)
+    #         #         print(computed)
+    #         # elif (cached != computed):
+    #         #     print(cached)
+    #         #     print(computed)
+    #         # return cached
+    #
+    #         return self.eval_cached(stored, subs)
+    #     else:
+    #         value = self.eval_computed(subs)
+    #         cache.set(self.cache_str(subs), value)
+    #         return value
 
-    def eval_computed(self, subs):
-        raise Exception("Method not implemented")
-
-    def eval(self, subs):
-        found, stored = cache.get(self.cache_str(subs))
-        if found:
-            # cached = self.eval_cached(stored, subs)
-            # computed = self.eval_computed(subs)
-            # if (type(cached) == np.ndarray):
-            #     if (cached != computed).any():
-            #         print(cached)
-            #         print(computed)
-            # elif (cached != computed):
-            #     print(cached)
-            #     print(computed)
-            # return cached
-
-            return self.eval_cached(stored, subs)
-        else:
-            value = self.eval_computed(subs)
-            cache.set(self.cache_str(subs), value)
-            return value
-
-    def cache_str(self, subs):
-        return str(self) + str(subs)
+    # def cache_str(self, subs):
+    #     return str(self) + str(subs)
 
     def __str__(self):
         return self.name
 
 class Matrix(Numeric):
-    def __init__(self, symbolic, name="M"):
-        self.symbolic = symbolic
+    def __init__(self, matrix, name="M"):
+        self.matrix = matrix
         self.name = name
 
     def derivate(self, var):
-        return Matrix(self.symbolic.diff(var), self.name + var)
+        return Matrix([[cell.derivate(var) for cell in row ] for row in self.matrix], self.name + var)
 
-    def eval_cached(self, stored, subs):
-        return stored#(*subs)
-        
-    def eval_computed(self, subs):
-        duration.start("Matrix::eval %s" % str(self))
-        func = sp.lambdify(sp.var("x y"), self.symbolic, "numpy")
-        value = func(*subs)
-        duration.step()
-        return value
+    def eval(self, subs):
+        return np.array([[cell.eval(subs) for cell in row] for row in self.matrix])
 
     def shape(self):
-        return self.symbolic.shape
+        return np.shape(self.matrix)
 
 
 class Inverse(Numeric):
@@ -69,14 +62,14 @@ class Inverse(Numeric):
     def derivate(self, var):
         return Product([self, Constant(-1*np.identity(self.original.shape()[0])), self.original.derivate(var), self])
 
-    def eval_computed(self, subs):
+    def eval(self, subs):
         duration.start("Inverse::eval %s%s"%(self,subs))
         value = np.linalg.inv(self.original.eval(subs))
         duration.step()
         return value
     
-    def cache_str(self, subs):
-        return str(self)+str(subs)
+    def shape(self):
+        return self.original.shape()
 
     def __str__(self):
         return self.name+"⁻¹"
@@ -93,9 +86,6 @@ class Sum(Numeric):
             for term in self.terms
         ])
     
-    def cache_str(self, subs):
-        return str(ft.reduce(lambda a, b: "(" + str(a) + " + " + str(b) + ")", self.terms)) + str(subs)
-
     def eval(self, subs):
         values = [t.eval(subs) for t in self.terms]
         return np.sum(values, axis=0)
@@ -134,9 +124,6 @@ class Product(Numeric):
 
     def __str__(self):
         return str(ft.reduce(lambda a, b: str(a) + "*" + str(b), self.factors))
-
-    def cache_str(self, subs):
-        return str(ft.reduce(lambda a, b: str(a) + "*" + str(b), self.factors)) + str(subs)
 
     def shape(self):
         return self.factors[0].shape()[0], self.factors[-1].shape()[1]

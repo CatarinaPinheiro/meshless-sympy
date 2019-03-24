@@ -10,7 +10,7 @@ class CrimpedBeamModel(ElasticModel):
         self.E = E = 3e7
         self.ni = ni = 0.3
         self.G = G = E/(2*(1+ni))
-        self.p = p = 10000
+        self.p = p = -1000
         self.D = (E/(1-ni**2))*np.array([[1, ni, 0],
                                          [ni, 1, 0],
                                          [0, 0, (1-ni)/2]]).reshape((3,3,1))

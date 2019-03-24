@@ -25,10 +25,11 @@ class PotentialModel(Model):
         normal = self.region.normal(point)
 
         cond = self.region.condition(point)[0]
+        f = num.Function(self.analytical, name="analytical")
         if cond == "NEUMANN":
-            return sp.lambdify((x,y),self.analytical.diff(x)*normal[0]+self.analytical.diff(y)*normal[1],"numpy")(*point)
+            return f.derivate("x").eval(point)*normal[0]+f.derivate("y").eval(point)*normal[1]
         elif cond == "DIRICHLET":
-            return sp.lambdify((x,y),self.analytical,"numpy")(*point)
+            return f.eval(point)
 
     def boundary_operator(self, num, point):
         """

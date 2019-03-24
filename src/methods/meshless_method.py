@@ -23,6 +23,7 @@ class MeshlessMethod:
         self.support_radius = {}
 
     def domain_append(self, i, d):
+        self.m2d.point = d
         radius = min(self.m2d.r_first(1), self.model.region.distance_from_boundary(d))
 
         def stiffness_element(integration_point):
@@ -58,6 +59,7 @@ class MeshlessMethod:
         return stiffness_element, b_element
 
     def boundary_append(self, i, d):
+        self.m2d.point = d
         stiffness_element = self.model.stiffness_boundary_operator(self.m2d.numeric_phi, d)
         b_element = self.model.independent_boundary_function(self.m2d.point)
 

@@ -3,13 +3,14 @@ import src.helpers.basis as b
 import numpy as np
 import src.methods.mls2d as m
 import teste.helpers.test_functions as ef
-from src.helpers.weights import GaussianWithRadius as Weight
+from src.helpers.weights import Spline as Weight
+import matplotlib.pyplot as plt
 
 
-size = 50
+size = 15
 class TestMovingLeastSquare2D(unittest.TestCase):
     def template(self,example):
-        point = np.array([12.5, 12.5])
+        point = np.array([2.5, 2.5])
 
         data = example.data
         base = b.quadratic_2d
@@ -20,23 +21,34 @@ class TestMovingLeastSquare2D(unittest.TestCase):
         desired_x = example.derivate_x(point)
 
         # test radius
-        self.assertAlmostEqual(mls.r_first(1), np.sqrt(2)/2, 3)
-
+        # self.assertAlmostEqual(mls.r_first(1), np.sqrt(2)/2, 3)
+        #
         # test valuation
-        self.assertAlmostEqual(approx, desired, 6)
+        # self.assertAlmostEqual(approx, desired, 6)
+        #
+        # test derivate_x
+        # self.assertAlmostEqual((mls.numeric_phi.derivate("x").eval(point)@data[:,2]).sum(), desired_x, 6)
+
+        return np.abs((mls.numeric_phi.eval(point)@data[:,2]).sum() - desired)
 
 
     def test_polynomial_phi(self):
-       self.template(ef.PolynomialExample(size))
+        points = range(20, 40)
+        plt.plot(points,[self.template(ef.PolynomialExample(size)) for size in points])
+        plt.show()
 
     def test_linear_phi(self):
-       self.template(ef.LinearExample(size))
+        points = range(20, 40)
+        plt.plot(points,[self.template(ef.LinearExample(size)) for size in points])
+        plt.show()
 
     def test_exponential_phi(self):
        self.template(ef.ExponentialExample(size))
 
     def test_trigonometric_phi(self):
-       self.template(ef.TrigonometricExample(size))
+       points = range(20, 40)
+       plt.plot(points,[self.template(ef.TrigonometricExample(size)) for size in points])
+       plt.show()
 
     def test_complex_phi(self):
         self.template(ef.ComplexExample(size))

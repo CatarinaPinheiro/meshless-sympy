@@ -5,7 +5,7 @@ import src.helpers.numeric as num
 
 
 class MovingLeastSquares2D:
-    def __init__(self, data, basis, weight_function, security=1.1):
+    def __init__(self, data, basis, weight_function, security=1.8):
         self.basis = basis
         self.data = data
         self.point = np.zeros(np.shape(data[0]))
@@ -16,7 +16,10 @@ class MovingLeastSquares2D:
             for d in self.data
         ])
         self.ri = 0
-        self.r_min = self.security * self.r_first(len(self.basis))
+
+    @property
+    def r_min(self):
+        return self.security * self.r_first(len(self.basis))
 
 
     def r_first(self, n):
@@ -77,24 +80,25 @@ class MovingLeastSquares2D:
         dx = np.array(self.data)[:, 0].max() - np.array(self.data)[:, 0].min()
         dy = np.array(self.data)[:, 1].max() - np.array(self.data)[:, 1].min()
 
-        # while True:
-        #     A, B = self.numeric_AB(self.ri)
-        #     det = np.linalg.det(A)
-        #     if self.ri > min(dx, dy):
-        #         raise Exception("need more points, r=%s, det = %s"%(self.ri, det))
-        #     if det < 1e-9:
-        #         self.ri *= 1.05
-        #         continue
-        #     else:
-        #         break
-        #
-        # print("condition(A)", np.linalg.cond(A))
-        # sA, sB, P, sW = self.ABPW(self.ri)
+        while True:
+            A, B = self.numeric_AB(self.ri)
+            # print("condition(A)", np.linalg.cond(A))
+            # print("det(A)", np.linalg.det(A))
+            det = np.linalg.det(A)
+            cond = np.linalg.cond(A)
+            if self.ri > max(dx, dy):
+                raise Exception("need more points, r=%s, det = %s, cond=%s"%(self.ri, det, cond))
+            if cond > 1e20:
+                self.ri *= 1.1
+                continue
+            else:
+                break
 
-        sA, sB, P, sW = self.ABPW(self.r_min)
+        sA, sB, P, sW = self.ABPW(self.ri)
 
+        # sA, sB, P, sW = self.ABPW(self.r_min)
 
-        spt = sp.Matrix([self.basis])
+        spt = [[num.Function(exp, name="basis %d"%i) for i, exp in enumerate(self.basis)]]
         return num.Product([
             num.Matrix(spt, "pt"),
             num.Inverse(sA, "A"),
