@@ -5,21 +5,18 @@ import src.helpers.numeric as num
 
 
 class MovingLeastSquares2D:
-    def __init__(self, data, basis, weight_function, security=1.2):
+    def __init__(self, data, basis, weight_function, security=1.8):
         self.basis = basis
         self.data = data
         self.point = np.zeros(np.shape(data[0]))
         self.security = security
         self.weight_function = weight_function
         self.preP = np.array([
-            [sp.lambdify(sp.var("x y"), exp, "numpy")(*d) for exp in self.basis]
+            [num.Function(exp, name="basis %d"%i).eval(d) for i, exp in enumerate(self.basis)]
             for d in self.data
         ])
         self.ri = 0
-
-    @property
-    def r_min(self):
-        return self.security * self.r_first(int((len(self.basis) + 1)))
+        self.r_min = self.security * self.r_first(len(self.basis))
 
 
     def r_first(self, n):
@@ -38,12 +35,12 @@ class MovingLeastSquares2D:
         W = num.Diagonal([
             h.cut(np.linalg.norm(np.array([xj, yj]) - self.point),
                   r,
-                  num.Function(sp.Integer(0),name = "0"),
+                  num.Constant(np.array(0), name="0"),
                   num.Function(self.weight_function.sympy(), {
                       'xj': xj,
                       'yj': yj,
                       'r': r
-                  }, name="g"))
+                  }, name="mls2d weight function"))
             for xj, yj in self.data])
 
         Pt = num.Constant(np.transpose(P))
@@ -77,27 +74,28 @@ class MovingLeastSquares2D:
     @property
     def numeric_phi(self):
         self.ri = self.r_min
+        dx = np.array(self.data)[:, 0].max() - np.array(self.data)[:, 0].min()
+        dy = np.array(self.data)[:, 1].max() - np.array(self.data)[:, 1].min()
 
-        while True:
-            A, B = self.numeric_AB(self.ri)
-            det = np.linalg.det(A)
-            dx = np.array(self.data)[:, 0].max() - np.array(self.data)[:, 0].min()
-            dy = np.array(self.data)[:, 1].max() - np.array(self.data)[:, 1].min()
-            if self.ri > dx+dy:
-                raise Exception("need more points, r=%s, det = %s"%(self.ri, det))
-            if det < 1e-9:
-                self.ri *= 1.05
-                continue
-            else:
-                break
+        # while True:
+        #     A, B = self.numeric_AB(self.ri)
+        #     det = np.linalg.det(A)
+        #     if self.ri > min(dx, dy)/len(self.basis):
+        #         raise Exception("need more points, r=%s, det = %s"%(self.ri, det))
+        #     if det < 1e-9:
+        #         self.ri *= 1.05
+        #         continue
+        #     else:
+        #         break
+        #
+        # print("condition(A)", np.linalg.cond(A))
+        # sA, sB, P, sW = self.ABPW(self.ri)
 
-        print("condition(A)", np.linalg.cond(A))
-        sA, sB, P, sW = self.ABPW(self.ri)
-        # sA, sB, P, sW = self.ABPW(self.security*self.r_first(len(self.basis)))
+        sA, sB, P, sW = self.ABPW(self.r_min)
+
 
         spt = sp.Matrix([self.basis])
         return num.Product([
-
             num.Matrix(spt, "pt"),
             num.Inverse(sA, "A"),
             sB], name="phi(%s)"%(self.point))

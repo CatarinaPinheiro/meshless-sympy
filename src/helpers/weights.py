@@ -5,7 +5,7 @@ import src.helpers.numeric as num
 
 class WeightFunction:
     def numeric(self, extra={}):
-        return num.Function(self.sympy(),extra)
+        return num.Function(self.sympy(),extra, name="weight function")
 
 
 class GaussianWithRadius(WeightFunction):

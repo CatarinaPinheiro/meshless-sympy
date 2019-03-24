@@ -21,10 +21,10 @@ elastic_region_example = Rectangle(
     y1=-15,
     x2=60,
     y2=15,
-    # dx=15,
-    # dy=15,
-    dx=3,
-    dy=3,
+    dx=30/2,
+    dy=30/2,
+    # dx=5,
+    # dy=5,
     parametric_partition={
         0.01: ["DIRICHLET", "NEUMANN"],
         1:    ["NEUMANN",   "NEUMANN"],
@@ -113,6 +113,7 @@ class TestMeshless(unittest.TestCase):
         result = result.reshape(model.num_dimensions*len(data))
 
         diff = corrects - result
+        print("diff", np.abs(diff).mean())
         print("result", result)
         print('corrects', corrects)
         print('diff', diff)

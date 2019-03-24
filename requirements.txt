@@ -1,4 +1,5 @@
 sympy
 matplotlib
+numexpr
 numpy
 scipy

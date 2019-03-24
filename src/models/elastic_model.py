@@ -157,13 +157,13 @@ class ElasticModel(Model):
         return np.array([K1, K2])
 
     def domain_function(self, point):
-        u = num.Function(self.analytical[0], name="u(%s)"%point).eval(point)
-        v = num.Function(self.analytical[1], name="v(%s)"%point).eval(point)
+        u = num.Function(self.analytical[0], name="analytical u")
+        v = num.Function(self.analytical[1], name="analytical v")
         return np.array([u, v])
 
     def boundary_function(self, point):
-        u = num.Function(self.analytical[0], name="u(%s)"%point)
-        v = num.Function(self.analytical[1], name="v(%s)"%point)
+        u = num.Function(self.analytical[0], name="analytical u")
+        v = num.Function(self.analytical[1], name="analytical v")
 
         return np.sum(self.independent_boundary_operator(u, v, point), axis=1)
 
@@ -285,8 +285,8 @@ class ElasticModel(Model):
         N = np.array([[nx, 0, ny],
                       [0, ny, nx]])
 
-        u = num.Function(self.analytical[0], name="u(%s)"%integration_point)
-        v = num.Function(self.analytical[1], name="v(%s)"%integration_point)
+        u = num.Function(self.analytical[0], name="analytical u")
+        v = num.Function(self.analytical[1], name="analytical v")
 
         ux = u.derivate("x").eval(integration_point)
         uy = u.derivate("y").eval(integration_point)

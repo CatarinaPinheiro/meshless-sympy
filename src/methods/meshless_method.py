@@ -4,6 +4,7 @@ from numpy import linalg as la
 import src.methods.mls2d as mls
 import numpy as np
 from src.helpers.cache import cache
+import src.helpers.svd as svd
 import scipy as sci
 from src.helpers.functions import unique_rows
 import src.helpers.duration as duration
@@ -96,7 +97,8 @@ class MeshlessMethod:
         print(self.b.shape)
         print(self.b.max(axis=0))
         print("cond(stiffness)", np.linalg.cond(self.stiffness))
-        return la.pinv(self.stiffness, rcond=1e-9)@self.b.astype(np.float64)
+        # return np.array([svd.solve(self.stiffness[i], self.b.astype(np.float)[i]) for i in range(self.stiffness.shape[0])])
+        return la.pinv(self.stiffness)@self.b.astype(np.float64)
         # return sci.sparse.linalg.inv(self.stiffness)@self.b.astype(np.float64)
         # size = 104
         # return sci.sparse.linalg.lsmr(A=self.stiffness.reshape([size, size]),

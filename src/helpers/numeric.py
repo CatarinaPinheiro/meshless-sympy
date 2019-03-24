@@ -4,13 +4,14 @@ import sympy as sp
 from src.helpers.cache import cache
 from src.helpers.duration import duration
 import random
+import numexpr as ne
 
 class Numeric():
     def eval_cached(self, stored, subs):
         return stored
 
     def eval_computed(self, subs):
-        raise "Method not implemented"
+        raise Exception("Method not implemented")
 
     def eval(self, subs):
         found, stored = cache.get(self.cache_str(subs))
@@ -33,8 +34,8 @@ class Numeric():
             return value
 
     def cache_str(self, subs):
-        return self.name + str(subs)
-    
+        return str(self) + str(subs)
+
     def __str__(self):
         return self.name
 
@@ -61,11 +62,11 @@ class Matrix(Numeric):
 
 
 class Inverse(Numeric):
-    def __init__(self,original, name="M"):
+    def __init__(self, original, name="M"):
         self.original = original
         self.name = name
 
-    def derivate(self,var):
+    def derivate(self, var):
         return Product([self, Constant(-1*np.identity(self.original.shape()[0])), self.original.derivate(var), self])
 
     def eval_computed(self, subs):
@@ -181,16 +182,17 @@ class Function(Numeric):
         self.name = name
         self.extra = extra
 
-    def eval_cached(self, stored, subs):
-        return stored#(*(subs + list(self.extra.values())))
+        found, stored = cache.get(name)
+        if found:
+            # print("found function name:", name)
+            self.eval_function = stored
+        else:
+            print("computing function name:", name)
+            self.eval_function = sp.lambdify(sp.var("x y "+" ".join((*self.extra,))), self.expression, "numpy")
+            cache.set(name, self.eval_function)
 
-    def eval_computed(self, subs):
-        duration.start("Inverse::eval %s%s"%(self,subs))
-        func = sp.lambdify(sp.var("x y "+" ".join((*self.extra,))), self.expression, "numpy")
-
-        value = func(*(list(subs) + list(self.extra.values())))
-        duration.step()
-        return value
+    def eval(self, subs):
+        return self.eval_function(*(list(subs) + list(self.extra.values())))
 
     def derivate(self, var):
         found, stored = cache.get("d" + self.name + var)
@@ -204,9 +206,6 @@ class Function(Numeric):
             cache.set("d" + self.name + var, value)
             duration.step()
             return value
-
-    def cache_str(self, subs):
-        return self.name + str(list(subs) + list(self.extra.values()))
 
 
     def shape(self):
