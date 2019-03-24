@@ -41,8 +41,8 @@ crimped_beam_region_example = Rectangle(
     y1=0,
     x2=0.48,
     y2=0.48,
-    dx=0.12,
-    dy=0.12,
+    dx=0.48/2,
+    dy=0.48/2,
     parametric_partition={
         0.01: ["DIRICHLET", "NEUMANN"],
         2.99: ["NEUMANN", "NEUMANN"],

@@ -71,7 +71,7 @@ class Inverse(Numeric):
 
     def eval_computed(self, subs):
         duration.start("Inverse::eval %s%s"%(self,subs))
-        value = np.linalg.pinv(self.original.eval(subs))
+        value = np.linalg.inv(self.original.eval(subs))
         duration.step()
         return value
     
@@ -83,7 +83,7 @@ class Inverse(Numeric):
 
 
 class Sum(Numeric):
-    def __init__(self, terms, name = "S"):
+    def __init__(self, terms, name="S"):
         self.terms = terms
         self.name = name
 
