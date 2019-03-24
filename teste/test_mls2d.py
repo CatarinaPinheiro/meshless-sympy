@@ -6,6 +6,7 @@ import teste.helpers.test_functions as ef
 from src.helpers.weights import GaussianWithRadius as Weight
 
 
+size = 50
 class TestMovingLeastSquare2D(unittest.TestCase):
     def template(self,example):
         point = np.array([12.5, 12.5])
@@ -22,20 +23,23 @@ class TestMovingLeastSquare2D(unittest.TestCase):
         self.assertAlmostEqual(mls.r_first(1), np.sqrt(2)/2, 3)
 
         # test valuation
-        self.assertAlmostEqual(approx, desired, 4)
+        self.assertAlmostEqual(approx, desired, 6)
 
 
     def test_polynomial_phi(self):
-       self.template(ef.PolynomialExample(20))
+       self.template(ef.PolynomialExample(size))
 
     def test_linear_phi(self):
-       self.template(ef.LinearExample(20))
+       self.template(ef.LinearExample(size))
 
     def test_exponential_phi(self):
-       self.template(ef.ExponentialExample(20))
+       self.template(ef.ExponentialExample(size))
 
     def test_trigonometric_phi(self):
-       self.template(ef.TrigonometricExample(20))
+       self.template(ef.TrigonometricExample(size))
+
+    def test_complex_phi(self):
+        self.template(ef.ComplexExample(size))
 
 
 if __name__ == '__main__':
