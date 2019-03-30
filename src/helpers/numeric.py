@@ -4,38 +4,8 @@ import sympy as sp
 from src.helpers.cache import cache
 from src.helpers.duration import duration
 import random
-import numexpr as ne
 
 class Numeric():
-    # def eval_cached(self, stored, subs):
-    #     return stored
-    #
-    # def eval_computed(self, subs):
-    #     raise Exception("Method not implemented")
-    #
-    # def eval(self, subs):
-    #     found, stored = cache.get(self.cache_str(subs))
-    #     if found:
-    #         # cached = self.eval_cached(stored, subs)
-    #         # computed = self.eval_computed(subs)
-    #         # if (type(cached) == np.ndarray):
-    #         #     if (cached != computed).any():
-    #         #         print(cached)
-    #         #         print(computed)
-    #         # elif (cached != computed):
-    #         #     print(cached)
-    #         #     print(computed)
-    #         # return cached
-    #
-    #         return self.eval_cached(stored, subs)
-    #     else:
-    #         value = self.eval_computed(subs)
-    #         cache.set(self.cache_str(subs), value)
-    #         return value
-
-    # def cache_str(self, subs):
-    #     return str(self) + str(subs)
-
     def __str__(self):
         return self.name
 
@@ -60,7 +30,7 @@ class Inverse(Numeric):
         self.name = name
 
     def derivate(self, var):
-        return Product([self, Constant(-1*np.identity(self.original.shape()[0])), self.original.derivate(var), self])
+        return Product([self, Constant(-1*np.identity(self.original.shape()[0]), name="I"), self.original.derivate(var), self])
 
     def eval(self, subs):
         duration.start("Inverse::eval %s%s"%(self,subs))
@@ -87,8 +57,15 @@ class Sum(Numeric):
         ])
     
     def eval(self, subs):
-        values = [t.eval(subs) for t in self.terms]
-        return np.sum(values, axis=0)
+        key = str(self)+str(subs)
+        found, value = cache.get(key)
+        if found:
+            return value
+        else:
+            values = [t.eval(subs) for t in self.terms]
+            computed_value = np.sum(values, axis=0)
+            cache.set(key, computed_value)
+            return computed_value
 
     def __str__(self):
         return str(ft.reduce(lambda a, b: "(" + str(a) + " + " + str(b) + ")", self.terms))
@@ -130,7 +107,7 @@ class Product(Numeric):
 
 
 class Diagonal(Numeric):
-    def __init__(self, elements, name="D"):
+    def __init__(self, elements, name):
         self.elements = elements
         self.name = name
 
@@ -142,14 +119,14 @@ class Diagonal(Numeric):
     def derivate(self, var):
         return Diagonal([
             element.derivate(var) for element in self.elements
-        ])
+        ], name=self.name+"_"+var)
 
     def shape(self):
         return len(self.elements), len(self.elements)
 
 
 class Constant:
-    def __init__(self, value, name="C"):
+    def __init__(self, value, name=str(random.random())):
         self.value = value
         self.name = name
 
@@ -161,6 +138,9 @@ class Constant:
 
     def shape(self):
         return self.value.shape
+
+    def __str__(self):
+        return str(self.name)
 
 
 class Function(Numeric):
@@ -193,7 +173,6 @@ class Function(Numeric):
             cache.set("d" + self.name + var, value)
             duration.step()
             return value
-
 
     def shape(self):
         return (1,1)

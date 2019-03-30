@@ -206,8 +206,8 @@ class ElasticModel(Model):
         c = self.D[1, 0]
         d = self.D[1, 1]
         e = self.D[2, 2]
-        u = num.Function(self.analytical[0], name="u(%s)"%point)
-        v = num.Function(self.analytical[1], name="v(%s)"%point)
+        u = num.Function(self.analytical[0], name="analytical u")
+        v = num.Function(self.analytical[1], name="analytical v")
         uxx = u.derivate("x").derivate("x").eval(point)
         uyy = u.derivate("y").derivate("y").eval(point)
         uxy = u.derivate("x").derivate("y").eval(point)

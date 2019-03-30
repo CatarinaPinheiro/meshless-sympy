@@ -1,3 +1,3 @@
 from teste.test_meshless import TestMeshless
-TestMeshless().test_petrov_galerkin_elasticity()
+TestMeshless().test_collocation_crimped_beam_elasticity()
 

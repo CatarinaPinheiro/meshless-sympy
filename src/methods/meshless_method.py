@@ -27,30 +27,18 @@ class MeshlessMethod:
         radius = min(self.m2d.r_first(1), self.model.region.distance_from_boundary(d))
 
         def stiffness_element(integration_point):
-            key = "stiffeness element %s %s" % (d, integration_point)
-            found, value = cache.get(key)
-            if found:
-                return value
-
             self.m2d.point = integration_point
             weight = self.integration_weight(d, integration_point, radius)
             Lphi = self.model.stiffness_domain_operator(self.m2d.numeric_phi, integration_point)
             value = weight*Lphi
 
-            cache.set(key, value)
             return value
 
         def independent_element(integration_point):
-            key = "independent element %s %s" % (d, integration_point)
-            found, value = cache.get(key)
-            if found:
-                return value
-
             weight = self.integration_weight(d,integration_point,radius)
             b = self.model.independent_domain_function(integration_point)
             value = weight*b
 
-            cache.set(key, value)
             return value
 
         stiffness_element = self.integration(d, radius, stiffness_element)

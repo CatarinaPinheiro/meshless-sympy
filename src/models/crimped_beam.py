@@ -43,17 +43,23 @@ class CrimpedBeamModel(ElasticModel):
     #
     # def petrov_galerkin_independent_domain(self, w, point):
     #     return np.zeros([2, 1])
-    #
-    #
-    #
+
     # def petrov_galerkin_independent_boundary(self, w, point):
     #     I = self.I
     #     h = self.h
     #     L = self.L
+    #     ni = self.ni
+    #     p = self.p
+    #     E = self.E
     #     x_ = L - point[0]
     #     y_ = -point[1]
+    #     if point[0] < 1e-6:
+    #         return np.array([
+    #             (-p*(2+ni)/(6*E*I))*(y_**2 - h**2/4),
+    #             0
+    #         ])
     #     if point[0] > L - 1e-6:
     #         return np.array([[-self.p*x_*y_/I],
     #                          [-self.p*(h**2/4-y_**2)/(2*I)]])
     #     return np.zeros([2, 1])
-
+#

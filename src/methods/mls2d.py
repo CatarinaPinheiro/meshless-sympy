@@ -44,11 +44,11 @@ class MovingLeastSquares2D:
                       'yj': yj,
                       'r': r
                   }, name="mls2d weight function"))
-            for xj, yj in self.data])
+            for xj, yj in self.data], name="W")
 
-        Pt = num.Constant(np.transpose(P))
+        Pt = num.Constant(np.transpose(P), name="Pt")
         B = num.Product([Pt, W])
-        A = num.Product([B, num.Constant(P)])
+        A = num.Product([B, num.Constant(P, name="P")])
 
         return A, B, P, W
 
@@ -86,8 +86,8 @@ class MovingLeastSquares2D:
             # print("det(A)", np.linalg.det(A))
             det = np.linalg.det(A)
             cond = np.linalg.cond(A)
-            if self.ri > max(dx, dy):
-                raise Exception("need more points, r=%s, det = %s, cond=%s"%(self.ri, det, cond))
+            # if self.ri > max(dx, dy):
+            #     raise Exception("need more points, r=%s, det = %s, cond=%s"%(self.ri, det, cond))
             if cond > 1e20:
                 self.ri *= 1.1
                 continue

@@ -21,8 +21,8 @@ elastic_region_example = Rectangle(
     y1=-15,
     x2=60,
     y2=15,
-    dx=30/4,
-    dy=30/4,
+    dx=30/2,
+    dy=30/2,
     # dx=5,
     # dy=5,
     parametric_partition={
@@ -72,8 +72,8 @@ potential_region_example = Rectangle(
     y1=0,
     x2=2,
     y2=2,
-    dx=0.5,
-    dy=0.5,
+    dx=0.4,
+    dy=0.4,
     parametric_partition={
         1: ["DIRICHLET"],
         2: ["NEUMANN"],
@@ -95,9 +95,9 @@ class TestMeshless(unittest.TestCase):
         result = method.solve()
         print("result", result.shape)
 
-        region.plot()
-        method.plot()
-        plt.show()
+        # region.plot()
+        # method.plot()
+        # plt.show()
         # plt.show(block=False)
         # for index, point in enumerate(data):
         #     plt.clf()
