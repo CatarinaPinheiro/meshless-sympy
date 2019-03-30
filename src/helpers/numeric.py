@@ -144,35 +144,59 @@ class Constant:
 
 
 class Function(Numeric):
-    def __init__(self, expression, extra={'_': 0}, name=str(random.random())):
+    def __init__(self, expression, name=str(random.random())):
         self.expression = expression
         self.name = name
-        self.extra = extra
 
         found, stored = cache.get(name)
         if found:
-            # print("found function name:", name)
+            # print("found function", name)
             self.eval_function = stored
         else:
-            print("computing function name:", name)
-            self.eval_function = sp.lambdify(sp.var("x y "+" ".join((*self.extra,))), self.expression, "numpy")
+            print("computing function", name)
+            self.eval_function = sp.lambdify(sp.var("x y"), self.expression, "numpy")
             cache.set(name, self.eval_function)
 
     def eval(self, subs):
-        return self.eval_function(*(list(subs) + list(self.extra.values())))
+        return self.eval_function(*subs)
 
     def derivate(self, var):
-        found, stored = cache.get("d" + self.name + var)
+        key = "d(" + self.name + ")/d" + var
+        found, stored = cache.get(key)
         if found:
             return stored
         else:
             duration.start("Function::derivate %s" % str(self))
-            if type(self.expression) == list:
-                print("tipo lista!")
-            value = Function(self.expression.diff(var), self.extra, self.name + var)
-            cache.set("d" + self.name + var, value)
+            value = Function(self.expression.diff(var), key)
+            cache.set(key, value)
             duration.step()
             return value
 
     def shape(self):
         return (1,1)
+
+class RadialFunction(Function):
+    def __init__(self, expression, xj, yj, r, name=str(random.random())):
+        self.xj = xj
+        self.yj = yj
+        self.r = r
+        self.expression = expression
+        self.name = name
+
+        found, stored = cache.get(str(self))
+        if found:
+            self.eval_function = stored
+        else:
+            print("computing radial function", str(self))
+            self.eval_function = sp.lambdify(sp.var("x y r"), self.expression, "numpy")
+            cache.set(str(self), self.eval_function)
+
+    def eval(self, subs):
+        return self.eval_function(subs[0] - self.xj, subs[1] - self.yj, self.r)
+
+    def derivate(self, var):
+        name = "d(" + self.name + ")/d" + var
+        return RadialFunction(self.expression.diff(var), self.xj, self.yj, self.r, name)
+
+    def __str__(self):
+        return self.name + "[%s]" % self.r

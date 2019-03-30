@@ -15,22 +15,14 @@ class PetrovGalerkinMethod(MeshlessMethod):
             self.m2d.point = integration_point
             phi = self.m2d.numeric_phi
 
-            w = self.weight_function.numeric({
-                'xj': d[0],
-                'yj': d[1],
-                'r': radius
-            })
+            w = self.weight_function.numeric(d[0], d[1], radius)
 
             return self.model.petrov_galerkin_stiffness_domain(phi, w, integration_point)
 
         stiffness_element = gq.polar_gauss_integral(d, radius, stiffness_element)
 
         def independent_element(integration_point):
-            w = self.weight_function.numeric({
-                'xj': d[0],
-                'yj': d[1],
-                'r': radius
-            })
+            w = self.weight_function.numeric(d[0], d[1], radius)
 
             return self.model.petrov_galerkin_independent_domain(w, integration_point)
 
@@ -47,11 +39,7 @@ class PetrovGalerkinMethod(MeshlessMethod):
                 self.m2d.point = integration_point
                 phi = self.m2d.numeric_phi
 
-                w = self.weight_function.numeric({
-                    'xj': d[0],
-                    'yj': d[1],
-                    'r': radius
-                })
+                w = self.weight_function.numeric(d[0], d[1], radius)
 
                 result = self.model.petrov_galerkin_stiffness_boundary(phi, w, integration_point)
 
@@ -65,11 +53,7 @@ class PetrovGalerkinMethod(MeshlessMethod):
             self.m2d.point = integration_point
             phi = self.m2d.numeric_phi
 
-            w = self.weight_function.numeric({
-                'xj': d[0],
-                'yj': d[1],
-                'r': radius
-            })
+            w = self.weight_function.numeric(d[0], d[1], radius)
 
             return self.model.petrov_galerkin_stiffness_domain(phi, w, integration_point)
 
@@ -81,11 +65,7 @@ class PetrovGalerkinMethod(MeshlessMethod):
         stiffness_neumann_element = stiffness_neumann_element
 
         def independent_boundary_element(integration_point):
-            w = self.weight_function.numeric({
-                'xj': d[0],
-                'yj': d[1],
-                'r': radius
-            })
+            w = self.weight_function.numeric(d[0], d[1], radius)
 
             result = self.model.petrov_galerkin_independent_boundary(w, integration_point)
 
@@ -96,11 +76,7 @@ class PetrovGalerkinMethod(MeshlessMethod):
             return result
 
         def independent_domain_element(integration_point):
-            w = self.weight_function.numeric({
-                'xj': d[0],
-                'yj': d[1],
-                'r': radius
-            })
+            w = self.weight_function.numeric(d[0], d[1], radius)
 
             return self.model.petrov_galerkin_independent_domain(w, integration_point)
 

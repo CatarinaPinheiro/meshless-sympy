@@ -19,7 +19,11 @@ class TestNumeric(unittest.TestCase):
 
     def test_invese_derivate(self):
         x = sp.var("x")
-        self.assertEqual(num.Inverse(num.Diagonal([num.Function(x**2)])).derivate('x').eval([3, 0])[0, 0], -2*3**(-3))
+        self.assertEqual(
+            num.Inverse(
+            num.Diagonal([
+                num.Function(x**2, name="square")
+            ], name="diagonal")).derivate('x').eval([3, 0])[0, 0], -2*3**(-3))
 
 
 if __name__ == '__main__':

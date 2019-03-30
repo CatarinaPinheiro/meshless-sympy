@@ -59,7 +59,7 @@ class MeshlessMethod:
 
         for i, d in enumerate(self.data):
             self.m2d.i = i
-            cache.reset()
+            # cache.reset()
 
             duration.duration.start("%d/%d" % (i, len(self.data)))
             self.m2d.point = d

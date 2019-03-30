@@ -39,11 +39,7 @@ class MovingLeastSquares2D:
             h.cut(np.linalg.norm(np.array([xj, yj]) - self.point),
                   r,
                   num.Constant(np.array(0), name="0"),
-                  num.Function(self.weight_function.sympy(), {
-                      'xj': xj,
-                      'yj': yj,
-                      'r': r
-                  }, name="mls2d weight function"))
+                  self.weight_function.numeric(xj, yj, r))
             for xj, yj in self.data], name="W")
 
         Pt = num.Constant(np.transpose(P), name="Pt")
@@ -88,8 +84,8 @@ class MovingLeastSquares2D:
             cond = np.linalg.cond(A)
             # if self.ri > max(dx, dy):
             #     raise Exception("need more points, r=%s, det = %s, cond=%s"%(self.ri, det, cond))
-            if cond > 1e20:
-                self.ri *= 1.1
+            if det < 1e-6:
+                self.ri *= 1.05
                 continue
             else:
                 break
