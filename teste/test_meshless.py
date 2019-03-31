@@ -21,8 +21,8 @@ elastic_region_example = Rectangle(
     y1=-15,
     x2=60,
     y2=15,
-    dx=5,
-    dy=5,
+    dx=15,
+    dy=15,
     # dx=5,
     # dy=5,
     parametric_partition={
@@ -41,8 +41,8 @@ crimped_beam_region_example = Rectangle(
     y1=-6,
     x2=48,
     y2=6,
-    dx=2,
-    dy=2,
+    dx=6,
+    dy=6,
     parametric_partition={
         0.01: ["DIRICHLET", "NEUMANN"],
         2.99: ["NEUMANN", "NEUMANN"],
@@ -72,8 +72,8 @@ potential_region_example = Rectangle(
     y1=0,
     x2=2,
     y2=2,
-    dx=1,
-    dy=1,
+    dx=0.5,
+    dy=0.5,
     parametric_partition={
         1: ["DIRICHLET"],
         2: ["NEUMANN"],
