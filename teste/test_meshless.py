@@ -72,8 +72,8 @@ potential_region_example = Rectangle(
     y1=0,
     x2=2,
     y2=2,
-    dx=0.5,
-    dy=0.5,
+    dx=2/5,
+    dy=2/5,
     parametric_partition={
         1: ["DIRICHLET"],
         2: ["NEUMANN"],

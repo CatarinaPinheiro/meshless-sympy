@@ -168,40 +168,39 @@ class ElasticModel(Model):
         return np.sum(self.independent_boundary_operator(u, v, point), axis=1)
 
     def stiffness_domain_operator(self, phi, point):
-        phi_xx = phi.derivate("x").derivate("x").eval(point)
-        phi_yy = phi.derivate("y").derivate("y").eval(point)
-        phi_xy = phi.derivate("x").derivate("y").eval(point)
-
-        c1 = np.expand_dims(self.E/(2*(1-self.ni**2)), 1)
-        c2 = np.expand_dims(self.E*(2-self.ni)/(2*(1-self.ni**2)), 1)
-        K11 = c2@phi_xx + c1@phi_yy
-        K12 = K21 = c1@phi_xy
-        K22 = c2@phi_yy + c1@phi_xx
-
-        time_size = c1.size
-        space_size = phi_xx.size
-
-        return np.array([[K11, K12],
-                         [K21, K22]]).swapaxes(2,3).swapaxes(1,2).reshape(2, 2*space_size, time_size)
-
-        # a = self.D[0, 0]
-        # b = self.D[0, 1]
-        # c = self.D[1, 0]
-        # d = self.D[1, 1]
-        # e = self.D[2, 2]
-        # phixx = phi.derivate("x").derivate("x").eval(point)
-        # phiyy = phi.derivate("y").derivate("y").eval(point)
-        # phixy = phi.derivate("x").derivate("y").eval(point)
+        # phi_xx = phi.derivate("x").derivate("x").eval(point)
+        # phi_yy = phi.derivate("y").derivate("y").eval(point)
+        # phi_xy = phi.derivate("x").derivate("y").eval(point)
         #
-        # # L.D.Lt.u
-        # space_size = phixx.size
-        # multiplication = np.array([
-        #     a*phixx+b*phixy+e*(phiyy+phixy),
-        #     c*phixy+d*phiyy+e*(phixy+phixx)
-        # ]).reshape([2, space_size])
-        # first_row = np.array([multiplication[0], np.zeros(space_size)]).transpose().ravel()
-        # second_row = np.array([np.zeros(space_size), multiplication[1]]).transpose().ravel()
-        # return np.array([first_row, second_row]).reshape([2, 2*space_size, 1])
+        # c1 = np.expand_dims(self.E/(2*(1-self.ni**2)), 1)
+        # c2 = np.expand_dims(self.E*(2-self.ni)/(2*(1-self.ni**2)), 1)
+        # K11 = c2@phi_xx + c1@phi_yy
+        # K12 = K21 = c1@phi_xy
+        # K22 = c2@phi_yy + c1@phi_xx
+        #
+        # time_size = c1.size
+        # space_size = phi_xx.size
+        #
+        # return np.array([[K11, K12],
+        #                  [K21, K22]]).swapaxes(2,3).swapaxes(1,2).reshape(2, 2*space_size, time_size)
+
+        a = np.expand_dims(self.D[0, 0],1)
+        b = np.expand_dims(self.D[0, 1],1)
+        c = np.expand_dims(self.D[1, 0],1)
+        d = np.expand_dims(self.D[1, 1],1)
+        e = np.expand_dims(self.D[2, 2],1)
+        phixx = phi.derivate("x").derivate("x").eval(point)
+        phiyy = phi.derivate("y").derivate("y").eval(point)
+        phixy = phi.derivate("x").derivate("y").eval(point)
+
+        # L.D.Lt.u
+        space_size = phixx.size
+        time_size = a.size
+        multiplication = np.array([
+            [a*phixx+b*phixy+e*(phiyy+phixy),np.zeros([time_size, space_size])],
+            [np.zeros([time_size, space_size]), c*phixy+d*phiyy+e*(phixy+phixx)]
+        ])
+        return np.moveaxis(multiplication, 3, 1).reshape([2, 2*space_size, time_size])
 
     def independent_domain_function(self, point):
         a = self.D[0, 0]
