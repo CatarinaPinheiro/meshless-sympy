@@ -259,7 +259,7 @@ class TestMeshless(unittest.TestCase):
         self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantiliever_beam_region_example(5,5))
 
     def test_collocation_simply_supported_beam(self):
-        self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel, simply_supported_beam_region_example(1/2,1/2))
+        self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel, simply_supported_beam_region_example(1,1))
 
     def test_subregion_potential(self):
         self.rectangle_template(SubregionMethod, PotentialModel, potential_region_example)
