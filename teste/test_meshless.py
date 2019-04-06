@@ -40,19 +40,19 @@ def elastic_region_example(dx, dy):
 def simply_supported_beam_region_example(dx, dy):
     return Rectangle(
         x1=0,
-        x2=10,
-        y1=-5,
-        y2=5,
+        y1=0,
+        x2=5,
+        y2=50,
         dx=dx,
         dy=dy,
         parametric_partition={
-            0.01: ["DIRICHLET", "DIRICHLET"],
-            0.99: ["NEUMANN", "NEUMANN"],
-            1.01: ["DIRICHLET", "DIRICHLET"],
-            3.99: ["NEUMANN", "NEUMANN"],
-            4.01: ["DIRICHLET", "DIRICHLET"]
-        }
-    )
+            1.01: ["NEUMANN",   "NEUMANN"],
+            1.99: ["NEUMANN",   "NEUMANN"],
+            2.99: ["NEUMANN",   "NEUMANN"],
+            3.01: ["DIRICHLET", "DIRICHLET"],
+            3.99: ["NEUMANN",   "NEUMANN"],
+            4.01: ["DIRICHLET", "NEUMANN"]
+        })
 
 def cantiliever_beam_region_example(dx, dy):
     return Rectangle(
@@ -258,7 +258,7 @@ class TestMeshless(unittest.TestCase):
         self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantiliever_beam_region_example(5,5))
 
     def test_collocation_simply_supported_beam(self):
-        self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel, simply_supported_beam_region_example(5,5))
+        self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel, simply_supported_beam_region_example(1/2,1/2))
 
     def test_subregion_potential(self):
         self.rectangle_template(SubregionMethod, PotentialModel, potential_region_example)
@@ -295,6 +295,9 @@ class TestMeshless(unittest.TestCase):
 
     def test_petrov_galerkin_cantiliever_beam(self):
         self.visco_rectangle_template(PetrovGalerkinMethod, CantileverBeamModel, cantiliever_beam_region_example(5, 5))
+
+    def test_petrov_galerkin_simply_supported_beam(self):
+        self.visco_rectangle_template(PetrovGalerkinMethod, SimplySupportedBeamModel, simply_supported_beam_region_example(1,1))
 
 if __name__ == '__main__':
     unittest.main()

@@ -56,8 +56,7 @@ class ViscoelasticModel(ElasticModel):
 
     def petrov_galerkin_independent_boundary(self, w, integration_point):
         if integration_point[0] > self.region.x2 - 1e-3:
-            print('Integration ', w.eval(integration_point)*np.array([self.p/self.s, np.zeros(self.s.shape)]))
-            return -w.eval(integration_point)*np.array([self.p/(2*self.I*self.s), np.zeros(self.s.shape)])
+            return -w.eval(integration_point)*np.array([self.p/self.s, np.zeros(self.s.shape)])
         else:
             return np.zeros([2,self.time*self.iterations])
 
@@ -69,7 +68,7 @@ class ViscoelasticModel(ElasticModel):
 
     def independent_boundary_function(self, point):
         if point[0] > self.region.x2 - 1e-3:
-            return np.array([self.p/(2*self.I*self.s), np.zeros(self.s.shape)])
+            return np.array([self.p/self.s, np.zeros(self.s.shape)])
         else:
             return np.zeros([2,self.time*self.iterations])
 
