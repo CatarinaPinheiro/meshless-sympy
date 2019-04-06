@@ -17,6 +17,7 @@ from src.models.cantilever_beam import CantileverBeamModel
 from src.models.elastic_model import ElasticModel
 from src.models.viscoelastic_model import ViscoelasticModel
 from matplotlib import pyplot as plt
+import random
 
 def elastic_region_example(dx, dy):
     return Rectangle(
@@ -135,8 +136,8 @@ class TestMeshless(unittest.TestCase):
 
         # region.plot()
         # method.plot()
-        # plt.show()
-        # plt.show(block=False)
+        # plt.savefig("%s.png"%random.randint(1,1000))
+        # plt.savefig("%s.png"%random.randint(1,1000))(block=False)
         # for index, point in enumerate(data):
         #     plt.clf()
         #     method.plot(index)
@@ -201,7 +202,7 @@ class TestMeshless(unittest.TestCase):
 
         region.plot()
         method.plot()
-        plt.show()
+        plt.savefig("%s.png"%random.randint(1,1000))
 
         for point_index, point in enumerate(data):
             calculated_x = fts[2*point_index].ravel()
@@ -217,13 +218,13 @@ class TestMeshless(unittest.TestCase):
             plt.plot(calculated_x, "r^-")
             if model.analytical:
                 plt.plot(analytical_x, "gs-")
-            plt.show()
+            plt.savefig("%s.png"%random.randint(1,1000))
 
             print("y")
             plt.plot(calculated_y, "r^-")
             if model.analytical:
                 plt.plot(analytical_y, "gs-")
-            plt.show()
+            plt.savefig("%s.png"%random.randint(1,1000))
 
 
     def test_collocation_potential(self):
@@ -249,7 +250,7 @@ class TestMeshless(unittest.TestCase):
             plt.plot(diffs)
             plt.draw()
             plt.pause(0.001)
-        plt.show()
+        plt.savefig("%s.png"%random.randint(1,1000))
 
     def test_collocation_viscoelasticity(self):
         self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example(1, 1))
