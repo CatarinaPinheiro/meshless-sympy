@@ -1,21 +1,24 @@
-from src.models.viscoelastic_model import ViscoelasticModel
+from src.models.elastic_model import ElasticModel
 import numpy as np
 import sympy as sp
 
-class CantileverBeamModel(ViscoelasticModel):
+
+class CantileverBeamModel(ElasticModel):
     def __init__(self, region, time=10, iterations=10):
-        self.num_dimensions = 2
-        self.region = region
+        ElasticModel.__init__(self, region)
+
         self.iterations = iterations
         self.time = time
         s = self.s = np.array([np.log(2)*i/t for i in range(1, self.iterations+1) for t in range(1, self.time+1)])
 
         ones = np.ones(s.shape)
         zeros = np.zeros(s.shape)
+
         p = self.p = 1e3
         F = 35e9
         G = 8.75e9
         K = 11.67e9
+
         E1 = 9 * K * G / (3 * K + G)
         E2 = E1
 
@@ -35,7 +38,6 @@ class CantileverBeamModel(ViscoelasticModel):
         self.D = (E / (1 - ni ** 2)) * np.array([[ones, ni, zeros],
                                                  [ni, ones, zeros],
                                                  [zeros, zeros, (1 - ni) / 2]])
-
 
         self.h = h = self.region.y2 - self.region.y1
         self.I = I = h**3/12
@@ -82,7 +84,7 @@ class CantileverBeamModel(ViscoelasticModel):
             s = self.s
             I = self.I
             y = integration_point[1]
-            return -w.eval(integration_point)*np.array([np.zeros(s.shape), (p/(2*I))*(h**2/4 - y**2)/s])
+            return -w.eval(integration_point)*np.array([np.zeros(s.shape), (p/(2*I))*((h**2)/4 - y**2)/s])
         else:
             return np.zeros([2,self.time*self.iterations])
 

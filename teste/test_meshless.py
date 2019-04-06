@@ -8,6 +8,7 @@ from src.methods.subregion_method import SubregionMethod
 import src.helpers.numeric as num
 import numpy as np
 import sympy as sp
+from src.models.simply_supported_beam import SimplySupportedBeamModel
 from src.geometry.regions.rectangle import Rectangle
 import mpmath as mp
 from src.models.potential_model import PotentialModel
@@ -36,16 +37,33 @@ def elastic_region_example(dx, dy):
             # 5: ["DIRICHLET", "DIRICHLET"]
         })
 
-def cantiliever_beam_region_example(dx, dy):
+def simply_supported_beam_region_example(dx, dy):
     return Rectangle(
         x1=0,
-        x2=100,
+        x2=10,
         y1=-5,
         y2=5,
         dx=dx,
         dy=dy,
         parametric_partition={
-            0.01: ["DIRICHLET", "NEUMANN"],
+            0.01: ["DIRICHLET", "DIRICHLET"],
+            0.99: ["NEUMANN", "NEUMANN"],
+            1.01: ["DIRICHLET", "DIRICHLET"],
+            3.99: ["NEUMANN", "NEUMANN"],
+            4.01: ["DIRICHLET", "DIRICHLET"]
+        }
+    )
+
+def cantiliever_beam_region_example(dx, dy):
+    return Rectangle(
+        x1=0,
+        x2=50,
+        y1=-5,
+        y2=5,
+        dx=dx,
+        dy=dy,
+        parametric_partition={
+            0.01: ["DIRICHLET", "DIRICHLET"],
             2.99: ["NEUMANN", "NEUMANN"],
             3.49: ["DIRICHLET", "DIRICHLET"],
             3.51: ["DIRICHLET", "DIRICHLET"],
@@ -126,18 +144,19 @@ class TestMeshless(unittest.TestCase):
         #     plt.pause(0.001)
         #     time.sleep(5)
 
-        corrects = np.reshape([sp.lambdify((x,y),model.analytical, "numpy")(*point) for point in data], (model.num_dimensions*len(data)))
+        if model.analytical:
+            corrects = np.reshape([sp.lambdify((x,y),model.analytical, "numpy")(*point) for point in data], (model.num_dimensions*len(data)))
 
-        # test if system makes sense
-        print("stiffness", method.stiffness)
-        print("np.matmul(method.stiffness,np.transpose([corrects])) - method.b", np.matmul(method.stiffness,np.transpose([corrects])) - method.b)
+            # test if system makes sense
+            print("stiffness", method.stiffness)
+            print("np.matmul(method.stiffness,np.transpose([corrects])) - method.b", np.matmul(method.stiffness,np.transpose([corrects])) - method.b)
 
-        result = result.reshape(model.num_dimensions*len(data))
+            result = result.reshape(model.num_dimensions*len(data))
 
-        diff = corrects - result
+            diff = corrects - result
 
-        # self.assertAlmostEqual(np.abs(diff).max(), 0, 3)
-        return np.abs(diff).mean()
+            # self.assertAlmostEqual(np.abs(diff).max(), 0, 3)
+            return np.abs(diff).mean()
 
     def visco_rectangle_template(self, method_class, model_class, region):
         data = region.cartesian
@@ -168,38 +187,42 @@ class TestMeshless(unittest.TestCase):
 
 
         for point_index, point in enumerate(data):
-            analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[::model.iterations].ravel()
-            analytical_y = num.Function(model.analytical[1], name="analytical uy(%s)").eval(point)[::model.iterations].ravel()
             calculated_x = fts[2*point_index].ravel()
             calculated_y = fts[2*point_index+1].ravel()
             print(point)
-            print('calculated_x, point diff, analytical', [calculated_x,np.diff(calculated_x), analytical_x,])
 
             plt.plot(point[0], point[1], "b^-")
             plt.plot(point[0]+calculated_x, point[1]+calculated_y, "r^-")
-            plt.plot(point[0]+analytical_x, point[1]+analytical_y, "gs-")
+
+            if model.analytical:
+                analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[::model.iterations].ravel()
+                analytical_y = num.Function(model.analytical[1], name="analytical uy(%s)").eval(point)[::model.iterations].ravel()
+                plt.plot(point[0]+analytical_x, point[1]+analytical_y, "gs-")
 
         region.plot()
-        # method.plot()
+        method.plot()
         plt.show()
 
         for point_index, point in enumerate(data):
-            analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[::model.iterations].ravel()
             calculated_x = fts[2*point_index].ravel()
 
-            analytical_y = num.Function(model.analytical[1], name="analytical uy(%s)").eval(point)[::model.iterations].ravel()
             calculated_y = fts[2*point_index+1].ravel()
 
+            if model.analytical:
+                analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[::model.iterations].ravel()
+                analytical_y = num.Function(model.analytical[1], name="analytical uy(%s)").eval(point)[::model.iterations].ravel()
             print(point)
 
             print("x")
             plt.plot(calculated_x, "r^-")
-            plt.plot(analytical_x, "gs-")
+            if model.analytical:
+                plt.plot(analytical_x, "gs-")
             plt.show()
 
             print("y")
             plt.plot(calculated_y, "r^-")
-            plt.plot(analytical_y, "gs-")
+            if model.analytical:
+                plt.plot(analytical_y, "gs-")
             plt.show()
 
 
@@ -231,8 +254,11 @@ class TestMeshless(unittest.TestCase):
     def test_collocation_viscoelasticity(self):
         self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example(1, 1))
 
-    def test_collocation_cantiliever_beam_elasticity(self):
+    def test_collocation_cantiliever_beam(self):
         self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantiliever_beam_region_example(5,5))
+
+    def test_collocation_simply_supported_beam(self):
+        self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel, simply_supported_beam_region_example(5,5))
 
     def test_subregion_potential(self):
         self.rectangle_template(SubregionMethod, PotentialModel, potential_region_example)
@@ -267,7 +293,7 @@ class TestMeshless(unittest.TestCase):
     def test_petrov_galerkin_viscoelasticity(self):
         self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticModel, viscoelastic_region_example(1,1))
 
-    def test_petrov_galerkin_cantiliever_beam_elasticity(self):
+    def test_petrov_galerkin_cantiliever_beam(self):
         self.visco_rectangle_template(PetrovGalerkinMethod, CantileverBeamModel, cantiliever_beam_region_example(5, 5))
 
 if __name__ == '__main__':
