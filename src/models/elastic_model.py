@@ -210,15 +210,17 @@ class ElasticModel(Model):
         e = self.D[2, 2]
         u = num.Function(self.analytical[0], name="analytical u")
         v = num.Function(self.analytical[1], name="analytical v")
-        uxx = u.derivate("x").derivate("x").eval(point)
-        uyy = u.derivate("y").derivate("y").eval(point)
-        uxy = u.derivate("x").derivate("y").eval(point)
-        vxy = v.derivate("x").derivate("y").eval(point)
-        vxx = v.derivate("x").derivate("x").eval(point)
-        vyy = v.derivate("y").derivate("y").eval(point)
+        uxx = u.derivate("x").derivate("x").eval(point).ravel()
+        uyy = u.derivate("y").derivate("y").eval(point).ravel()
+        uxy = u.derivate("x").derivate("y").eval(point).ravel()
+        vxy = v.derivate("x").derivate("y").eval(point).ravel()
+        vxx = v.derivate("x").derivate("x").eval(point).ravel()
+        vyy = v.derivate("y").derivate("y").eval(point).ravel()
+
+        time_size = a.size
 
         # L.D.Lt.u
-        return np.array([a*uxx+b*vxy+e*(uyy+vxy), c*uxy+d*vyy+e*(uxy+vxx)]).reshape([2, 1])
+        return np.array([a*uxx+b*vxy+e*(uyy+vxy), c*uxy+d*vyy+e*(uxy+vxx)]).reshape([2, time_size])
 
     def independent_boundary_function(self, point):
         func = self.boundary_function(point)

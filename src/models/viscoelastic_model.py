@@ -4,7 +4,7 @@ import sympy as sp
 
 
 class ViscoelasticModel(ElasticModel):
-    def __init__(self, region, time=40, iterations=10):
+    def __init__(self, region, time=10, iterations=10):
         ElasticModel.__init__(self, region)
 
         self.iterations = iterations
@@ -54,7 +54,7 @@ class ViscoelasticModel(ElasticModel):
         # self.analytical = [sp.Matrix(np.zeros([self.time * self.iterations,1])), sp.Matrix(np.zeros([self.time * self.iterations,1]))]
 
     def petrov_galerkin_independent_boundary(self, w, integration_point):
-        if integration_point[0] > 1.99:
+        if integration_point[0] > self.region.x2 - 1e-3:
             print('Integration ', w.eval(integration_point)*np.array([self.p/self.s, np.zeros(self.s.shape)]))
             return -w.eval(integration_point)*np.array([self.p/self.s, np.zeros(self.s.shape)])
         else:

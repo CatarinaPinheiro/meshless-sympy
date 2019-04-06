@@ -12,74 +12,94 @@ from src.geometry.regions.rectangle import Rectangle
 import mpmath as mp
 from src.models.potential_model import PotentialModel
 from src.models.crimped_beam import CrimpedBeamModel
+from src.models.cantilever_beam import CantileverBeamModel
 from src.models.elastic_model import ElasticModel
 from src.models.viscoelastic_model import ViscoelasticModel
 from matplotlib import pyplot as plt
 
-elastic_region_example = Rectangle(
-    x1=0,
-    y1=-15,
-    x2=60,
-    y2=15,
-    dx=15,
-    dy=15,
-    # dx=5,
-    # dy=5,
-    parametric_partition={
-        0.01: ["DIRICHLET", "NEUMANN"],
-        1:    ["NEUMANN",   "NEUMANN"],
-        2:    ["NEUMANN",   "NEUMANN"],
-        3:    ["NEUMANN",   "NEUMANN"],
-        3.49: ["DIRICHLET", "NEUMANN"],
-        3.51: ["DIRICHLET", "DIRICHLET"],
-        4:    ["DIRICHLET", "NEUMANN"]
-        # 5: ["DIRICHLET", "DIRICHLET"]
-    })
+def elastic_region_example(dx, dy):
+    return Rectangle(
+        x1=0,
+        y1=-15,
+        x2=60,
+        y2=15,
+        dx=dx,
+        dy=dy,
+        parametric_partition={
+            0.01: ["DIRICHLET", "NEUMANN"],
+            1:    ["NEUMANN",   "NEUMANN"],
+            2:    ["NEUMANN",   "NEUMANN"],
+            3:    ["NEUMANN",   "NEUMANN"],
+            3.49: ["DIRICHLET", "NEUMANN"],
+            3.51: ["DIRICHLET", "DIRICHLET"],
+            4:    ["DIRICHLET", "NEUMANN"]
+            # 5: ["DIRICHLET", "DIRICHLET"]
+        })
 
-crimped_beam_region_example = Rectangle(
-    x1=0,
-    y1=-6,
-    x2=48,
-    y2=6,
-    dx=6,
-    dy=6,
-    parametric_partition={
-        0.01: ["DIRICHLET", "NEUMANN"],
-        2.99: ["NEUMANN", "NEUMANN"],
-        3.49: ["DIRICHLET", "NEUMANN"],
-        3.51: ["DIRICHLET", "DIRICHLET"],
-        4.01: ["DIRICHLET", "NEUMANN"]
-        # 5: ["DIRICHLET", "DIRICHLET"]
-    })
+def cantiliever_beam_region_example(dx, dy):
+    return Rectangle(
+        x1=0,
+        x2=100,
+        y1=-5,
+        y2=5,
+        dx=dx,
+        dy=dy,
+        parametric_partition={
+            0.01: ["DIRICHLET", "NEUMANN"],
+            2.99: ["NEUMANN", "NEUMANN"],
+            3.49: ["DIRICHLET", "DIRICHLET"],
+            3.51: ["DIRICHLET", "DIRICHLET"],
+            4.01: ["DIRICHLET", "DIRICHLET"]
+            # 5: ["DIRICHLET", "DIRICHLET"]
+        })
 
-viscoelastic_region_example = Rectangle(
-    x1=0,
-    y1=0,
-    x2=2,
-    y2=2,
-    dx=0.5,
-    dy=0.5,
-    parametric_partition={
-        1.01: ["NEUMANN",   "DIRICHLET"],
-        1.99: ["NEUMANN",   "NEUMANN"],
-        2.99: ["NEUMANN",   "DIRICHLET"],
-        5:    ["DIRICHLET", "DIRICHLET"],
-        # 5:    ["DIRICHLET", "DIRICHLET"]
-    })
+def crimped_beam_region_example(dx, dy):
+    return Rectangle(
+        x1=0,
+        y1=-6,
+        x2=48,
+        y2=6,
+        dx=dx,
+        dy=dy,
+        parametric_partition={
+            0.01: ["DIRICHLET", "NEUMANN"],
+            2.99: ["NEUMANN", "NEUMANN"],
+            3.49: ["DIRICHLET", "NEUMANN"],
+            3.51: ["DIRICHLET", "DIRICHLET"],
+            4.01: ["DIRICHLET", "NEUMANN"]
+            # 5: ["DIRICHLET", "DIRICHLET"]
+        })
 
-potential_region_example = Rectangle(
-    x1=0,
-    y1=0,
-    x2=2,
-    y2=2,
-    dx=2/5,
-    dy=2/5,
-    parametric_partition={
-        1: ["DIRICHLET"],
-        2: ["NEUMANN"],
-        3: ["DIRICHLET"],
-        4: ["NEUMANN"],
-    })
+def viscoelastic_region_example(dx, dy):
+    return Rectangle(
+        x1=0,
+        y1=0,
+        x2=2,
+        y2=2,
+        dx=dx,
+        dy=dy,
+        parametric_partition={
+            1.01: ["NEUMANN",   "DIRICHLET"],
+            1.99: ["NEUMANN",   "NEUMANN"],
+            2.99: ["NEUMANN",   "DIRICHLET"],
+            5:    ["DIRICHLET", "DIRICHLET"],
+            # 5:    ["DIRICHLET", "DIRICHLET"]
+        })
+
+def potential_region_example(dx, dy):
+    return Rectangle(
+        x1=0,
+        y1=0,
+        x2=2,
+        y2=2,
+        dx=dx,
+        dy=dy,
+        parametric_partition={
+            1: ["DIRICHLET"],
+            2: ["NEUMANN"],
+            3: ["DIRICHLET"],
+            4: ["NEUMANN"],
+        })
 
 class TestMeshless(unittest.TestCase):
 
@@ -95,9 +115,9 @@ class TestMeshless(unittest.TestCase):
         result = method.solve()
         print("result", result.shape)
 
-        region.plot()
-        method.plot()
-        plt.show()
+        # region.plot()
+        # method.plot()
+        # plt.show()
         # plt.show(block=False)
         # for index, point in enumerate(data):
         #     plt.clf()
@@ -115,12 +135,9 @@ class TestMeshless(unittest.TestCase):
         result = result.reshape(model.num_dimensions*len(data))
 
         diff = corrects - result
-        print("diff", np.abs(diff).mean())
-        print("result", result)
-        print('corrects', corrects)
-        print('diff', diff)
 
-        self.assertAlmostEqual(np.abs(diff).max(), 0, 3)
+        # self.assertAlmostEqual(np.abs(diff).max(), 0, 3)
+        return np.abs(diff).mean()
 
     def visco_rectangle_template(self, method_class, model_class, region):
         data = region.cartesian
@@ -158,22 +175,31 @@ class TestMeshless(unittest.TestCase):
             print(point)
             print('calculated_x, point diff, analytical', [calculated_x,np.diff(calculated_x), analytical_x,])
 
-            plt.plot(point[0], point[1], "r^-")
-            plt.plot(point[0]+np.diff(calculated_x), point[1]+np.diff(calculated_y), "b^-")
+            plt.plot(point[0], point[1], "b^-")
+            plt.plot(point[0]+calculated_x, point[1]+calculated_y, "r^-")
             plt.plot(point[0]+analytical_x, point[1]+analytical_y, "gs-")
 
         region.plot()
+        # method.plot()
         plt.show()
 
         for point_index, point in enumerate(data):
             analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[::model.iterations].ravel()
             calculated_x = fts[2*point_index].ravel()
+
+            analytical_y = num.Function(model.analytical[1], name="analytical uy(%s)").eval(point)[::model.iterations].ravel()
+            calculated_y = fts[2*point_index+1].ravel()
+
             print(point)
-            t = np.arange(0.5, calculated_x.size-1)
-            # plt.plot(t, 1.5*np.diff(np.diff(calculated_x))[0]+np.diff(calculated_x), "b^-")
+
+            print("x")
             plt.plot(calculated_x, "r^-")
-            # plt.plot(np.diff(calculated_x), "b^-")
             plt.plot(analytical_x, "gs-")
+            plt.show()
+
+            print("y")
+            plt.plot(calculated_y, "r^-")
+            plt.plot(analytical_y, "gs-")
             plt.show()
 
 
@@ -181,13 +207,32 @@ class TestMeshless(unittest.TestCase):
         self.rectangle_template(CollocationMethod, PotentialModel, potential_region_example)
 
     def test_collocation_elasticity(self):
-        self.rectangle_template(CollocationMethod, ElasticModel, elastic_region_example)
+        self.rectangle_template(CollocationMethod, ElasticModel, elastic_region_example(30, 15))
 
     def test_collocation_crimped_beam_elasticity(self):
-        self.rectangle_template(CollocationMethod, CrimpedBeamModel, crimped_beam_region_example)
+        steps = [
+            [6, 6],
+            [3, 3],
+            [2,2],
+            [1.5, 1.5],
+            [6/5, 6/5],
+            [1,1]
+        ]
+        diffs = []
+        for dx, dy in steps:
+            diff = self.rectangle_template(CollocationMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
+            diffs.append(diff)
+
+            plt.plot(diffs)
+            plt.draw()
+            plt.pause(0.001)
+        plt.show()
 
     def test_collocation_viscoelasticity(self):
-        self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example)
+        self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example(1, 1))
+
+    def test_collocation_cantiliever_beam_elasticity(self):
+        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantiliever_beam_region_example(5,5))
 
     def test_subregion_potential(self):
         self.rectangle_template(SubregionMethod, PotentialModel, potential_region_example)
@@ -196,7 +241,7 @@ class TestMeshless(unittest.TestCase):
         self.rectangle_template(SubregionMethod, ElasticModel, elastic_region_example)
 
     def test_subregion_viscoelasticity(self):
-        self.visco_rectangle_template(SubregionMethod, ViscoelasticModel, viscoelastic_region_example)
+        self.visco_rectangle_template(SubregionMethod, ViscoelasticModel, viscoelastic_region_example(1, 1))
 
     def test_galerkin_potential(self):
         self.rectangle_template(GalerkinMethod, PotentialModel, potential_region_example)
@@ -220,7 +265,10 @@ class TestMeshless(unittest.TestCase):
         self.rectangle_template(PetrovGalerkinMethod, CrimpedBeamModel, crimped_beam_region_example)
 
     def test_petrov_galerkin_viscoelasticity(self):
-        self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticModel, viscoelastic_region_example)
+        self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticModel, viscoelastic_region_example(1,1))
+
+    def test_petrov_galerkin_cantiliever_beam_elasticity(self):
+        self.visco_rectangle_template(PetrovGalerkinMethod, CantileverBeamModel, cantiliever_beam_region_example(5, 5))
 
 if __name__ == '__main__':
     unittest.main()
