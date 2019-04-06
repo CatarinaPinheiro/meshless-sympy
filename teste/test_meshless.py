@@ -136,8 +136,8 @@ class TestMeshless(unittest.TestCase):
 
         # region.plot()
         # method.plot()
-        # plt.savefig("%s.png"%random.randint(1,1000))
-        # plt.savefig("%s.png"%random.randint(1,1000))(block=False)
+        # plt.show()
+        # plt.show()(block=False)
         # for index, point in enumerate(data):
         #     plt.clf()
         #     method.plot(index)
@@ -157,7 +157,7 @@ class TestMeshless(unittest.TestCase):
             diff = corrects - result
 
             # self.assertAlmostEqual(np.abs(diff).max(), 0, 3)
-            return np.abs(diff).mean()
+            return np.abs(diff).max()
 
     def visco_rectangle_template(self, method_class, model_class, region):
         data = region.cartesian
@@ -202,7 +202,7 @@ class TestMeshless(unittest.TestCase):
 
         region.plot()
         method.plot()
-        plt.savefig("%s.png"%random.randint(1,1000))
+        plt.show()
 
         for point_index, point in enumerate(data):
             calculated_x = fts[2*point_index].ravel()
@@ -218,13 +218,13 @@ class TestMeshless(unittest.TestCase):
             plt.plot(calculated_x, "r^-")
             if model.analytical:
                 plt.plot(analytical_x, "gs-")
-            plt.savefig("%s.png"%random.randint(1,1000))
+            plt.show()
 
             print("y")
             plt.plot(calculated_y, "r^-")
             if model.analytical:
                 plt.plot(analytical_y, "gs-")
-            plt.savefig("%s.png"%random.randint(1,1000))
+            plt.show()
 
 
     def test_collocation_potential(self):
@@ -250,10 +250,10 @@ class TestMeshless(unittest.TestCase):
             plt.plot(diffs)
             plt.draw()
             plt.pause(0.001)
-        plt.savefig("%s.png"%random.randint(1,1000))
+        plt.show()
 
     def test_collocation_viscoelasticity(self):
-        self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example(1, 1))
+        self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example(0.5, 0.5))
 
     def test_collocation_cantiliever_beam(self):
         self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantiliever_beam_region_example(5,5))
