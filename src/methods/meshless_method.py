@@ -21,6 +21,7 @@ class MeshlessMethod:
         self.weight_function = weight_function
         self.m2d = mls.MovingLeastSquares2D(self.data, self.basis, self.weight_function)
         self.support_radius = {}
+        cache.reset()
 
     def domain_append(self, i, d):
         self.m2d.point = d
