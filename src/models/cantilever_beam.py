@@ -80,7 +80,3 @@ class CantileverBeamModel(CrimpedBeamModel):
 
         self.visco_analytical = [ux, uy]
 
-    def creep(self, t):
-        lmbda = self.q0/self.q1
-        return 1-np.exp(-lmbda*t)
-        # return ((self.p1/self.q1)*np.exp(-lmbda*t)+(1/self.q0)*(1-np.exp(-lmbda*t)))

@@ -40,19 +40,18 @@ def elastic_region_example(dx, dy):
 
 def simply_supported_beam_region_example(dx, dy):
     return Rectangle(
-        x1=-5,
-        y1=0,
-        x2=5,
-        y2=50,
+        x1=0,
+        y1=-5,
+        x2=50,
+        y2=5,
         dx=dx,
         dy=dy,
         parametric_partition={
-            1.01: ["NEUMANN",   "NEUMANN"],
-            1.99: ["NEUMANN",   "NEUMANN"],
-            2.99: ["NEUMANN",   "NEUMANN"],
-            3.01: ["DIRICHLET", "DIRICHLET"],
-            3.99: ["NEUMANN",   "NEUMANN"],
-            4.01: ["DIRICHLET", "NEUMANN"]
+            0.01: ["DIRICHLET", "DIRICHLET"],
+            0.99: ["NEUMANN", "NEUMANN"],
+            1.01: ["NEUMANN", "DIRICHLET"],
+            3.99: ["NEUMANN", "NEUMANN"],
+            4.01: ["DIRICHLET", "DIRICHLET"]
         })
 
 def cantiliever_beam_region_example(dx, dy):
@@ -204,8 +203,6 @@ class TestMeshless(unittest.TestCase):
 
             padding = 10
             plt.axis([region.x1 - padding, region.x2 + padding, region.y1 - padding, region.y2 + padding])
-            region.plot()
-            method.plot()
             plt.draw()
             plt.pause(1/24)
             plt.clf()

@@ -324,3 +324,8 @@ class ElasticModel(Model):
         # return -w.eval(integration_point)*np.tensordot(N, np.tensordot(self.D, Ltu, axes=(1,0)), axes=(1,0)).reshape((2,self.D.shape[2]))
         return np.moveaxis(-w.eval(integration_point)*N@D@Ltu, 0, 2).reshape(2,time_points)
 
+    def creep(self, t):
+        lmbda = self.q0/self.q1
+        return 1-np.exp(-lmbda*t)
+        # return ((self.p1/self.q1)*np.exp(-lmbda*t)+(1/self.q0)*(1-np.exp(-lmbda*t)))
+
