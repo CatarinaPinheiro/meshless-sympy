@@ -8,8 +8,9 @@ class ElasticModel(Model):
     def __init__(self, region):
         self.region = region
         x, y = sp.var("x y")
-        self.analytical = [sp.Matrix([x]), sp.Matrix([-y/4])]
+        # self.analytical = [sp.Matrix([x]), sp.Matrix([-y/4])]
         # self.analytical = [x,sp.Integer(0)]
+        self.analytical = None
         self.num_dimensions = 2
 
         self.E = 1
@@ -29,11 +30,11 @@ class ElasticModel(Model):
 
         time_points = self.D.shape[2]
 
-        ux = u.derivate("x").eval(integration_point)
-        uy = u.derivate("y").eval(integration_point)
+        ux = np.array(u.derivate("x").eval(integration_point))
+        uy = np.array(u.derivate("y").eval(integration_point))
 
-        vx = v.derivate("x").eval(integration_point)
-        vy = v.derivate("y").eval(integration_point)
+        vx = np.array(v.derivate("x").eval(integration_point))
+        vy = np.array(v.derivate("y").eval(integration_point))
 
         nx, ny = self.region.normal(integration_point)
         N = np.array([[nx, 0, ny],
@@ -162,8 +163,13 @@ class ElasticModel(Model):
         return np.array([u, v])
 
     def boundary_function(self, point):
-        u = num.Function(self.analytical[0], name="analytical u")
-        v = num.Function(self.analytical[1], name="analytical v")
+        if callable(self.analytical[0]):
+            big_number = 9999999999
+            u = num.Function(self.analytical[0](big_number), name="analytical u")
+            v = num.Function(self.analytical[1](big_number), name="analytical v")
+        else:
+            u = num.Function(self.analytical[0], name="analytical u")
+            v = num.Function(self.analytical[1], name="analytical v")
 
         return np.sum(self.independent_boundary_operator(u, v, point), axis=1)
 
@@ -208,14 +214,25 @@ class ElasticModel(Model):
         c = self.D[1, 0]
         d = self.D[1, 1]
         e = self.D[2, 2]
-        u = num.Function(self.analytical[0], name="analytical u")
-        v = num.Function(self.analytical[1], name="analytical v")
-        uxx = u.derivate("x").derivate("x").eval(point).ravel()
-        uyy = u.derivate("y").derivate("y").eval(point).ravel()
-        uxy = u.derivate("x").derivate("y").eval(point).ravel()
-        vxy = v.derivate("x").derivate("y").eval(point).ravel()
-        vxx = v.derivate("x").derivate("x").eval(point).ravel()
-        vyy = v.derivate("y").derivate("y").eval(point).ravel()
+        if callable(self.analytical[0]):
+            big_number = 9999999999
+            u = num.Function(self.analytical[0](big_number), name="analytical u")
+            v = num.Function(self.analytical[1](big_number), name="analytical v")
+            uxx = u.derivate("x").derivate("x").eval(point)
+            uyy = u.derivate("y").derivate("y").eval(point)
+            uxy = u.derivate("x").derivate("y").eval(point)
+            vxy = v.derivate("x").derivate("y").eval(point)
+            vxx = v.derivate("x").derivate("x").eval(point)
+            vyy = v.derivate("y").derivate("y").eval(point)
+        else:
+            u = num.Function(self.analytical[0], name="analytical u")
+            v = num.Function(self.analytical[1], name="analytical v")
+            uxx = u.derivate("x").derivate("x").eval(point).ravel()
+            uyy = u.derivate("y").derivate("y").eval(point).ravel()
+            uxy = u.derivate("x").derivate("y").eval(point).ravel()
+            vxy = v.derivate("x").derivate("y").eval(point).ravel()
+            vxx = v.derivate("x").derivate("x").eval(point).ravel()
+            vyy = v.derivate("y").derivate("y").eval(point).ravel()
 
         time_size = a.size
 

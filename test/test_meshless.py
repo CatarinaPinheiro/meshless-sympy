@@ -177,27 +177,17 @@ class TestMeshless(unittest.TestCase):
         result = method.solve()
         print("result", result)
 
-        def nearest_indices(t):
-            print(".", end="")
-            return np.abs(model.s-t).argmin()
-
-        fts = np.array([
-            [mp.invertlaplace(lambda t: result[nearest_indices(t)][i][0], x, method='stehfest', degree=model.iterations)
-            for x in range(1, model.time+1)]
-        for i in range(result.shape[1])], dtype=np.float64)
-
-
         for point_index, point in enumerate(data):
-            calculated_x = fts[2*point_index].ravel()
-            calculated_y = fts[2*point_index+1].ravel()
+            ts = np.linspace(0,40)
+            calculated_x = model.creep(ts)*result[:, 2*point_index, 0]
+            calculated_y = model.creep(ts)*result[:, 2*point_index+1, 0]
             print(point)
 
-            plt.plot(point[0], point[1], "b^-")
             plt.plot(point[0]+calculated_x, point[1]+calculated_y, "r^-")
 
             if model.analytical:
-                analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[::model.iterations].ravel()
-                analytical_y = num.Function(model.analytical[1], name="analytical uy(%s)").eval(point)[::model.iterations].ravel()
+                analytical_x = np.array(num.Function(model.visco_analytical[0](ts), name="analytical ux(%s)").eval(point))
+                analytical_y = np.array(num.Function(model.visco_analytical[1](ts), name="analytical uy(%s)").eval(point))
                 plt.plot(point[0]+analytical_x, point[1]+analytical_y, "gs-")
 
         region.plot()
@@ -205,17 +195,13 @@ class TestMeshless(unittest.TestCase):
         plt.show()
 
 
-        for t in range(model.time):
-            print(fts[t])
-
         for point_index, point in enumerate(data):
-            calculated_x = fts[2*point_index].ravel()
-
-            calculated_y = fts[2*point_index+1].ravel()
+            calculated_x = model.creep(ts)*result[:, 2*point_index, 0]
+            calculated_y = model.creep(ts)*result[:, 2*point_index+1, 0]
 
             if model.analytical:
-                analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[::model.iterations].ravel()
-                analytical_y = num.Function(model.analytical[1], name="analytical uy(%s)").eval(point)[::model.iterations].ravel()
+                analytical_x = np.array(num.Function(model.visco_analytical[0](ts), name="analytical ux(%s)").eval(point))
+                analytical_y = np.array(num.Function(model.visco_analytical[1](ts), name="analytical uy(%s)").eval(point))
             print(point)
 
             print("x")
@@ -239,7 +225,7 @@ class TestMeshless(unittest.TestCase):
     def test_collocation_elasticity(self):
         self.rectangle_template(CollocationMethod, ElasticModel, elastic_region_example(30, 15))
 
-    def test_collocation_crimped_beam_elasticity(self):
+    def collocation_crimped_beam_plot_error(self):
         steps = [
             [6, 6],
             [3, 3],
@@ -257,6 +243,9 @@ class TestMeshless(unittest.TestCase):
             plt.draw()
             plt.pause(0.001)
         plt.show()
+
+    def test_collocation_crimped_beam(self):
+        self.visco_rectangle_template(CollocationMethod, CrimpedBeamModel, crimped_beam_region_example(3, 3))
 
     def test_collocation_viscoelasticity(self):
         self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example(0.5, 0.5))

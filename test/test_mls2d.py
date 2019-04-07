@@ -2,7 +2,7 @@ import unittest
 import src.helpers.basis as b
 import numpy as np
 import src.methods.mls2d as m
-import teste.helpers.test_functions as ef
+import test.helpers.test_functions as ef
 from src.helpers.weights import Spline as Weight
 import matplotlib.pyplot as plt
 
