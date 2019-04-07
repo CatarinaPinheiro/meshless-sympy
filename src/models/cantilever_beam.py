@@ -11,7 +11,7 @@ class CantileverBeamModel(CrimpedBeamModel):
         self.num_dimensions = 2
         self.ni = ni = 0.3
         # self.G = G = E/(2*(1+ni))
-        self.p = p = -1000
+        self.p = p = -1e8
         self.ni = np.array([ni])
 
         self.h = h = region.y2 - region.y1
@@ -29,7 +29,10 @@ class CantileverBeamModel(CrimpedBeamModel):
         self.q0 = E1*E2/(E1+E2)
         self.q1 = F*E1/(E1+E2)
 
-        self.E = E = self.q0
+        if not self.q1 > self.p1*self.q0:
+            raise Exception("invalid values for q1, p1 and p0")
+
+        self.E = E = E1#self.q0
         self.D = (E/(1-ni**2))*np.array([[1, ni, 0],
                                          [ni, 1, 0],
                                          [0, 0, (1-ni)/2]]).reshape((3,3,1))
@@ -79,4 +82,5 @@ class CantileverBeamModel(CrimpedBeamModel):
 
     def creep(self, t):
         lmbda = self.q0/self.q1
-        return ((self.p1/self.q1)*np.exp(-lmbda*t)+(1/self.q0)*(1-np.exp(-lmbda*t)))
+        return 1-np.exp(-lmbda*t)
+        # return ((self.p1/self.q1)*np.exp(-lmbda*t)+(1/self.q0)*(1-np.exp(-lmbda*t)))

@@ -177,8 +177,8 @@ class TestMeshless(unittest.TestCase):
         result = method.solve()
         print("result", result)
 
+        ts = np.linspace(0,40)
         for point_index, point in enumerate(data):
-            ts = np.linspace(0,40)
             calculated_x = model.creep(ts)*result[:, 2*point_index, 0]
             calculated_y = model.creep(ts)*result[:, 2*point_index+1, 0]
             print(point)
@@ -193,6 +193,22 @@ class TestMeshless(unittest.TestCase):
         region.plot()
         method.plot()
         plt.show()
+
+        for t in ts:
+            for point_index, point in enumerate(data):
+                calculated_x = model.creep(t)*result[:, 2*point_index, 0]
+                calculated_y = model.creep(t)*result[:, 2*point_index+1, 0]
+                print(point)
+
+                plt.plot(point[0]+calculated_x, point[1]+calculated_y, "r^-")
+
+            padding = 10
+            plt.axis([region.x1 - padding, region.x2 + padding, region.y1 - padding, region.y2 + padding])
+            region.plot()
+            method.plot()
+            plt.draw()
+            plt.pause(1/24)
+            plt.clf()
 
 
         for point_index, point in enumerate(data):
