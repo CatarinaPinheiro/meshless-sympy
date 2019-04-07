@@ -1,5 +1,7 @@
 from src.models.elastic_model import ElasticModel
 import numpy as np
+import src.helpers.numeric as num
+from src.helpers.cache import cache
 import sympy as sp
 
 
@@ -45,21 +47,62 @@ class CantileverBeamModel(ElasticModel):
         x, y = sp.var("x y")
         t = np.arange(1, self.time + 1).repeat(self.iterations)
 
-        def ux(s):
+        def ux(tt):
+            print("ux(%s)"%tt)
+            s, t = sp.var("s t")
+
+            L1 = q0 + q1 * s
+            L2 = 3 * K
+
+            P1 = p0 + p1 * s
+            P2 = sp.Integer(1)
+
+            E =  3 * L1 * L2 / (2 * P1 * L2 + L1 * P2)
+            ni =  (P1 * L2 - L1 * P2) / (2 * P1 * L2 + L1 * P2)
+
+
             pvisc = self.p/s
             exp1 = pvisc*y/(6*E*I)
             exp2 = (6*L - 3*x)*x
             exp3 = 2 + ni
             exp4 = y**2 - h**2/4
-            return -exp1*(exp2 + exp3*exp4)
 
-        def uy(s):
+            key = "analytical u(s)"
+            found, value = cache.get(key)
+            if found:
+                return value.subs(t,tt)
+            else:
+                computed = sp.inverse_laplace_transform(-exp1*(exp2 + exp3*exp4), s, t)
+                cache.set(key, computed)
+                return computed.subs(t,tt)
+
+        def uy(tt):
+            print("uy(%s)"%tt)
+            s, t = sp.var("s t")
+
+            L1 = q0 + q1 * s
+            L2 = 3 * K
+
+            P1 = p0 + p1 * s
+            P2 = sp.Integer(1)
+
+            E =  3 * L1 * L2 / (2 * P1 * L2 + L1 * P2)
+            ni = (P1 * L2 - L1 * P2) / (2 * P1 * L2 + L1 * P2)
+
             pvisc = self.p/s
             exp1 = pvisc/(6*E*I)
             exp2 = 3*ni*(y**2)*(L - x)
             exp3 = (4 + 5*ni)*(h**2)*x/4
-            exp4 = (3*L - x)*(x**2)
-            return exp1*(exp2 + exp3 + exp4)
+            exp4 = (x - 3*L)*(x**2)
+
+            key = "analytical v(s)"
+            found, value = cache.get(key)
+            if found:
+                return value.subs(t, tt)
+            else:
+                computed = sp.inverse_laplace_transform(-exp1*(exp2 + exp3*exp4), s, t)
+                cache.set(key, computed)
+                return computed.subs(t, tt)
 
         # def ux(t):
         #     ht = 1

@@ -40,7 +40,7 @@ def elastic_region_example(dx, dy):
 
 def simply_supported_beam_region_example(dx, dy):
     return Rectangle(
-        x1=0,
+        x1=-5,
         y1=0,
         x2=5,
         y2=50,
@@ -204,6 +204,10 @@ class TestMeshless(unittest.TestCase):
         method.plot()
         plt.show()
 
+
+        for t in range(model.time):
+            print(fts[t])
+
         for point_index, point in enumerate(data):
             calculated_x = fts[2*point_index].ravel()
 
@@ -225,6 +229,8 @@ class TestMeshless(unittest.TestCase):
             if model.analytical:
                 plt.plot(analytical_y, "gs-")
             plt.show()
+
+
 
 
     def test_collocation_potential(self):
@@ -259,7 +265,7 @@ class TestMeshless(unittest.TestCase):
         self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantiliever_beam_region_example(5,5))
 
     def test_collocation_simply_supported_beam(self):
-        self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel, simply_supported_beam_region_example(1,1))
+        self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel, simply_supported_beam_region_example(5,5))
 
     def test_subregion_potential(self):
         self.rectangle_template(SubregionMethod, PotentialModel, potential_region_example)
