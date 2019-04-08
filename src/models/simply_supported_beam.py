@@ -1,27 +1,26 @@
-from src.models.elastic_model import ElasticModel
+from src.models.simply_supported_elastic import SimplySupportedElasticModel
 import numpy as np
 import sympy as sp
 
 
-class SimplySupportedBeamModel(ElasticModel):
+class SimplySupportedBeamModel(SimplySupportedElasticModel):
     def __init__(self, region):
-        ElasticModel.__init__(self, region)
-
-        q = self.p = -1000
         self.region = region
         self.num_dimensions = 2
         self.ni = ni = 0.3
         # self.G = G = E/(2*(1+ni))
+        self.q = q = -1e8
         self.ni = np.array([ni])
 
         self.h = h = region.y2 - region.y1
         self.I = I = h ** 3 / 12
         self.L = L = region.x2 - region.x1
-        F = 35e9
-        self.G = G = 4.8e9
-        K = 12.80e9
         self.alfa = alfa = 0.25
-        self.lbda = lbda = 0.40
+        self.lbda = lbda = 0.4
+        c = h/2
+        F = 35e9
+        self.G = G = 8.75e9
+        K = 11.67e9
 
         E1 = 9 * K * G / (3 * K + G)
         E2 = E1
@@ -38,10 +37,21 @@ class SimplySupportedBeamModel(ElasticModel):
                                                  [ni, 1, 0],
                                                  [0, 0, (1 - ni) / 2]]).reshape((3, 3, 1))
 
-        self.h = h = self.region.y2 - self.region.y1
-        self.I = I = h ** 3 / 12
-        self.L = L = self.region.x2 - self.region.x1
+        h = self.region.y2 - self.region.y1
+        I = h ** 3 / 12
+        L = self.region.x2 - self.region.x1
         x, y = sp.var("x y")
+
+        ux = (q / (2 * E * I)) * (
+                (x * L ** 2 - (x ** 3) / 3) * y + x * (2 * (y ** 3) / 3 - 2 * y * (c ** 2) / 5) + ni * x * (
+                (y ** 3) / 3 - y * c ** 2 + 2 * (c ** 3) / 3))
+        uy = -(q / (2 * E * I)) * ((y ** 4) / 12 - (c ** 2) * (y ** 2) / 2 + 2 * (c ** 3) * y / 3 + ni * (
+                (L ** 2 - x ** 2) * (y ** 2) / 2 + (y ** 4) / 6 - (c ** 2) * (y ** 2) / 5)) - (q / (2 * E * I)) * (
+                     (L ** 2) * (x ** 2) / 2 - (x ** 4) / 12 - (c ** 2) * (x ** 2) / 5 + (1 + ni / 2) * (c ** 2) * (
+                     x ** 2)) + (5 * q * (L ** 4) / (24 * E * I)) * (
+                     1 + (12 * (c ** 2) / (5 * (L ** 2))) * (4 / 5 + ni / 2))
+
+        self.analytical = [sp.Matrix([ux]), sp.Matrix([uy])]
 
         def ux(t):
             exp1 = q * x / (540 * G * I * K * alfa)
@@ -70,22 +80,79 @@ class SimplySupportedBeamModel(ElasticModel):
         self.visco_analytical = [ux, uy]
 
 
-    def petrov_galerkin_independent_boundary(self, w, integration_point):
-        if integration_point[1] > self.region.y2 - 1e-3:
-            return -w.eval(integration_point) * np.array([[1],
-                                                          [self.p]])
-        else:
-            return np.zeros([2, 1])
 
-    def petrov_galerkin_independent_domain(self, w, integration_point):
-        return np.zeros([2, 1])
 
-    def independent_domain_function(self, point):
-        return np.zeros([2, 1])
+    def __init__(self, region):
+        self.region = region
+        self.num_dimensions = 2
+        self.ni = ni = 0.3
+        # self.G = G = E/(2*(1+ni))
+        self.p = p = -1e8
+        self.ni = np.array([ni])
 
-    def independent_boundary_function(self, point):
-        if point[1] > self.region.y2 - 1e-3:
-            return np.array([[1],
-                             [self.p]])
-        else:
-            return np.zeros([2, 1])
+        self.h = h = region.y2 - region.y1
+        self.I = I = h**3/12
+        self.L = L = region.x2 - region.x1
+        F = 35e9
+        self.G = G = 8.75e9
+        K = 11.67e9
+
+
+        E1 = 9 * K * G / (3 * K + G)
+        E2 = E1
+
+        self.p1 = F/(E1+E2)
+        self.q0 = E1*E2/(E1+E2)
+        self.q1 = F*E1/(E1+E2)
+
+        if not self.q1 > self.p1*self.q0:
+            raise Exception("invalid values for q1, p1 and p0")
+
+        self.E = E = E1 #self.q0
+        self.D = (E/(1-ni**2))*np.array([[1, ni, 0],
+                                         [ni, 1, 0],
+                                         [0, 0, (1-ni)/2]]).reshape((3,3,1))
+
+
+        h = self.region.y2 - self.region.y1
+        I = h ** 3 / 12
+        L = self.region.x2 - self.region.x1
+        x, y = sp.var("x y")
+
+        ux = (-p/(6*E*I))*( (6*L-3*x)*x + (2+ni)*(y**2-h**2/4))
+        uy = (p/(6*E*I))*(3*ni*y**2*(L-x) + (4+5*ni)*h**2*x/4 + (3*L-x)*x**2)
+
+        self.analytical = [sp.Matrix([ux]), sp.Matrix([uy])]
+
+        def ux(t):
+            ht = 1
+            q00 = (E1*E2)/(E1 + E2)
+            q01 = E1*F/(E1+ E2)
+            p01 = F/(E1 + E2)
+            exp1 = (6 * K + q00) / (9 * K * q00)
+            exp2 = ((p01 * q00 - q01) / (q00 * q01)) * np.exp(-q00 * t / q01)
+            exp3 = -p * y * ((L - x) ** 2) / (2 * I)
+            exp4 = p * y * (L ** 2) / (2 * I)
+            exp5 = (3 * K - q00) / (9 * K * q00)
+            exp6 = self.p * (y ** 3) / (6 * I)
+            exp7 = 1 / q00
+            return -ht * ((exp1 + 2 * exp2 / 3) * (exp3 + exp4) - (exp5 + exp2 / 3) * exp6 + 2 * exp6 * (exp7 + exp2))
+
+        def uy(t):
+            ht = 1
+            q00 = (E1*E2)/(E1 + E2)
+            q01 = E1*F/(E1+ E2)
+            p01 = F/(E1 + E2)
+            exp1 = (6 * K + q00) / (9 * K * q00)
+            exp2 = ((p01 * q00 - q01) / (q00 * q01)) * np.exp(-q00 * t / q01)
+            exp5 = (3 * K - q00) / (9 * K * q00)
+            exp7 = 1 / q00
+            exp8 = self.p*(L-x)*(y**2)/(2*I)
+            exp9 = self.p*x*(h**2)/(8*I)
+            exp10 = self.p*((L - x)**3)/(6*I)
+            exp11 = self.p*(L-x)*(L**2)/(2*I)
+            exp12 = self.p*(L**3)/(3*I)
+            return ht*(exp5 + exp2/3)*exp8 + 2*ht*(exp7 + exp2)*exp9 + ht*(exp1 + 2*exp2/3)*(exp10 - exp11 + exp12)
+
+        self.visco_analytical = [ux, uy]
+

@@ -9,6 +9,7 @@ import src.helpers.numeric as num
 import numpy as np
 import sympy as sp
 from src.models.simply_supported_beam import SimplySupportedBeamModel
+from src.models.simply_supported_elastic import SimplySupportedElasticModel
 from src.geometry.regions.rectangle import Rectangle
 import mpmath as mp
 from src.models.potential_model import PotentialModel
@@ -36,6 +37,21 @@ def elastic_region_example(dx, dy):
             3.51: ["DIRICHLET", "DIRICHLET"],
             4:    ["DIRICHLET", "NEUMANN"]
             # 5: ["DIRICHLET", "DIRICHLET"]
+        })
+def simply_supported_elastic_region_example(dx, dy):
+    return Rectangle(
+        x1=-50,
+        y1=-10,
+        x2=50,
+        y2=10,
+        dx=dx,
+        dy=dy,
+        parametric_partition={
+            0.01: ["DIRICHLET", "DIRICHLET"],
+            0.99: ["NEUMANN", "NEUMANN"],
+            1.01: ["NEUMANN", "DIRICHLET"],
+            3.99: ["NEUMANN", "NEUMANN"],
+            4.01: ["DIRICHLET", "DIRICHLET"]
         })
 
 def simply_supported_beam_region_example(dx, dy):
@@ -154,9 +170,11 @@ class TestMeshless(unittest.TestCase):
             result = result.reshape(model.num_dimensions*len(data))
 
             diff = corrects - result
+            print('corrects', corrects)
+            print('diff',diff)
 
-            # self.assertAlmostEqual(np.abs(diff).max(), 0, 3)
-            return np.abs(diff).max()
+            #self.assertAlmostEqual(np.abs(diff).max(), 0, 3)
+            #return np.abs(diff).max()
 
     def visco_rectangle_template(self, method_class, model_class, region):
         data = region.cartesian
@@ -238,7 +256,29 @@ class TestMeshless(unittest.TestCase):
     def test_collocation_elasticity(self):
         self.rectangle_template(CollocationMethod, ElasticModel, elastic_region_example(30, 15))
 
-    def collocation_crimped_beam_plot_error(self):
+    def test_collocation_simply_supported_elastic(self):
+        self.rectangle_template(CollocationMethod, SimplySupportedElasticModel, simply_supported_elastic_region_example(2.5, 2.5))
+
+    def test_collocation_simply_supported_elastic_plot_error(self):
+        steps = [
+            [10, 10],
+            [5, 5],
+            [2.5, 2.5],
+            [2, 2],
+            [1, 2]
+        ]
+        diffs = []
+        for dx, dy in steps:
+            diff = self.rectangle_template(CollocationMethod,SimplySupportedElasticModel, simply_supported_elastic_region_example(dx,dy))
+            diffs.append(diff)
+
+            plt.plot(diffs)
+            plt.draw()
+            plt.pause(0.001)
+        plt.show()
+        
+
+    def test_collocation_crimped_beam_plot_error(self):
         steps = [
             [6, 6],
             [3, 3],
@@ -255,15 +295,15 @@ class TestMeshless(unittest.TestCase):
             plt.plot(diffs)
             plt.draw()
             plt.pause(0.001)
-        plt.show()
+            plt.show()
 
     def test_collocation_crimped_beam(self):
-        self.visco_rectangle_template(CollocationMethod, CrimpedBeamModel, crimped_beam_region_example(3, 3))
+        self.rectangle_template(CollocationMethod, CrimpedBeamModel, crimped_beam_region_example(3, 3))
 
     def test_collocation_viscoelasticity(self):
         self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example(0.5, 0.5))
 
-    def test_collocation_cantiliever_beam(self):
+    def test_collocation_cantilever_beam(self):
         self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantiliever_beam_region_example(5,5))
 
     def test_collocation_simply_supported_beam(self):
