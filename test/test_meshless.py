@@ -40,10 +40,10 @@ def elastic_region_example(dx, dy):
 
 def simply_supported_beam_region_example(dx, dy):
     return Rectangle(
-        x1=0,
-        y1=-5,
+        x1=-50,
+        y1=-10,
         x2=50,
-        y2=5,
+        y2=10,
         dx=dx,
         dy=dy,
         parametric_partition={
@@ -204,7 +204,7 @@ class TestMeshless(unittest.TestCase):
             padding = 10
             plt.axis([region.x1 - padding, region.x2 + padding, region.y1 - padding, region.y2 + padding])
             plt.draw()
-            plt.pause(1/24)
+            #plt.pause(1/24)
             plt.clf()
 
 
