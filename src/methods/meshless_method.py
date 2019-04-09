@@ -84,6 +84,7 @@ class MeshlessMethod:
 
         self.stiffness = np.moveaxis(np.concatenate(stiffness, axis=0), 2, 0)
         self.b = np.expand_dims(np.concatenate(b, axis=0).transpose(), 2)
+        print('b = ', self.b)
         print(self.stiffness.shape)
         print(self.b.shape)
         print(np.abs(self.b).max(axis=0))

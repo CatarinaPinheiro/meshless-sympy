@@ -15,10 +15,10 @@ class ElasticModel(Model):
 
         self.E = 1
         self.ni = np.array([0.25])
-        self.G = self.E/(2*(1+self.ni))
-        self.D = (self.E/(1-self.ni**2))*np.array([[1, self.ni, 0],
-                                                   [self.ni, 1, 0],
-                                                   [0, 0, (1-self.ni)/2]]).reshape((3,3,1))
+        self.G = self.E / (2 * (1 + self.ni))
+        self.D = (self.E / (1 - self.ni ** 2)) * np.array([[1, self.ni, 0],
+                                                           [self.ni, 1, 0],
+                                                           [0, 0, (1 - self.ni) / 2]]).reshape((3, 3, 1))
 
     def independent_boundary_operator(self, u, v, integration_point):
         """
@@ -46,13 +46,13 @@ class ElasticModel(Model):
         print(vx.shape, vy.shape)
         Lt = np.array([[ux, zr],
                        [zr, vy],
-                       [uy, vx]]).\
-            astype(np.float64).\
-            reshape([3,2, time_points])
+                       [uy, vx]]). \
+            astype(np.float64). \
+            reshape([3, 2, time_points])
         Lt = np.moveaxis(Lt, 2, 0)
 
         D = np.moveaxis(self.D, 2, 0)
-        neumann_case = np.moveaxis(N@D@Lt, 0,-1)
+        neumann_case = np.moveaxis(N @ D @ Lt, 0, -1)
 
         uv = np.array(u.eval(integration_point))
         vv = np.array(v.eval(integration_point))
@@ -62,22 +62,20 @@ class ElasticModel(Model):
         dirichlet_case = np.array([[uv.ravel(), np.zeros(uv.size)],
                                    [np.zeros(vv.size), vv.ravel()]])
 
-
         conditions = self.region.condition(integration_point)
         if conditions[0] == "DIRICHLET":
             K1 = dirichlet_case[0]
         elif conditions[0] == "NEUMANN":
             K1 = neumann_case[0]
         else:
-            raise Exception("condition(%s) = %s"%(integration_point, conditions[0]))
+            raise Exception("condition(%s) = %s" % (integration_point, conditions[0]))
 
         if conditions[1] == "DIRICHLET":
             K2 = dirichlet_case[1]
         elif conditions[1] == "NEUMANN":
             K2 = neumann_case[1]
         else:
-            raise Exception("condition(%s) = %s"%(integration_point, conditions[1]))
-
+            raise Exception("condition(%s) = %s" % (integration_point, conditions[1]))
 
         return np.array([K1, K2])
 
@@ -102,42 +100,47 @@ class ElasticModel(Model):
 
         Lt = np.array([[phix, zero],
                        [zero, phiy],
-                       [phiy, phix]]).\
-            reshape([3,2,space_points]).\
-            repeat(time_points, axis=2).\
-            reshape([3,2,space_points, time_points]).\
-            swapaxes(0,2).swapaxes(1,3)
+                       [phiy, phix]]). \
+            reshape([3, 2, space_points]). \
+            repeat(time_points, axis=2). \
+            reshape([3, 2, space_points, time_points]). \
+            swapaxes(0, 2).swapaxes(1, 3)
 
-        D = self.D.repeat(space_points, axis=2).\
-            reshape(3,3,time_points, space_points).\
-            swapaxes(0,3).swapaxes(1,2)
-        neumann_case = (N@D@Lt).swapaxes(0,1).\
-            swapaxes(0,3).swapaxes(0,2).\
-            reshape([2,2*space_points, time_points])
+        D = self.D.repeat(space_points, axis=2). \
+            reshape(3, 3, time_points, space_points). \
+            swapaxes(0, 3).swapaxes(1, 2)
+        neumann_case = (N @ D @ Lt).swapaxes(0, 1). \
+            swapaxes(0, 3).swapaxes(0, 2). \
+            reshape([2, 2 * space_points, time_points])
 
-        # a = self.D[0,0]
-        # b = self.D[0,1]
-        # c = self.D[1,0]
-        # d = self.D[1,1]
-        # e = self.D[2,2]
-        # time_points = self.ni.size
-        # space_points = phix.size
-        # m1 = a*phix+b*phiy
-        # m2 = c*phix+d*phiy
-        # m3 = e*(phix+phiy)
-        # multiplication = np.array([nx*m1+ny*m3, ny*m2 + nx*m3]).reshape([2, space_points])
-        # first_row = np.array([multiplication[0], np.zeros(space_points)]).transpose().ravel()
-        # second_row = np.array([np.zeros(space_points), multiplication[1]]).transpose().ravel()
-        # neumann_case2 = np.array([first_row, second_row]).reshape([2, 2*space_points, 1])
-        # diff = neumann_case - neumann_case2
+        a = self.D[0,0]
+        b = self.D[0,1]
+        c = self.D[1,0]
+        d = self.D[1,1]
+        e = self.D[2,2]
+        time_points = self.ni.size
+        space_points = phix.size
+        m1 = a*phix
+        m11 = b*phiy
+        m2 = c*phix
+        m22 = d*phiy
+        m3 = e*phix
+        m4 = e*phiy
+        multiplication = np.array([[nx*m1 + ny*m4, nx*m11 + ny*m3],
+                                   [ ny*m2 + nx*m4, ny*m22 + nx*m3]]).swapaxes(1,3).reshape(2,2*space_points)
+        first_row = np.array(multiplication[0]).transpose().ravel()
+        second_row = np.array(multiplication[1]).transpose().ravel()
+        neumann_case2 = np.array([first_row, second_row]).reshape([2, 2*space_points, 1])
+        diff = neumann_case - neumann_case2
+        print('diff of neumann cases', diff)
 
         phi = phi.eval(integration_point)
         dirichlet_case = np.array([[phi.ravel(), np.zeros(phi.size)],
-                                   [np.zeros(phi.size), phi.ravel()]]).\
-            repeat(time_points, axis=2).\
-            reshape([2,2,space_points, time_points]).\
-            swapaxes(1,2).\
-            reshape([2,2*space_points, time_points])
+                                   [np.zeros(phi.size), phi.ravel()]]). \
+            repeat(time_points, axis=2). \
+            reshape([2, 2, space_points, time_points]). \
+            swapaxes(1, 2). \
+            reshape([2, 2 * space_points, time_points])
 
         conditions = self.region.condition(integration_point)
         if conditions[0] == "DIRICHLET":
@@ -145,15 +148,14 @@ class ElasticModel(Model):
         elif conditions[0] == "NEUMANN":
             K1 = neumann_case[0]
         else:
-            raise Exception("condition(%s) = %s"%(integration_point, conditions[0]))
+            raise Exception("condition(%s) = %s" % (integration_point, conditions[0]))
 
         if conditions[1] == "DIRICHLET":
             K2 = dirichlet_case[1]
         elif conditions[1] == "NEUMANN":
             K2 = neumann_case[1]
         else:
-            raise Exception("condition(%s) = %s"%(integration_point, conditions[1]))
-
+            raise Exception("condition(%s) = %s" % (integration_point, conditions[1]))
 
         return np.array([K1, K2])
 
@@ -190,11 +192,11 @@ class ElasticModel(Model):
         # return np.array([[K11, K12],
         #                  [K21, K22]]).swapaxes(2,3).swapaxes(1,2).reshape(2, 2*space_size, time_size)
 
-        a = np.expand_dims(self.D[0, 0],1)
-        b = np.expand_dims(self.D[0, 1],1)
-        c = np.expand_dims(self.D[1, 0],1)
-        d = np.expand_dims(self.D[1, 1],1)
-        e = np.expand_dims(self.D[2, 2],1)
+        a = np.expand_dims(self.D[0, 0], 1)
+        b = np.expand_dims(self.D[0, 1], 1)
+        c = np.expand_dims(self.D[1, 0], 1)
+        d = np.expand_dims(self.D[1, 1], 1)
+        e = np.expand_dims(self.D[2, 2], 1)
         phixx = phi.derivate("x").derivate("x").eval(point)
         phiyy = phi.derivate("y").derivate("y").eval(point)
         phixy = phi.derivate("x").derivate("y").eval(point)
@@ -203,10 +205,14 @@ class ElasticModel(Model):
         space_size = phixx.size
         time_size = a.size
         multiplication = np.array([
-            [a*phixx+b*phixy+e*(phiyy+phixy),np.zeros([time_size, space_size])],
-            [np.zeros([time_size, space_size]), c*phixy+d*phiyy+e*(phixy+phixx)]
+            [a * phixx + e * phiyy, b * phixy + e * phixy],
+            [c * phixy + e * phixy, d * phiyy + e * phixx]
+            # [a*phixx+b*phixy+e*(phiyy+phixy),np.zeros([time_size, space_size])],
+            # [np.zeros([time_size, space_size]), c*phixy+d*phiyy+e*(phixy+phixx)]
+            # [a * phixx + e * (phiyy), b * phixy + e * phixy],
+            # [c * phixy + e * (phixy), d * phiyy + e * (phixx)]
         ])
-        return np.moveaxis(multiplication, 3, 1).reshape([2, 2*space_size, time_size])
+        return np.moveaxis(multiplication, 3, 1).reshape([2, 2 * space_size, time_size])
 
     def independent_domain_function(self, point):
         a = self.D[0, 0]
@@ -237,11 +243,12 @@ class ElasticModel(Model):
         time_size = a.size
 
         # L.D.Lt.u
-        return np.array([a*uxx+b*vxy+e*(uyy+vxy), c*uxy+d*vyy+e*(uxy+vxx)]).reshape([2, time_size])
+        return np.array([a * uxx + b * vxy + e * (uyy + vxy), c * uxy + d * vyy + e * (uxy + vxx)]).reshape(
+            [2, time_size])
 
     def independent_boundary_function(self, point):
         func = self.boundary_function(point)
-        return np.reshape(func, (2,func.shape[1]))
+        return np.reshape(func, (2, func.shape[1]))
 
     def petrov_galerkin_stiffness_domain(self, phi, w, integration_point):
         zero = np.zeros(w.shape())
@@ -257,19 +264,19 @@ class ElasticModel(Model):
         space_points = dphidx.size
         time_points = self.D.shape[2]
 
-        D = self.D.repeat(space_points, axis=2).\
-            reshape([3,3,time_points, space_points]).\
-            swapaxes(0,3).swapaxes(1,2).swapaxes(2,3)
+        D = self.D.repeat(space_points, axis=2). \
+            reshape([3, 3, time_points, space_points]). \
+            swapaxes(0, 3).swapaxes(1, 2).swapaxes(2, 3)
 
         Ltphi = np.array([[dphidx, zeroph],
                           [zeroph, dphidy],
                           [dphidy, dphidx]]). \
             reshape([3, 2, space_points]). \
             repeat(time_points, axis=2). \
-            reshape([3,2,space_points, time_points]). \
-            swapaxes(0,2).swapaxes(1,3)
+            reshape([3, 2, space_points, time_points]). \
+            swapaxes(0, 2).swapaxes(1, 3)
 
-        return (-Lw@D@Ltphi).swapaxes(0,1).swapaxes(0,3).swapaxes(0,2).reshape(2, 2*space_points, time_points)
+        return (-Lw @ D @ Ltphi).swapaxes(0, 1).swapaxes(0, 3).swapaxes(0, 2).reshape(2, 2 * space_points, time_points)
 
     def petrov_galerkin_stiffness_boundary(self, phi, w, integration_point):
         nx, ny = self.region.normal(integration_point)
@@ -283,23 +290,22 @@ class ElasticModel(Model):
         time_points = self.D.shape[2]
 
         D = self.D.repeat(space_points, axis=2). \
-            reshape([3,3,time_points, space_points]). \
-            swapaxes(0,2).swapaxes(1,3).swapaxes(0,1)
+            reshape([3, 3, time_points, space_points]). \
+            swapaxes(0, 2).swapaxes(1, 3).swapaxes(0, 1)
 
         Ltphi = np.array([[dphidx, zeroph],
                           [zeroph, dphidy],
                           [dphidy, dphidx]]). \
             reshape([3, 2, space_points]). \
             repeat(time_points, axis=2). \
-            reshape([3,2,space_points, time_points]). \
-            swapaxes(0,2).swapaxes(1,3)
+            reshape([3, 2, space_points, time_points]). \
+            swapaxes(0, 2).swapaxes(1, 3)
 
-
-        result = w.eval(integration_point)*N@D@Ltphi
-        return result.swapaxes(2,3).swapaxes(0,1).swapaxes(0,3).reshape(2, 2*space_points, time_points)
+        result = w.eval(integration_point) * N @ D @ Ltphi
+        return result.swapaxes(2, 3).swapaxes(0, 1).swapaxes(0, 3).reshape(2, 2 * space_points, time_points)
 
     def petrov_galerkin_independent_domain(self, w, integration_point):
-        return w.eval(integration_point)*np.array([0,0]).repeat(self.D.shape[2], axis=0).reshape(2,self.D.shape[2])
+        return w.eval(integration_point) * np.array([0, 0]).repeat(self.D.shape[2], axis=0).reshape(2, self.D.shape[2])
 
     def petrov_galerkin_independent_boundary(self, w, integration_point):
         nx, ny = self.region.normal(integration_point)
@@ -320,12 +326,11 @@ class ElasticModel(Model):
 
         Ltu = np.moveaxis(np.array([[ux.ravel()],
                                     [vy.ravel()],
-                                    [(uy+vx).ravel()]]), 2, 0)
+                                    [(uy + vx).ravel()]]), 2, 0)
         # return -w.eval(integration_point)*np.tensordot(N, np.tensordot(self.D, Ltu, axes=(1,0)), axes=(1,0)).reshape((2,self.D.shape[2]))
-        return np.moveaxis(-w.eval(integration_point)*N@D@Ltu, 0, 2).reshape(2,time_points)
+        return np.moveaxis(-w.eval(integration_point) * N @ D @ Ltu, 0, 2).reshape(2, time_points)
 
     def creep(self, t):
-        lmbda = self.q0/self.q1
-        return 1-np.exp(-lmbda*t)
+        lmbda = self.q0 / self.q1
+        return 1 - np.exp(-lmbda * t)
         # return ((self.p1/self.q1)*np.exp(-lmbda*t)+(1/self.q0)*(1-np.exp(-lmbda*t)))
-

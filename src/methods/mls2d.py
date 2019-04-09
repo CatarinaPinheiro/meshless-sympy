@@ -5,7 +5,7 @@ import src.helpers.numeric as num
 
 
 class MovingLeastSquares2D:
-    def __init__(self, data, basis, weight_function, security=1.15):
+    def __init__(self, data, basis, weight_function, security=1.05):
         self.basis = basis
         self.data = data
         self.point = np.zeros(np.shape(data[0]))
@@ -83,7 +83,7 @@ class MovingLeastSquares2D:
             cond = np.linalg.cond(A)
             # if self.ri > max(dx, dy):
             #     raise Exception("need more points, r=%s, det = %s, cond=%s"%(self.ri, det, cond))
-            if det < 1e-3:
+            if det < 1e-9:
                 self.ri *= 1.05
                 continue
             else:

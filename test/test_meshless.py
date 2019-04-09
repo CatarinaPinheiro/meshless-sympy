@@ -40,16 +40,16 @@ def elastic_region_example(dx, dy):
         })
 def simply_supported_elastic_region_example(dx, dy):
     return Rectangle(
-        x1=-50,
-        y1=-10,
-        x2=50,
-        y2=10,
+        x1=-25,
+        y1=-5,
+        x2=25,
+        y2=5,
         dx=dx,
         dy=dy,
         parametric_partition={
             0.01: ["DIRICHLET", "DIRICHLET"],
             0.99: ["NEUMANN", "NEUMANN"],
-            1.01: ["NEUMANN", "DIRICHLET"],
+            1.01: ["DIRICHLET", "DIRICHLET"],
             3.99: ["NEUMANN", "NEUMANN"],
             4.01: ["DIRICHLET", "DIRICHLET"]
         })
@@ -166,15 +166,22 @@ class TestMeshless(unittest.TestCase):
             # test if system makes sense
             print("stiffness", method.stiffness)
             print("np.matmul(method.stiffness,np.transpose([corrects])) - method.b", np.matmul(method.stiffness,np.transpose([corrects])) - method.b)
+            print("np.matmul(method.stiffness,np.transpose([corrects]))", np.matmul(method.stiffness,np.transpose([corrects])))
 
             result = result.reshape(model.num_dimensions*len(data))
-
             diff = corrects - result
-            print('corrects', corrects)
-            print('diff',diff)
+            rel_error = abs(diff)/corrects
+            i=0
+            ii = 1
+            for p in data:
+                print('point, result, correct, diff',[p, result[i],result[ii],corrects[i], corrects[ii],diff[i], diff[ii]])
+                i=i+2
+                ii = ii+2
+            # print('relative error', rel_error)
+            # print('diff',diff)
 
             #self.assertAlmostEqual(np.abs(diff).max(), 0, 3)
-            #return np.abs(diff).max()
+            return np.abs(diff).max()
 
     def visco_rectangle_template(self, method_class, model_class, region):
         data = region.cartesian
@@ -257,7 +264,7 @@ class TestMeshless(unittest.TestCase):
         self.rectangle_template(CollocationMethod, ElasticModel, elastic_region_example(30, 15))
 
     def test_collocation_simply_supported_elastic(self):
-        self.rectangle_template(CollocationMethod, SimplySupportedElasticModel, simply_supported_elastic_region_example(2.5, 2.5))
+        self.rectangle_template(CollocationMethod, SimplySupportedElasticModel, simply_supported_elastic_region_example(5/4, 5/4))
 
     def test_collocation_simply_supported_elastic_plot_error(self):
         steps = [
@@ -265,7 +272,8 @@ class TestMeshless(unittest.TestCase):
             [5, 5],
             [2.5, 2.5],
             [2, 2],
-            [1, 2]
+            [5 / 3, 5 / 3],
+            [1, 1]
         ]
         diffs = []
         for dx, dy in steps:

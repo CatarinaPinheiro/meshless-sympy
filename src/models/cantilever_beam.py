@@ -11,7 +11,7 @@ class CantileverBeamModel(CrimpedBeamModel):
         self.num_dimensions = 2
         self.ni = ni = 0.3
         # self.G = G = E/(2*(1+ni))
-        self.p = p = -1e8
+        self.p = p = -1e3
         self.ni = np.array([ni])
 
         self.h = h = region.y2 - region.y1

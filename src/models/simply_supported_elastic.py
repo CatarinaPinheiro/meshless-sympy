@@ -20,7 +20,7 @@ class SimplySupportedElasticModel(ElasticModel):
         self.h = h = region.y2 - region.y1
         c = h / 2
         self.I = I = h ** 3 / 12
-        self.L = L = region.x2 - region.x1
+        self.L = L = (region.x2 - region.x1)/2
         x, y = sp.var("x y")
         ux = (q / (2 * E * I)) * (
                     (x * L ** 2 - (x ** 3) / 3) * y + x * (2 * (y ** 3) / 3 - 2 * y * (c ** 2) / 5) + ni * x * (
