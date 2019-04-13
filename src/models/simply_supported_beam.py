@@ -7,10 +7,8 @@ class SimplySupportedBeamModel(SimplySupportedElasticModel):
     def __init__(self, region):
         self.region = region
         self.num_dimensions = 2
-        self.ni = ni = 0.3
         # self.G = G = E/(2*(1+ni))
         self.q = q = -1e8
-        self.ni = np.array([ni])
 
         self.h = h = region.y2 - region.y1
         self.I = I = h ** 3 / 12
@@ -18,9 +16,11 @@ class SimplySupportedBeamModel(SimplySupportedElasticModel):
         self.alfa = alfa = 0.25
         self.lbda = lbda = 0.4
         c = h/2
-        F = 35e9
-        self.G = G = 8.75e9
-        K = 11.67e9
+        F = 1500
+        self.G = G = 1280
+        K = 480
+        self.ni = ni = (3*K - 2*G)/(2*(3*K + G))
+        self.ni = np.array([ni])
 
         E1 = 9 * K * G / (3 * K + G)
         E2 = E1
@@ -61,22 +61,53 @@ class SimplySupportedBeamModel(SimplySupportedElasticModel):
             exp4 = 9 * ((h / 2) ** 2) * y * (9 * K * np.exp(-t * alfa * lbda) * (-1 + alfa) + (9 * K - 2 * G * alfa))
             return exp1 * (exp2 + exp3 - exp4)
 
+        def ux(t):
+            q00 = (E1 * E2) / (E1 + E2)
+            q01 = E1 * F / (E1 + E2)
+            p01 = F / (E1 + E2)
+            exp1 = q/(2*I)
+            exp2 = ((6*K + q00)*(1-np.exp(-q00*t/q01)))/(9*K*q00)
+            exp3 = ((6*K*p01 + q01)*np.exp(-q00*t/q01))/(9*K*q01)
+            exp4 = ((x*L**2/4 - x**3/3)*y + x*(2*y**3/3 - y*h**2/10))*(exp2 + exp3)
+            exp5 = ((3*K - q00)*(1 - np.exp(-q00*t/q01)))/(9*K*q00)
+            exp6 = ((3*K*p01 - q01)*np.exp(-q00*t/q01))/(9*K*q01)
+            exp7 = (exp5 + exp6)*x*(y**3/3 - y*h**2/4 + 2*h**3/24)
+
+            return exp1*(exp4 + exp7)
+
+        # def uy(t):
+        #     exp1 = q / (1080 * G * I * K * alfa)
+        #     exp2 = 2 * G * (L ** 2 - x ** 2 + y ** 2) * alfa
+        #     exp3 = 3 * K * (7 * L ** 2 - 7 * x ** 2 + 4 * y ** 2) * (-1 + alfa) * np.exp(-t * alfa * lbda)
+        #     exp4 = 3 * K * (7 * L ** 2 - 7 * x ** 2 + 4 * y ** 2)
+        #     exp5 = -9 * ((h / 2) ** 2) * (exp2 + exp3 + exp4)
+        #     exp6 = G * alfa * (5 * L ** 4 - 6 * (L ** 2) * x ** 2 + x ** 4 + 6 * (L - x) * (L + x) * y ** 2 + y ** 4)
+        #     exp7 = 3 * K * ((5 * L ** 4 + x ** 4 + 3 * (x ** 2) * y ** 2 - 2 * y ** 4 - 3 * (L ** 2) * (
+        #                 2 * x ** 2 + y ** 2)) * (-1 + alfa) * np.exp(-t * alfa * lbda))
+        #     exp8 = 3 * K * (
+        #                 5 * L ** 4 + x ** 4 + 3 * (x ** 2) * y ** 2 - 2 * y ** 4 - 3 * (L ** 2) * (2 * x ** 2 + y ** 2))
+        #     exp9 = 40 * ((h / 2) ** 3) * y * (3 * K * np.exp(-t * alfa * lbda) * (-1 + alfa) + (3 * K + G * alfa))
+        #
+        #     return -exp1 * (exp5 - 5 * (exp6 + exp7 + exp8) + exp9)
+
         def uy(t):
-            exp1 = q / (1080 * G * I * K * alfa)
-            exp2 = 2 * G * (L ** 2 - x ** 2 + y ** 2) * alfa
-            exp3 = 3 * K * (7 * L ** 2 - 7 * x ** 2 + 4 * y ** 2) * (-1 + alfa) * np.exp(-t * alfa * lbda)
-            exp4 = 3 * K * (7 * L ** 2 - 7 * x ** 2 + 4 * y ** 2)
-            exp5 = -9 * ((h / 2) ** 2) * (exp2 + exp3 + exp4)
-            exp6 = G * alfa * (5 * L ** 4 - 6 * (L ** 2) * x ** 2 + x ** 4 + 6 * (L - x) * (L + x) * y ** 2 + y ** 4)
-            exp7 = 3 * K * ((5 * L ** 4 + x ** 4 + 3 * (x ** 2) * y ** 2 - 2 * y ** 4 - 3 * (L ** 2) * (
-                        2 * x ** 2 + y ** 2)) * (-1 + alfa) * np.exp(-t * alfa * lbda))
-            exp8 = 3 * K * (
-                        5 * L ** 4 + x ** 4 + 3 * (x ** 2) * y ** 2 - 2 * y ** 4 - 3 * (L ** 2) * (2 * x ** 2 + y ** 2))
-            exp9 = 40 * ((h / 2) ** 3) * y * (3 * K * np.exp(-t * alfa * lbda) * (-1 + alfa) + (3 * K + G * alfa))
+            q00 = (E1 * E2) / (E1 + E2)
+            q01 = E1 * F / (E1 + E2)
+            p01 = F / (E1 + E2)
+            exp1 = -q/(2*I)
+            exp2 = ((6*K + q00)*(1-np.exp(-q00*t/q01)))/(9*K*q00)
+            exp3 = ((6*K*p01 + q01)*np.exp(-q00*t/q01))/(9*K*q01)
+            exp4 = (y**4/12 - (h**2)*y**2/8 + 2*y*h**3/24)*(exp2 + exp3)
+            exp5 = ((3*K - q00)*(1 - np.exp(-q00*t/q01)))/(9*K*q00)
+            exp6 = ((3*K*p01 - q01)*np.exp(-q00*t/q01))/(9*K*q01)
+            exp7 = (exp5 + exp6)*((L**2/4 - x**2)*y**2/2 + y**4/6 + (h**2)*y**2/20)
+            exp8 = (exp2 + exp3)*((L**2)*x**2/8 - x**4/12 - x**2*(h**2)/20 + (h**2)*x**2/4)
+            exp9 = (exp5 + exp6)*(1/2)
+            exp10 = 5*q*L**4/(24*16*I)
+            exp11 = (exp2 + exp3)*(1 + 12*4*h**2/(25*L**2))
+            exp12 = (exp5 + exp6)*(12*h**2/(10*L**2))
 
-            return -exp1 * (exp5 - 5 * (exp6 + exp7 + exp8) + exp9)
-
-
+            return exp1*(exp4 + exp7) + exp1*(exp8 + exp9) + exp10*(exp11 + exp12)
         self.visco_analytical = [ux, uy]
 
 
