@@ -166,9 +166,16 @@ class TestMeshless(unittest.TestCase):
             # test if system makes sense
             print("stiffness", method.stiffness)
             print("np.matmul(method.stiffness,np.transpose([corrects])) - method.b", np.matmul(method.stiffness,np.transpose([corrects])) - method.b)
-            print("np.matmul(method.stiffness,np.transpose([corrects]))", np.matmul(method.stiffness,np.transpose([corrects])))
+            #print("np.matmul(method.stiffness,np.transpose([corrects]))", np.matmul(method.stiffness,np.transpose([corrects])))
 
             result = result.reshape(model.num_dimensions*len(data))
+            for point in data:
+                method.m2d.point = point
+                phi = method.m2d.numeric_phi
+                print('point: ',point)
+                print('stress: ', model.stress(phi, point, result))
+                print('analytical stress: ', model.analytical_stress(point))
+
             diff = corrects - result
             rel_error = abs(diff)/corrects
             i=0
@@ -303,7 +310,7 @@ class TestMeshless(unittest.TestCase):
             plt.plot(diffs)
             plt.draw()
             plt.pause(0.001)
-            plt.show()
+        plt.show()
 
     def test_collocation_crimped_beam(self):
         self.rectangle_template(CollocationMethod, CrimpedBeamModel, crimped_beam_region_example(3, 3))

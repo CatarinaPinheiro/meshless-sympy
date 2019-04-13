@@ -8,8 +8,10 @@ class ElasticModel(Model):
     def __init__(self, region):
         self.region = region
         x, y = sp.var("x y")
-        # self.analytical = [sp.Matrix([x]), sp.Matrix([-y/4])]
-        # self.analytical = [x,sp.Integer(0)]
+        u = x
+        v = -y/4
+        #self.analytical = [sp.Matrix([x]), sp.Matrix([-y/4])]
+        #self.analytical = [x,sp.Integer(0)]
         self.analytical = None
         self.num_dimensions = 2
 
@@ -19,6 +21,21 @@ class ElasticModel(Model):
         self.D = (self.E / (1 - self.ni ** 2)) * np.array([[1, self.ni, 0],
                                                            [self.ni, 1, 0],
                                                            [0, 0, (1 - self.ni) / 2]]).reshape((3, 3, 1))
+
+        def analytical_stress(point):
+            nu = num.Function(u, "analytical_u")
+            nv = num.Function(v, "analytical_v")
+            ux = nu.derivate("x").eval(point)
+            uy = nu.derivate("y").eval(point)
+            vx = nv.derivate("x").eval(point)
+            vy = nv.derivate("y").eval(point)
+
+            Ltu = np.array([ux, vy, (uy + vx)])
+            D = np.moveaxis(self.D, 2, 0)
+
+            return D@Ltu
+
+        self.analytical_stress = analytical_stress
 
     def independent_boundary_operator(self, u, v, integration_point):
         """
@@ -332,5 +349,23 @@ class ElasticModel(Model):
 
     def creep(self, t):
         lmbda = self.q0 / self.q1
-        return 1 - np.exp(-lmbda * t)
-        # return ((self.p1/self.q1)*np.exp(-lmbda*t)+(1/self.q0)*(1-np.exp(-lmbda*t)))
+        #return 1 - np.exp(-lmbda * t)
+        return self.q0*((self.p1/self.q1)*np.exp(-lmbda*t)+(1/self.q0)*(1-np.exp(-lmbda*t)))
+
+    def stress(self, phi, point, uv):
+        phix = phi.derivate("x").eval(point).ravel()
+        phiy = phi.derivate("y").eval(point).ravel()
+        u = uv.reshape([phix.size, 2])[:, 0]
+        v = uv.reshape([phiy.size, 2])[:, 1]
+
+        ux = np.dot(phix, u)
+        vy = np.dot(phiy, v)
+        uy = np.dot(phiy, u)
+        vx = np.dot(phix, v)
+
+        Ltu = np.array([[ux],
+                        [vy],
+                        [uy + vx]])
+
+        D = np.moveaxis(self.D, 2, 0)
+        return D@Ltu

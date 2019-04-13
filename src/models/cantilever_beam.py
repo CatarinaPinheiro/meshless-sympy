@@ -9,10 +9,9 @@ class CantileverBeamModel(CrimpedBeamModel):
     def __init__(self, region):
         self.region = region
         self.num_dimensions = 2
-        self.ni = ni = 0.3
         # self.G = G = E/(2*(1+ni))
         self.p = p = -1e3
-        self.ni = np.array([ni])
+
 
         self.h = h = region.y2 - region.y1
         self.I = I = h**3/12
@@ -32,7 +31,9 @@ class CantileverBeamModel(CrimpedBeamModel):
         if not self.q1 > self.p1*self.q0:
             raise Exception("invalid values for q1, p1 and p0")
 
-        self.E = E = E1#self.q0
+        self.E = E = (9 * K * self.q0) / (6 * K + self.q0)
+        self.ni = ni = (3 * K - self.q0) / (9 * K * self.q0)
+        self.ni = np.array([ni])
         self.D = (E/(1-ni**2))*np.array([[1, ni, 0],
                                          [ni, 1, 0],
                                          [0, 0, (1-ni)/2]]).reshape((3,3,1))
@@ -43,10 +44,25 @@ class CantileverBeamModel(CrimpedBeamModel):
         L = self.region.x2 - self.region.x1
         x, y = sp.var("x y")
 
-        ux = (-p/(6*E*I))*( (6*L-3*x)*x + (2+ni)*(y**2-h**2/4))
-        uy = (p/(6*E*I))*(3*ni*y**2*(L-x) + (4+5*ni)*h**2*x/4 + (3*L-x)*x**2)
+        u = (-p/(6*E*I))*( (6*L-3*x)*x + (2+ni)*(y**2-h**2/4))
+        v = (p/(6*E*I))*(3*ni*y**2*(L-x) + (4+5*ni)*h**2*x/4 + (3*L-x)*x**2)
 
-        self.analytical = [sp.Matrix([ux]), sp.Matrix([uy])]
+        self.analytical = [sp.Matrix([u]), sp.Matrix([v])]
+
+        def analytical_stress(point):
+            nu = num.Function(u, "analytical_u")
+            nv = num.Function(v, "analytical_v")
+            ux = nu.derivate("x").eval(point)
+            uy = nu.derivate("y").eval(point)
+            vx = nv.derivate("x").eval(point)
+            vy = nv.derivate("y").eval(point)
+
+            Ltu = np.array([ux, vy, (uy + vx)])
+            D = np.moveaxis(self.D, 2, 0)
+
+            return D@Ltu
+
+        self.analytical_stress = analytical_stress
 
         # def ux(t):
         #     ht = 1
@@ -62,17 +78,17 @@ class CantileverBeamModel(CrimpedBeamModel):
         #     exp7 = 1 / q00
         #     return -ht * ((exp1 + 2 * exp2 / 3) * (exp3 + exp4) - (exp5 + exp2 / 3) * exp6 + 2 * exp6 * (exp7 + exp2))
 
-        def ux(t):
-            ht = 1
-            q00 = (E1 * E2) / (E1 + E2)
-            q01 = E1 * F / (E1 + E2)
-            p01 = F / (E1 + E2)
-            exp1 = self.p*y*(np.exp(-q00*t/q01))/(18*(h**3)*K*(q00**2))
-            exp2 = np.exp(q00*t/q01)*(q00**2) + 15*K*((-1 + np.exp(q00*t/q01))*p01*q00 + q01 -np.exp(q00*t/q01)*q01 + q00*t*np.exp(q00*t/q01))
-            exp3 = (q00**2)*np.exp(q00*t/q01)*(6*L*x - 3*(x**2) + y**2)
-            exp4 = 3*K*((-1 + np.exp(q00*t/q01))*p01*q00 + q01 -np.exp(q00*t/q01)*q01 + np.exp(q00*t/q01)*q00*t)
-            exp5 = (12*L*x - 6*(x**2) + 5*(y**2))
-            return exp1*((h**2)*exp2 - 4*(exp3 + exp4*exp5))
+        # def ux(t):
+        #     ht = 1
+        #     q00 = (E1 * E2) / (E1 + E2)
+        #     q01 = E1 * F / (E1 + E2)
+        #     p01 = F / (E1 + E2)
+        #     exp1 = self.p*y*(np.exp(-q00*t/q01))/(18*(h**3)*K*(q00**2))
+        #     exp2 = np.exp(q00*t/q01)*(q00**2) + 15*K*((-1 + np.exp(q00*t/q01))*p01*q00 + q01 -np.exp(q00*t/q01)*q01 + q00*t*np.exp(q00*t/q01))
+        #     exp3 = (q00**2)*np.exp(q00*t/q01)*(6*L*x - 3*(x**2) + y**2)
+        #     exp4 = 3*K*((-1 + np.exp(q00*t/q01))*p01*q00 + q01 -np.exp(q00*t/q01)*q01 + np.exp(q00*t/q01)*q00*t)
+        #     exp5 = (12*L*x - 6*(x**2) + 5*(y**2))
+        #     return exp1*((h**2)*exp2 - 4*(exp3 + exp4*exp5))
 
         def ux(t):
             q00 = (E1 * E2) / (E1 + E2)

@@ -1,6 +1,7 @@
 from src.models.elastic_model import ElasticModel
 import numpy as np
 import sympy as sp
+import src.helpers.numeric as num
 
 
 class SimplySupportedElasticModel(ElasticModel):
@@ -22,13 +23,28 @@ class SimplySupportedElasticModel(ElasticModel):
         self.I = I = h ** 3 / 12
         self.L = L = (region.x2 - region.x1)/2
         x, y = sp.var("x y")
-        ux = (q / (2 * E * I)) * (
+        u = (q / (2 * E * I)) * (
                     (x * L ** 2 - (x ** 3) / 3) * y + x * (2 * (y ** 3) / 3 - 2 * y * (c ** 2) / 5) + ni * x * (
                         (y ** 3) / 3 - y * c ** 2 + 2 * (c ** 3) / 3))
-        uy = -(q / (2 * E * I)) * ((y ** 4) / 12 - (c ** 2) * (y ** 2) / 2 + 2 * (c ** 3) * y / 3 + ni * (
+        v = -(q / (2 * E * I)) * ((y ** 4) / 12 - (c ** 2) * (y ** 2) / 2 + 2 * (c ** 3) * y / 3 + ni * (
                     (L ** 2 - x ** 2) * (y ** 2) / 2 + (y ** 4) / 6 - (c ** 2) * (y ** 2) / 5)) - (q / (2 * E * I)) * (
                          (L ** 2) * (x ** 2) / 2 - (x ** 4) / 12 - (c ** 2) * (x ** 2) / 5 + (1 + ni / 2) * (c ** 2) * (
                              x ** 2)) + (5 * q * (L ** 4) / (24 * E * I)) * (
                          1 + (12 * (c ** 2) / (5 * (L ** 2))) * (4 / 5 + ni / 2))
 
-        self.analytical = [sp.Matrix([ux]), sp.Matrix([uy])]
+        self.analytical = [sp.Matrix([u]), sp.Matrix([v])]
+
+        def analytical_stress(point):
+            nu = num.Function(u, "analytical_u")
+            nv = num.Function(v, "analytical_v")
+            ux = nu.derivate("x").eval(point)
+            uy = nu.derivate("y").eval(point)
+            vx = nv.derivate("x").eval(point)
+            vy = nv.derivate("y").eval(point)
+
+            Ltu = np.array([ux, vy, (uy + vx)])
+            D = np.moveaxis(self.D, 2, 0)
+
+            return D@Ltu
+
+        self.analytical_stress = analytical_stress
