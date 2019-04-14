@@ -9,13 +9,18 @@ class WeightFunction:
 
 
 class GaussianWithRadius(WeightFunction):
-    def sympy(self):
+    def __init__(self):
         x, y, r = sp.var("x y r")
+
+        # caching sympy for speedup
         c = 100
         exp1 = sp.exp(-((x ** 2 + y ** 2) / c ** 2))
         exp2 = sp.exp(-((r / c) ** 2))
         weight = (exp1 - exp2) / (1 - exp2)
-        return weight
+        self.cached_sympy = weight
+
+    def sympy(self):
+        return self.cached_sympy
 
     def numpy(self, x, y, r):
         c = 100

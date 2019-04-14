@@ -59,7 +59,7 @@ class Sum(Numeric):
     def eval(self, subs):
         key = str(self)+str(subs)
         found, value = cache.get(key)
-        if found:
+        if False and found:
             return value
         else:
             values = [t.eval(subs) for t in self.terms]
