@@ -17,10 +17,10 @@ class CantileverBeamModel(CrimpedBeamModel):
         self.L = L = region.x2 - region.x1
         # alfa = 0.25
         # lmbda = 0.40
-        self.G = G = 8.75e7
-        self.K = K = 11.67e7
+        self.G = G = 8.75e5
+        self.K = K = 11.67e5
         E1 = 9 * K * G / (3 * K + G)
-        F = 35e7
+        F = 35e5
 
         E2 = E1
 
