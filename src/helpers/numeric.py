@@ -196,7 +196,13 @@ class RadialFunction(Function):
 
     def derivate(self, var):
         name = "d(" + self.name + ")/d" + var
-        return RadialFunction(self.expression.diff(var), self.xj, self.yj, self.r, name)
+        key = "sympy expression for "+name
+        found, value = cache.get(key)
+        if not found:
+            print("computing sympy differentiation %s"%name)
+            value = self.expression.diff(var)
+            cache.set(key, value)
+        return RadialFunction(value, self.xj, self.yj, self.r, name)
 
     def __str__(self):
         return self.name + "[%s]" % self.r

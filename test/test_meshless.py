@@ -244,23 +244,31 @@ class TestMeshless(unittest.TestCase):
             calculated_x = model.creep(ts)*result[:, 2*point_index, 0]
             calculated_y = model.creep(ts)*result[:, 2*point_index+1, 0]
 
-            if model.analytical:
-                analytical_x = np.array(num.Function(model.visco_analytical[0](ts), name="analyticals ux(%s)").eval(point))
-                analytical_y = np.array(num.Function(model.visco_analytical[1](ts), name="analyticals uy(%s)").eval(point))
+            if model.visco_analytical:
+                visco_analytical_x = np.array(num.Function(model.visco_analytical[0](ts), name="visco_analyticals u").eval(point))
+                visco_analytical_y = np.array(num.Function(model.visco_analytical[1](ts), name="visco_analyticals v").eval(point))
             print(point)
-            print("analytical_x", analytical_x)
+            print("visco_analytical_x", visco_analytical_x)
 
 
             print("x")
             plt.plot(calculated_x, "r^-")
-            if not analytical_x is None:
-                plt.plot(analytical_x, "gs-")
+            if not visco_analytical_x is None:
+                plt.plot(visco_analytical_x, "gs-")
+
+            if model.analytical:
+                elastic_analytical_x = num.Function(model.analytical[0], name="analytical u").eval(point)
+                plt.axhline(y=elastic_analytical_x)
             plt.show()
 
             print("y")
             plt.plot(calculated_y, "r^-")
-            if not analytical_y is None:
-                plt.plot(analytical_y, "gs-")
+            if not visco_analytical_y is None:
+                plt.plot(visco_analytical_y, "gs-")
+
+            if model.analytical:
+                elastic_analytical_y = num.Function(model.analytical[1], name="analytical v").eval(point)
+                plt.axhline(y=elastic_analytical_y)
             plt.show()
 
 
@@ -321,7 +329,7 @@ class TestMeshless(unittest.TestCase):
         self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example(0.5, 0.5))
 
     def test_collocation_cantilever_beam(self):
-        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantiliever_beam_region_example(1.5, 1.5))
+        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantiliever_beam_region_example(1, 1))
 
     def test_collocation_simply_supported_beam(self):
         self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel, simply_supported_beam_region_example(5,5))
