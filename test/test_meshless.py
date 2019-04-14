@@ -359,8 +359,8 @@ class TestMeshless(unittest.TestCase):
     def test_petrov_galerkin_viscoelasticity(self):
         self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticModel, viscoelastic_region_example(1,1))
 
-    def test_petrov_galerkin_cantiliever_beam(self):
-        self.visco_rectangle_template(PetrovGalerkinMethod, CantileverBeamModel, cantiliever_beam_region_example(5, 5))
+    def test_petrov_galerkin_cantilever_beam(self):
+        self.visco_rectangle_template(PetrovGalerkinMethod, CantileverBeamModel, cantiliever_beam_region_example(1.5, 1.5))
 
     def test_petrov_galerkin_simply_supported_beam(self):
         self.visco_rectangle_template(PetrovGalerkinMethod, SimplySupportedBeamModel, simply_supported_beam_region_example(1,1))

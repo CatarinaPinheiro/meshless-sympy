@@ -53,27 +53,26 @@ class SimplySupportedBeamModel(SimplySupportedElasticModel):
 
         self.analytical = [sp.Matrix([u]), sp.Matrix([v])]
 
-        def ux(t):
-            exp1 = q * x / (540 * G * I * K * alfa)
-            exp2 = 5 * y * (2 * G * alfa * (3 * L ** 2 - x ** 2 + y ** 2) + 3 * K * (
-                        6 * L ** 2 - 2 * x ** 2 + 5 * y ** 2) * ((-1 + alfa) * np.exp(-t * alfa * lbda) + 1))
-            exp3 = 10 * ((h / 2) ** 3) * ((3 * K * np.exp(-t * alfa * lbda)) * (-1 + alfa) + (3 * K - 2 * G * alfa))
-            exp4 = 9 * ((h / 2) ** 2) * y * (9 * K * np.exp(-t * alfa * lbda) * (-1 + alfa) + (9 * K - 2 * G * alfa))
-            return exp1 * (exp2 + exp3 - exp4)
+        # def ux(t):
+        #     exp1 = q * x / (540 * G * I * K * alfa)
+        #     exp2 = 5 * y * (2 * G * alfa * (3 * L ** 2 - x ** 2 + y ** 2) + 3 * K * (
+        #                 6 * L ** 2 - 2 * x ** 2 + 5 * y ** 2) * ((-1 + alfa) * np.exp(-t * alfa * lbda) + 1))
+        #     exp3 = 10 * ((h / 2) ** 3) * ((3 * K * np.exp(-t * alfa * lbda)) * (-1 + alfa) + (3 * K - 2 * G * alfa))
+        #     exp4 = 9 * ((h / 2) ** 2) * y * (9 * K * np.exp(-t * alfa * lbda) * (-1 + alfa) + (9 * K - 2 * G * alfa))
+        #     return exp1 * (exp2 + exp3 - exp4)
 
         def ux(t):
-            q00 = (E1 * E2) / (E1 + E2)
-            q01 = E1 * F / (E1 + E2)
-            p01 = F / (E1 + E2)
-            exp1 = q/(2*I)
-            exp2 = ((6*K + q00)*(1-np.exp(-q00*t/q01)))/(9*K*q00)
-            exp3 = ((6*K*p01 + q01)*np.exp(-q00*t/q01))/(9*K*q01)
-            exp4 = ((x*L**2/4 - x**3/3)*y + x*(2*y**3/3 - y*h**2/10))*(exp2 + exp3)
-            exp5 = ((3*K - q00)*(1 - np.exp(-q00*t/q01)))/(9*K*q00)
-            exp6 = ((3*K*p01 - q01)*np.exp(-q00*t/q01))/(9*K*q01)
-            exp7 = (exp5 + exp6)*x*(y**3/3 - y*h**2/4 + 2*h**3/24)
+            ht = 1
+            q00 = self.q0
+            q01 = self.q1
+            p01 = self.p1
+            exp1 = q*ht/(2*I)
+            exp2 = ((6*K + q00)/(9*K*q00) + (2/3)*((p01*q00 - q01)/(q00*q01))*np.exp(-q00*t/q01))
+            exp3 = ((3*K - q00)/(9*K*q00) + (1/3)*((p01*q00 - q01)/(q00*q01))*np.exp(-q00*t/q01))
+            exp4 = (((L**2)*x/4 - x**3)*y + x*(2*(y**3)/3 - 2*y*(h**2)/20))
+            exp5 = (x*(y**3/3 - y*h**2/4 + 2*h**3/24))
 
-            return exp1*(exp4 + exp7)
+            return exp1*(exp2*exp4 + exp3*exp5)
 
         # def uy(t):
         #     exp1 = q / (1080 * G * I * K * alfa)
@@ -91,12 +90,25 @@ class SimplySupportedBeamModel(SimplySupportedElasticModel):
         #     return -exp1 * (exp5 - 5 * (exp6 + exp7 + exp8) + exp9)
 
         def uy(t):
-            q00 = (E1 * E2) / (E1 + E2)
-            q01 = E1 * F / (E1 + E2)
-            p01 = F / (E1 + E2)
-            exp1 = -q/(2*I)
-            exp2 = ((6*K + q00)*(1-np.exp(-q00*t/q01)))/(9*K*q00)
-            exp3 = ((6*K*p01 + q01)*np.exp(-q00*t/q01))/(9*K*q01)
+            ht = 1
+            q00 = self.q0
+            q01 = self.q1
+            p01 = self.p1
+            exp1 = q*ht/(2*I)
+            exp2 = ((6*K + q00)/(9*K*q00) + (2/3)*((p01*q00 - q01)/(q00*q01))*np.exp(-q00*t/q01))
+            exp3 = ((3*K - q00)/(9*K*q00) + (1/3)*((p01*q00 - q01)/(q00*q01))*np.exp(-q00*t/q01))
+            exp4 = (y**4/12 - (h**2)*(y**2)/8 + y*h**3/12)
+            exp5 = ((L**2/4 - x**2)*y**2/2 + y**4/6 - (h**2)*(y**2)/20)
+            exp6 = ((L**2)*(x**2)/8 - x**4/12 -(h**2)*(x**2)/20 + (h**2)*(x**2)/4)
+            exp7 = ((h**2)*(x**2)/8)
+            exp8 = (5*q*ht*L**4/(384*I))
+            exp9 = (1 + 48*(h**2)/(25*(L**2)))
+            exp10 = (48*(h**2)/(25*(L**2)))
+
+            return -exp1*(exp4*exp2 + exp5*exp3) - exp1*(exp6*exp2 + exp7*exp3) + exp8*(exp9*exp2 + exp10*exp3)
+
+
+
             exp4 = (y**4/12 - (h**2)*y**2/8 + 2*y*h**3/24)*(exp2 + exp3)
             exp5 = ((3*K - q00)*(1 - np.exp(-q00*t/q01)))/(9*K*q00)
             exp6 = ((3*K*p01 - q01)*np.exp(-q00*t/q01))/(9*K*q01)
