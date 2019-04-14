@@ -73,17 +73,17 @@ def simply_supported_beam_region_example(dx, dy):
 def cantiliever_beam_region_example(dx, dy):
     return Rectangle(
         x1=0,
-        x2=50,
-        y1=-5,
-        y2=5,
+        x2=48,
+        y1=-6,
+        y2=6,
         dx=dx,
         dy=dy,
         parametric_partition={
-            0.01: ["DIRICHLET", "DIRICHLET"],
+            0.01: ["DIRICHLET", "NEUMANN"],
             2.99: ["NEUMANN", "NEUMANN"],
-            3.49: ["DIRICHLET", "DIRICHLET"],
+            3.49: ["DIRICHLET", "NEUMANN"],
             3.51: ["DIRICHLET", "DIRICHLET"],
-            4.01: ["DIRICHLET", "DIRICHLET"]
+            4.01: ["DIRICHLET", "NEUMANN"]
             # 5: ["DIRICHLET", "DIRICHLET"]
         })
 
@@ -245,19 +245,21 @@ class TestMeshless(unittest.TestCase):
             calculated_y = model.creep(ts)*result[:, 2*point_index+1, 0]
 
             if model.analytical:
-                analytical_x = np.array(num.Function(model.visco_analytical[0](ts), name="analytical ux(%s)").eval(point))
-                analytical_y = np.array(num.Function(model.visco_analytical[1](ts), name="analytical uy(%s)").eval(point))
+                analytical_x = np.array(num.Function(model.visco_analytical[0](ts), name="analyticals ux(%s)").eval(point))
+                analytical_y = np.array(num.Function(model.visco_analytical[1](ts), name="analyticals uy(%s)").eval(point))
             print(point)
+            print("analytical_x", analytical_x)
+
 
             print("x")
             plt.plot(calculated_x, "r^-")
-            if model.analytical:
+            if not analytical_x is None:
                 plt.plot(analytical_x, "gs-")
             plt.show()
 
             print("y")
             plt.plot(calculated_y, "r^-")
-            if model.analytical:
+            if not analytical_y is None:
                 plt.plot(analytical_y, "gs-")
             plt.show()
 
@@ -319,7 +321,7 @@ class TestMeshless(unittest.TestCase):
         self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example(0.5, 0.5))
 
     def test_collocation_cantilever_beam(self):
-        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantiliever_beam_region_example(5,5))
+        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantiliever_beam_region_example(1.5, 1.5))
 
     def test_collocation_simply_supported_beam(self):
         self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel, simply_supported_beam_region_example(5,5))
@@ -352,7 +354,7 @@ class TestMeshless(unittest.TestCase):
         self.rectangle_template(PetrovGalerkinMethod, ElasticModel, elastic_region_example)
 
     def test_petrov_galerkin_crimped_beam_elasticity(self):
-        self.rectangle_template(PetrovGalerkinMethod, CrimpedBeamModel, crimped_beam_region_example)
+        self.rectangle_template(PetrovGalerkinMethod, CrimpedBeamModel, crimped_beam_region_example(6,6))
 
     def test_petrov_galerkin_viscoelasticity(self):
         self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticModel, viscoelastic_region_example(1,1))

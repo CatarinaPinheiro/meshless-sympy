@@ -8,10 +8,10 @@ class ElasticModel(Model):
     def __init__(self, region):
         self.region = region
         x, y = sp.var("x y")
-        u = x
-        v = -y/4
-        #self.analytical = [sp.Matrix([x]), sp.Matrix([-y/4])]
-        #self.analytical = [x,sp.Integer(0)]
+        uxx = x
+        vyy = -y / 4
+        # self.analytical = [sp.Matrix([x]), sp.Matrix([-y/4])]
+        # self.analytical = [x,sp.Integer(0)]
         self.analytical = None
         self.num_dimensions = 2
 
@@ -23,8 +23,8 @@ class ElasticModel(Model):
                                                            [0, 0, (1 - self.ni) / 2]]).reshape((3, 3, 1))
 
         def analytical_stress(point):
-            nu = num.Function(u, "analytical_u")
-            nv = num.Function(v, "analytical_v")
+            nu = num.Function(uxx, "analytical_u")
+            nv = num.Function(vyy, "analytical_v")
             ux = nu.derivate("x").eval(point)
             uy = nu.derivate("y").eval(point)
             vx = nv.derivate("x").eval(point)
@@ -33,7 +33,7 @@ class ElasticModel(Model):
             Ltu = np.array([ux, vy, (uy + vx)])
             D = np.moveaxis(self.D, 2, 0)
 
-            return D@Ltu
+            return D @ Ltu
 
         self.analytical_stress = analytical_stress
 
@@ -53,6 +53,7 @@ class ElasticModel(Model):
         vx = np.array(v.derivate("x").eval(integration_point))
         vy = np.array(v.derivate("y").eval(integration_point))
 
+        # !!!!!
         nx, ny = self.region.normal(integration_point)
         N = np.array([[nx, 0, ny],
                       [0, ny, nx]])
@@ -130,24 +131,24 @@ class ElasticModel(Model):
             swapaxes(0, 3).swapaxes(0, 2). \
             reshape([2, 2 * space_points, time_points])
 
-        a = self.D[0,0]
-        b = self.D[0,1]
-        c = self.D[1,0]
-        d = self.D[1,1]
-        e = self.D[2,2]
+        a = self.D[0, 0]
+        b = self.D[0, 1]
+        c = self.D[1, 0]
+        d = self.D[1, 1]
+        e = self.D[2, 2]
         time_points = self.ni.size
         space_points = phix.size
-        m1 = a*phix
-        m11 = b*phiy
-        m2 = c*phix
-        m22 = d*phiy
-        m3 = e*phix
-        m4 = e*phiy
-        multiplication = np.array([[nx*m1 + ny*m4, nx*m11 + ny*m3],
-                                   [ ny*m2 + nx*m4, ny*m22 + nx*m3]]).swapaxes(1,3).reshape(2,2*space_points)
+        m1 = a * phix
+        m11 = b * phiy
+        m2 = c * phix
+        m22 = d * phiy
+        m3 = e * phix
+        m4 = e * phiy
+        multiplication = np.array([[nx * m1 + ny * m4, nx * m11 + ny * m3],
+                                   [ny * m2 + nx * m4, ny * m22 + nx * m3]]).swapaxes(1, 3).reshape(2, 2 * space_points)
         first_row = np.array(multiplication[0]).transpose().ravel()
         second_row = np.array(multiplication[1]).transpose().ravel()
-        neumann_case2 = np.array([first_row, second_row]).reshape([2, 2*space_points, 1])
+        neumann_case2 = np.array([first_row, second_row]).reshape([2, 2 * space_points, 1])
         diff = neumann_case - neumann_case2
         print('diff of neumann cases', diff)
 
@@ -176,7 +177,7 @@ class ElasticModel(Model):
 
         return np.array([K1, K2])
 
-    def domain_function(self, point):
+    def domain_function(self):
         u = num.Function(self.analytical[0], name="analytical u")
         v = num.Function(self.analytical[1], name="analytical v")
         return np.array([u, v])
@@ -260,8 +261,8 @@ class ElasticModel(Model):
         time_size = a.size
 
         # L.D.Lt.u
-        return np.array([a * uxx + b * vxy + e * (uyy + vxy), c * uxy + d * vyy + e * (uxy + vxx)]).reshape(
-            [2, time_size])
+        return np.array([a * uxx + b * vxy + e * (uyy + vxy),
+                         c * uxy + d * vyy + e * (uxy + vxx)]).reshape([2, time_size])
 
     def independent_boundary_function(self, point):
         func = self.boundary_function(point)
@@ -349,8 +350,9 @@ class ElasticModel(Model):
 
     def creep(self, t):
         lmbda = self.q0 / self.q1
-        #return 1 - np.exp(-lmbda * t)
-        return self.q0*((self.p1/self.q1)*np.exp(-lmbda*t)+(1/self.q0)*(1-np.exp(-lmbda*t)))
+        # return 1 - np.exp(-lmbda * t)
+        print("creep", self.q0 * ((self.p1 / self.q1) * np.exp(-lmbda * t) + (1 / self.q0) * (1 - np.exp(-lmbda * t))))
+        return self.q0 * ((self.p1 / self.q1) * np.exp(-lmbda * t) + (1 / self.q0) * (1 - np.exp(-lmbda * t)))
 
     def stress(self, phi, point, uv):
         phix = phi.derivate("x").eval(point).ravel()
@@ -368,4 +370,4 @@ class ElasticModel(Model):
                         [uy + vx]])
 
         D = np.moveaxis(self.D, 2, 0)
-        return D@Ltu
+        return D @ Ltu

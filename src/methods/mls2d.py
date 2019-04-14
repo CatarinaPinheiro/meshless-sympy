@@ -5,7 +5,7 @@ import src.helpers.numeric as num
 
 
 class MovingLeastSquares2D:
-    def __init__(self, data, basis, weight_function, security=1.40):
+    def __init__(self, data, basis, weight_function, security=1.4):
         self.basis = basis
         self.data = data
         self.point = np.zeros(np.shape(data[0]))
