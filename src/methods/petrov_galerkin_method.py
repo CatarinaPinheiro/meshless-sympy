@@ -12,11 +12,11 @@ class PetrovGalerkinMethod(MeshlessMethod):
         radius = min(self.m2d.r_first(1), self.model.region.distance_from_boundary(d))
 
 
-        self.m2d.point = d
-        phi = self.m2d.numeric_phi
+        # self.m2d.point = d
+        # phi = self.m2d.numeric_phi
         def stiffness_element(integration_point):
-            # self.m2d.point = integration_point
-            # phi = self.m2d.numeric_phi
+            self.m2d.point = integration_point
+            phi = self.m2d.numeric_phi
 
             w = self.weight_function.numeric(d[0], d[1], radius)
             self.m2d.point = integration_point
