@@ -350,9 +350,9 @@ class ElasticModel(Model):
 
     def creep(self, t):
         lmbda = self.q0 / self.q1
-        # return 1 - np.exp(-lmbda * t)
-        print("creep", self.q0 * ((self.p1 / self.q1) * np.exp(-lmbda * t) + (1 / self.q0) * (1 - np.exp(-lmbda * t))))
-        return self.q0 * ((self.p1 / self.q1) * np.exp(-lmbda * t) + (1 / self.q0) * (1 - np.exp(-lmbda * t)))
+        return 1 - np.exp(-lmbda * t)
+        # print("creep", self.q0 * ((self.p1 / self.q1) * np.exp(-lmbda * t) + (1 / self.q0) * (1 - np.exp(-lmbda * t))))
+        # return self.q0 * ((self.p1 / self.q1) * np.exp(-lmbda * t) + (1 / self.q0) * (1 - np.exp(-lmbda * t)))
 
     def stress(self, phi, point, uv):
         phix = phi.derivate("x").eval(point).ravel()
