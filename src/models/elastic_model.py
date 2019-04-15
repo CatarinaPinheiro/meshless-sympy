@@ -60,8 +60,8 @@ class ElasticModel(Model):
 
         zr = np.zeros(ux.shape)
 
-        print(ux.shape, uy.shape)
-        print(vx.shape, vy.shape)
+        # print(ux.shape, uy.shape)
+        # print(vx.shape, vy.shape)
         Lt = np.array([[ux, zr],
                        [zr, vy],
                        [uy, vx]]). \
@@ -75,8 +75,8 @@ class ElasticModel(Model):
         uv = np.array(u.eval(integration_point))
         vv = np.array(v.eval(integration_point))
 
-        print(uv.ravel().shape, vv.ravel().shape)
-        print(np.zeros(uv.size).shape, np.zeros(vv.size).shape)
+        # print(uv.ravel().shape, vv.ravel().shape)
+        # print(np.zeros(uv.size).shape, np.zeros(vv.size).shape)
         dirichlet_case = np.array([[uv.ravel(), np.zeros(uv.size)],
                                    [np.zeros(vv.size), vv.ravel()]])
 
@@ -131,26 +131,26 @@ class ElasticModel(Model):
             swapaxes(0, 3).swapaxes(0, 2). \
             reshape([2, 2 * space_points, time_points])
 
-        a = self.D[0, 0]
-        b = self.D[0, 1]
-        c = self.D[1, 0]
-        d = self.D[1, 1]
-        e = self.D[2, 2]
-        time_points = self.ni.size
-        space_points = phix.size
-        m1 = a * phix
-        m11 = b * phiy
-        m2 = c * phix
-        m22 = d * phiy
-        m3 = e * phix
-        m4 = e * phiy
-        multiplication = np.array([[nx * m1 + ny * m4, nx * m11 + ny * m3],
-                                   [ny * m2 + nx * m4, ny * m22 + nx * m3]]).swapaxes(1, 3).reshape(2, 2 * space_points)
-        first_row = np.array(multiplication[0]).transpose().ravel()
-        second_row = np.array(multiplication[1]).transpose().ravel()
-        neumann_case2 = np.array([first_row, second_row]).reshape([2, 2 * space_points, 1])
-        diff = neumann_case - neumann_case2
-        print('diff of neumann cases', diff)
+        # a = self.D[0, 0]
+        # b = self.D[0, 1]
+        # c = self.D[1, 0]
+        # d = self.D[1, 1]
+        # e = self.D[2, 2]
+        # time_points = self.ni.size
+        # space_points = phix.size
+        # m1 = a * phix
+        # m11 = b * phiy
+        # m2 = c * phix
+        # m22 = d * phiy
+        # m3 = e * phix
+        # m4 = e * phiy
+        # multiplication = np.array([[nx * m1 + ny * m4, nx * m11 + ny * m3],
+        #                            [ny * m2 + nx * m4, ny * m22 + nx * m3]]).swapaxes(1, 3).reshape(2, 2 * space_points)
+        # first_row = np.array(multiplication[0]).transpose().ravel()
+        # second_row = np.array(multiplication[1]).transpose().ravel()
+        # neumann_case2 = np.array([first_row, second_row]).reshape([2, 2 * space_points, 1])
+        # diff = neumann_case - neumann_case2
+        # print('diff of neumann cases', diff)
 
         phi = phi.eval(integration_point)
         dirichlet_case = np.array([[phi.ravel(), np.zeros(phi.size)],
