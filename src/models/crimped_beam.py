@@ -21,7 +21,7 @@ class CrimpedBeamModel(ElasticModel):
         self.I = I = h**3/12
         self.L = L = region.x2 - region.x1
         x, y = sp.var("x y")
-        ux = (-p/(6*E*I))*( (6*L-3*x)*x + (2+ni)*(y**2-h**2/4))
+        ux = (-p*y/(6*E*I))*( (6*L-3*x)*x + (2+ni)*(y**2-h**2/4))
         uy = (p/(6*E*I))*(3*ni*y**2*(L-x) + (4+5*ni)*h**2*x/4 + (3*L-x)*x**2)
 
         self.analytical = [sp.Matrix([ux]), sp.Matrix([uy])]

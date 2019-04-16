@@ -197,8 +197,8 @@ class ElasticModel(Model):
         space_size = phixx.size
         time_size = a.size
         multiplication = np.array([
-            [a*phixx+b*phixy+e*(phiyy+phixy),np.zeros([time_size, space_size])],
-            [np.zeros([time_size, space_size]), c*phixy+d*phiyy+e*(phixy+phixx)]
+            [a * phixx + e * phiyy, b * phixy + e * phixy],
+            [c * phixy + e * phixy, d * phiyy + e * phixx]
         ])
         return np.moveaxis(multiplication, 3, 1).reshape([2, 2*space_size, time_size])
 

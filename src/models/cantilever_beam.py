@@ -17,26 +17,29 @@ class CantileverBeamModel(ElasticModel):
         zeros = np.zeros(s.shape)
 
         p = self.p = -1e3
-        F = 35e9
-        G = 8.75e9
-        K = 11.67e9
+        F = 35e5
+        G = 8.75e5
+        K = 11.67e5
 
         E1 = 9 * K * G / (3 * K + G)
         E2 = E1
+        print(E1)
 
-        p1 = F / E1
-        p0 = 1 + E2 / E1
-        q0 = E2
-        q1 = F
+        self.p1 = p1 = F / (E1 + E2)
+        self.q0 = q0 = E1*E2 / (E1 + E2)
+        self.q1 = q1 = F*E1/(E1 + E2)
 
         L1 = q0 + q1 * s
         L2 = 3 * K
 
-        P1 = p0 + p1 * s
+        P1 = 1/s + p1
         P2 = ones
 
-        E = self.E = 3 * L1 * L2 / (2 * P1 * L2 + L1 * P2)
-        ni = self.ni = (P1 * L2 - L1 * P2) / (2 * P1 * L2 + L1 * P2)
+        E = self.E = E1 + (E1 - E1/2)*s/(1+s)#3 * L1 * L2 / (2 * P1 * L2 + L1 * P2)
+        print('Eshape', E.shape)
+        ni = self.ni = ((3*K - E1)/(6*K))*s/s
+        print('ni',ni)
+        #ni = np.array([ni], shape=(1,len(E)))
         self.D = (E / (1 - ni ** 2)) * np.array([[ones, ni, zeros],
                                                  [ni, ones, zeros],
                                                  [zeros, zeros, (1 - ni) / 2]])
@@ -47,62 +50,35 @@ class CantileverBeamModel(ElasticModel):
         x, y = sp.var("x y")
         t = np.arange(1, self.time + 1).repeat(self.iterations)
 
-        def ux(tt):
-            print("ux(%s)"%tt)
-            s, t = sp.var("s t")
+        def ux(t):
+            ht = 1
+            q00 = self.q0
+            q01 = self.q1
+            p01 = self.p1
+            exp1 = -ht * self.p * y / (6 * I)
+            exp2 = ((6 * K + q00) / (9 * K * q00) + (2 / 3) * ((p01 * q00 - q01) / (q00 * q01)) * np.exp(
+                -q00 * t / q01))
+            exp3 = (6 * L - 3 * x) * x * exp2
+            exp4 = ((3 * K - q00) / (9 * K * q00) + (1 / 3) * ((p01 * q00 - q01) / (q00 * q01)) * np.exp(
+                -q00 * t / q01))
+            exp5 = (2 * exp2 + exp4) * (y ** 2 - (h ** 2) / 4)
 
-            L1 = q0 + q1 * s
-            L2 = 3 * K
+            return exp1 * (exp3 + exp5)
 
-            P1 = p0 + p1 * s
-            P2 = sp.Integer(1)
+        def uy(t):
+            q00 = self.q0
 
-            E =  3 * L1 * L2 / (2 * P1 * L2 + L1 * P2)
-            ni =  (P1 * L2 - L1 * P2) / (2 * P1 * L2 + L1 * P2)
+            q01 = self.q1
+            p01 = self.p1
+            exp1 = self.p / (6 * I)
+            exp2 = ((6 * K + q00) / (9 * K * q00) + (2 / 3) * ((p01 * q00 - q01) / (q00 * q01)) * np.exp(
+                -q00 * t / q01))
+            exp3 = ((3 * K - q00) / (9 * K * q00) + (1 / 3) * ((p01 * q00 - q01) / (q00 * q01)) * np.exp(
+                -q00 * t / q01))
+            exp4 = (3 * (y ** 2) * (L - x) + 5 * x * h ** 2 / 4)
+            exp5 = (x * h ** 2 + (3 * L - x) * x ** 2)
 
-
-            pvisc = self.p/s
-            exp1 = pvisc*y/(6*E*I)
-            exp2 = (6*L - 3*x)*x
-            exp3 = 2 + ni
-            exp4 = y**2 - h**2/4
-
-            key = "analytical u(s)"
-            found, value = cache.get(key)
-            if found:
-                return value.subs(t,tt)
-            else:
-                computed = sp.inverse_laplace_transform(-exp1*(exp2 + exp3*exp4), s, t)
-                cache.set(key, computed)
-                return computed.subs(t,tt)
-
-        def uy(tt):
-            print("uy(%s)"%tt)
-            s, t = sp.var("s t")
-
-            L1 = q0 + q1 * s
-            L2 = 3 * K
-
-            P1 = p0 + p1 * s
-            P2 = sp.Integer(1)
-
-            E =  3 * L1 * L2 / (2 * P1 * L2 + L1 * P2)
-            ni = (P1 * L2 - L1 * P2) / (2 * P1 * L2 + L1 * P2)
-
-            pvisc = self.p/s
-            exp1 = pvisc/(6*E*I)
-            exp2 = 3*ni*(y**2)*(L - x)
-            exp3 = (4 + 5*ni)*(h**2)*x/4
-            exp4 = (x - 3*L)*(x**2)
-
-            key = "analytical v(s)"
-            found, value = cache.get(key)
-            if found:
-                return value.subs(t, tt)
-            else:
-                computed = sp.inverse_laplace_transform(-exp1*(exp2 + exp3*exp4), s, t)
-                cache.set(key, computed)
-                return computed.subs(t, tt)
+            return exp1 * (exp3 * exp4 + exp5 * exp2)
 
         # def ux(t):
         #     ht = 1
@@ -143,7 +119,7 @@ class CantileverBeamModel(ElasticModel):
             s = self.s
             I = self.I
             y = integration_point[1]
-            return -w.eval(integration_point)*np.array([np.zeros(s.shape), (p/(2*I))*((h**2)/4 - y**2)/s])
+            return -w.eval(integration_point)*np.array([np.zeros(s.shape), (p/(2*I))*((h**2)/4 - y**2)*s/s])
         else:
             return np.zeros([2,self.time*self.iterations])
 
@@ -161,6 +137,6 @@ class CantileverBeamModel(ElasticModel):
             I = self.I
             y = point[1]
             # return np.array([np.zeros(s.shape), (p/(2*I))*(h**2/4 - y**2)/s])
-            return np.array([np.zeros(s.shape), p*(h**2/4 - y**2)/(2*I*s)])
+            return np.array([np.zeros(s.shape), p*s*(h**2/4 - y**2)/(2*I*s)])
         else:
             return np.zeros([2,self.time*self.iterations])

@@ -58,9 +58,9 @@ def simply_supported_beam_region_example(dx, dy):
 def cantiliever_beam_region_example(dx, dy):
     return Rectangle(
         x1=0,
-        x2=50,
-        y1=-5,
-        y2=5,
+        x2=48,
+        y1=-6,
+        y2=6,
         dx=dx,
         dy=dy,
         parametric_partition={
@@ -261,8 +261,8 @@ class TestMeshless(unittest.TestCase):
     def test_collocation_viscoelasticity(self):
         self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example(0.5, 0.5))
 
-    def test_collocation_cantiliever_beam(self):
-        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantiliever_beam_region_example(5,5))
+    def test_collocation_cantilever_beam(self):
+        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantiliever_beam_region_example(1,1))
 
     def test_collocation_simply_supported_beam(self):
         self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel, simply_supported_beam_region_example(5,5))
