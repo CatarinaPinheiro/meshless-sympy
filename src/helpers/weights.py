@@ -13,7 +13,7 @@ class GaussianWithRadius(WeightFunction):
         x, y, r = sp.var("x y r")
 
         # caching sympy for speedup
-        c = 100
+        c = r/3
         exp1 = sp.exp(-((x ** 2 + y ** 2) / c ** 2))
         exp2 = sp.exp(-((r / c) ** 2))
         weight = (exp1 - exp2) / (1 - exp2)
@@ -23,7 +23,7 @@ class GaussianWithRadius(WeightFunction):
         return self.cached_sympy
 
     def numpy(self, x, y, r):
-        c = 100
+        c = r/3
         exp1 = np.exp(-((x ** 2 + y ** 2) / c ** 2))
         exp2 = np.exp(-((r / c) ** 2))
         weight = (exp1 - exp2) / (1 - exp2)

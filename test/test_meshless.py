@@ -322,10 +322,10 @@ class TestMeshless(unittest.TestCase):
         steps = [
             [6, 6],
             [3, 3],
-            [2, 2],
-            [1.5, 1.5],
-            [6 / 5, 6 / 5],
-            [1, 1]
+            [2, 2]
+            # [1.5, 1.5],
+            # [6 / 5, 6 / 5],
+            # [1, 1]
         ]
         diffs = []
         for dx, dy in steps:
