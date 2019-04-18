@@ -84,7 +84,7 @@ class MovingLeastSquares2D:
             cond = np.linalg.cond(A)
             # if self.ri > max(dx, dy):
             #     raise Exception("need more points, r=%s, det = %s, cond=%s"%(self.ri, det, cond))
-            if det < 1e-3:
+            if det < 1e-9:
                 self.ri *= 1.05
                 continue
             else:

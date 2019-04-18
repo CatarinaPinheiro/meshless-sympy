@@ -1,6 +1,7 @@
 from src.models.elastic_model import ElasticModel
 import numpy as np
 import sympy as sp
+import src.helpers.numeric as num
 
 
 class CrimpedBeamModel(ElasticModel):
@@ -9,23 +10,37 @@ class CrimpedBeamModel(ElasticModel):
         self.num_dimensions = 2
         self.E = E = 3e7
         self.ni = ni = 0.3
-        self.G = G = E/(2*(1+ni))
+        self.ni = np.array([ni])
+        self.G = G = E / (2 * (1 + ni))
         self.p = p = -1000
-        self.D = (E/(1-ni**2))*np.array([[1, ni, 0],
-                                         [ni, 1, 0],
-                                         [0, 0, (1-ni)/2]]).reshape((3,3,1))
+        self.D = (E / (1 - ni ** 2)) * np.array([[1, ni, 0],
+                                                 [ni, 1, 0],
+                                                 [0, 0, (1 - ni) / 2]]).reshape((3, 3, 1))
 
         self.ni = np.array([ni])
 
         self.h = h = region.y2 - region.y1
-        self.I = I = h**3/12
+        self.I = I = h ** 3 / 12
         self.L = L = region.x2 - region.x1
         x, y = sp.var("x y")
-        ux = (-p*y/(6*E*I))*( (6*L-3*x)*x + (2+ni)*(y**2-h**2/4))
-        uy = (p/(6*E*I))*(3*ni*y**2*(L-x) + (4+5*ni)*h**2*x/4 + (3*L-x)*x**2)
+        uxx = (-p * y / (6 * E * I)) * ((6 * L - 3 * x) * x + (2 + ni) * (y ** 2 - h ** 2 / 4))
+        uyy = (p / (6 * E * I)) * (3 * ni * y ** 2 * (L - x) + (4 + 5 * ni) * h ** 2 * x / 4 + (3 * L - x) * x ** 2)
 
-        self.analytical = [sp.Matrix([ux]), sp.Matrix([uy])]
-    #
+        self.analytical = [sp.Matrix([uxx]), sp.Matrix([uyy])]
+
+        def analytical_stress(point):
+            nu = num.Function(uxx, "analytical_u")
+            nv = num.Function(uyy, "analytical_v")
+            ux = nu.derivate("x").eval(point)
+            uy = nu.derivate("y").eval(point)
+            vx = nv.derivate("x").eval(point)
+            vy = nv.derivate("y").eval(point)
+            Ltu = np.array([ux, vy, (uy + vx)])
+            D = np.moveaxis(self.D, 2, 0)
+            return D @ Ltu
+
+        self.analytical_stress = analytical_stress
+
     # def independent_domain_function(self, point):
     #     return np.zeros([2, 1])
     #

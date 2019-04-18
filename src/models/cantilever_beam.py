@@ -11,7 +11,8 @@ class CantileverBeamModel(ElasticModel):
 
         self.iterations = iterations
         self.time = time
-        s = self.s = np.array([np.log(2)*i/t for i in range(1, self.iterations+1) for t in range(1, self.time+1)])
+        s = self.s = np.array(
+            [np.log(2) * i / t for i in range(1, self.iterations + 1) for t in range(1, self.time + 1)])
 
         ones = np.ones(s.shape)
         zeros = np.zeros(s.shape)
@@ -26,26 +27,29 @@ class CantileverBeamModel(ElasticModel):
         print(E1)
 
         self.p1 = p1 = F / (E1 + E2)
-        self.q0 = q0 = E1*E2 / (E1 + E2)
-        self.q1 = q1 = F*E1/(E1 + E2)
+        self.q0 = q0 = E1 * E2 / (E1 + E2)
+        self.q1 = q1 = F * E1 / (E1 + E2)
+
+        if not self.q1 > self.p1 * self.q0:
+            raise Exception("invalid values for q1, p1 and p0")
 
         L1 = q0 + q1 * s
         L2 = 3 * K
 
-        P1 = 1/s + p1
+        P1 = 1 / s + p1
         P2 = ones
 
-        E = self.E = E1 + (E1 - E1/2)*s/(1+s)#3 * L1 * L2 / (2 * P1 * L2 + L1 * P2)
+        E = self.E = 3 * L1 * L2 / (2 * P1 * L2 + L1 * P2)
         print('Eshape', E.shape)
-        ni = self.ni = ((3*K - E1)/(6*K))*s/s
-        print('ni',ni)
-        #ni = np.array([ni], shape=(1,len(E)))
+        ni = self.ni = ((3 * K - E1) / (6 * K)) * s / s
+        print('ni', ni)
+        # ni = np.array([ni], shape=(1,len(E)))
         self.D = (E / (1 - ni ** 2)) * np.array([[ones, ni, zeros],
                                                  [ni, ones, zeros],
                                                  [zeros, zeros, (1 - ni) / 2]])
 
         self.h = h = self.region.y2 - self.region.y1
-        self.I = I = h**3/12
+        self.I = I = h ** 3 / 12
         self.L = L = self.region.x2 - self.region.x1
         x, y = sp.var("x y")
         t = np.arange(1, self.time + 1).repeat(self.iterations)
@@ -59,8 +63,10 @@ class CantileverBeamModel(ElasticModel):
             exp2 = ((6 * K + q00) / (9 * K * q00) + (2 / 3) * ((p01 * q00 - q01) / (q00 * q01)) * np.exp(
                 -q00 * t / q01))
             exp3 = (6 * L - 3 * x) * x * exp2
-            exp4 = ((3 * K - q00) / (9 * K * q00) + (1 / 3) * ((p01 * q00 - q01) / (q00 * q01)) * np.exp(
-                -q00 * t / q01))
+            exp4 = ((3 * K - E1) / (6 * K)) * (
+                    (6 * K + q00) / (9 * K * q00) + (2 / 3) * ((p01 * q00 - q01) / (q00 * q01)) * np.exp(
+                -q00 * t / q01))  # ((3 * K - q00) / (9 * K * q00) + (1 / 3) * ((p01 * q00 - q01) / (q00 * q01)) * np.exp(
+            # -q00 * t / q01))
             exp5 = (2 * exp2 + exp4) * (y ** 2 - (h ** 2) / 4)
 
             return exp1 * (exp3 + exp5)
@@ -73,8 +79,10 @@ class CantileverBeamModel(ElasticModel):
             exp1 = self.p / (6 * I)
             exp2 = ((6 * K + q00) / (9 * K * q00) + (2 / 3) * ((p01 * q00 - q01) / (q00 * q01)) * np.exp(
                 -q00 * t / q01))
-            exp3 = ((3 * K - q00) / (9 * K * q00) + (1 / 3) * ((p01 * q00 - q01) / (q00 * q01)) * np.exp(
-                -q00 * t / q01))
+            exp3 = ((3 * K - E1) / (6 * K)) * (
+                    (6 * K + q00) / (9 * K * q00) + (2 / 3) * ((p01 * q00 - q01) / (q00 * q01)) * np.exp(
+                -q00 * t / q01))  # ((3 * K - q00) / (9 * K * q00) + (1 / 3) * ((p01 * q00 - q01) / (q00 * q01)) * np.exp(
+            # -q00 * t / q01))
             exp4 = (3 * (y ** 2) * (L - x) + 5 * x * h ** 2 / 4)
             exp5 = (x * h ** 2 + (3 * L - x) * x ** 2)
 
@@ -119,15 +127,16 @@ class CantileverBeamModel(ElasticModel):
             s = self.s
             I = self.I
             y = integration_point[1]
-            return -w.eval(integration_point)*np.array([np.zeros(s.shape), (p/(2*I))*((h**2)/4 - y**2)*s/s])
+            return -w.eval(integration_point) * np.array(
+                [np.zeros(s.shape), (p / (2 * I)) * ((h ** 2) / 4 - y ** 2) * s / s])
         else:
-            return np.zeros([2,self.time*self.iterations])
+            return np.zeros([2, self.time * self.iterations])
 
     def petrov_galerkin_independent_domain(self, w, integration_point):
-        return np.zeros([2,self.time*self.iterations])
+        return np.zeros([2, self.time * self.iterations])
 
     def independent_domain_function(self, point):
-        return np.zeros([2,self.time*self.iterations])
+        return np.zeros([2, self.time * self.iterations])
 
     def independent_boundary_function(self, point):
         if point[0] > self.region.x2 - 1e-3:
@@ -137,6 +146,6 @@ class CantileverBeamModel(ElasticModel):
             I = self.I
             y = point[1]
             # return np.array([np.zeros(s.shape), (p/(2*I))*(h**2/4 - y**2)/s])
-            return np.array([np.zeros(s.shape), p*s*(h**2/4 - y**2)/(2*I*s)])
+            return np.array([np.zeros(s.shape), p * s * (h ** 2 / 4 - y ** 2) / (2 * I * s)])
         else:
-            return np.zeros([2,self.time*self.iterations])
+            return np.zeros([2, self.time * self.iterations])

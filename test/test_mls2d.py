@@ -2,7 +2,7 @@ import unittest
 import src.helpers.basis as b
 import numpy as np
 import src.methods.mls2d as m
-import teste.helpers.test_functions as ef
+import test.helpers.test_functions as ef
 from src.helpers.weights import Spline as Weight
 import matplotlib.pyplot as plt
 
@@ -20,13 +20,13 @@ class TestMovingLeastSquare2D(unittest.TestCase):
         desired = example.eval(point)
         desired_x = example.derivate_x(point)
 
-        # test radius
+        # testt radius
         # self.assertAlmostEqual(mls.r_first(1), np.sqrt(2)/2, 3)
         #
-        # test valuation
+        # testt valuation
         # self.assertAlmostEqual(approx, desired, 6)
         #
-        # test derivate_x
+        # testt derivate_x
         # self.assertAlmostEqual((mls.numeric_phi.derivate("x").eval(point)@data[:,2]).sum(), desired_x, 6)
 
         return np.abs((mls.numeric_phi.eval(point)@data[:,2]).sum() - desired)
