@@ -4,7 +4,7 @@ import sympy as sp
 
 
 class SimplySupportedBeamModel(ElasticModel):
-    def __init__(self, region, time=10, iterations=10):
+    def __init__(self, region, time=50, iterations=10):
         ElasticModel.__init__(self, region)
 
         self.iterations = iterations
@@ -113,7 +113,7 @@ class SimplySupportedBeamModel(ElasticModel):
         #     exp1 = (3*K+2*(E1*E2/(E1+E2)))/((E1*E2/(E1+E2))*(6*K+(E1*E2/(E1+E2))))
         #     return ht*p*x*(exp1+exp2*exp3)
 
-        self.analytical = [sp.Matrix([ux(tt) for tt in t]), sp.Matrix(np.zeros([self.time * self.iterations]))]
+        self.analytical = [sp.Matrix([ux(tt) for tt in t]), sp.Matrix([uy(tt) for tt in t])]
         # self.analytical = [sp.Matrix(np.zeros([self.time * self.iterations,1])), sp.Matrix(np.zeros([self.time * self.iterations,1]))]
 
     def petrov_galerkin_independent_boundary(self, w, integration_point):
@@ -126,12 +126,12 @@ class SimplySupportedBeamModel(ElasticModel):
         return np.zeros([2,self.time*self.iterations])
 
     def independent_domain_function(self, point):
-        return np.zeros([2,self.time*self.iterations])
+        return np.array([0, 0])
 
     def independent_boundary_function(self, point):
-        if point[0] > self.region.x2 - 1e-3:
-            return np.array([self.p/self.s, np.zeros(self.s.shape)])
+        if point[1] > self.region.y2 - 1e-3:
+            return np.array([0, self.p])
         else:
-            return np.zeros([2,self.time*self.iterations])
+            return np.array([0, 0])
 
 

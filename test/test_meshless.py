@@ -59,19 +59,19 @@ def simply_supported_elastic_region_example(dx, dy):
 
 def simply_supported_beam_region_example(dx, dy):
     return Rectangle(
-        x1=-5,
-        y1=0,
-        x2=5,
-        y2=50,
+        x1=-24,
+        y1=-6,
+        x2=24,
+        y2=6,
         dx=dx,
         dy=dy,
         parametric_partition={
-            1.01: ["DIRICHLET", "DIRICHLET"],
-            1.99: ["NEUMANN", "NEUMANN"],
-            2.99: ["NEUMANN", "NEUMANN"],
-            3.01: ["DIRICHLET", "DIRICHLET"],
+            0.01: ["DIRICHLET", "DIRICHLET"],
+            0.99: ["NEUMANN", "NEUMANN"],
+            1.01: ["NEUMANN", "DIRICHLET"],
             3.99: ["NEUMANN", "NEUMANN"],
-            4.01: ["DIRICHLET", "NEUMANN"]
+            4.01: ["DIRICHLET", "DIRICHLET"]
+            # 5.01: ["DIRICHLET", "DIRICHLET"]
         })
 
 
@@ -311,7 +311,7 @@ class TestMeshless(unittest.TestCase):
 
     def test_collocation_simply_supported_beam(self):
         self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel,
-                                      simply_supported_beam_region_example(2.5, 2.5))
+                                      simply_supported_beam_region_example(1, 1))
 
     # ______________Subregion Test_______________
 

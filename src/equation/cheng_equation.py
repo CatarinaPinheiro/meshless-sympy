@@ -10,7 +10,7 @@ class ChengEquation:
     """
     def __init__(self, model):
         self.model = model
-        self.time = np.zeros([1])#np.linspace(1, 40)
+        self.time = np.linspace(1, 40)
 
     def cheng_params(self, phi, point):
         phix = phi.derivate("x").eval(point).ravel()
@@ -20,7 +20,7 @@ class ChengEquation:
         phixy = phi.derivate("x").derivate("y").eval(point).ravel()
         zero = np.zeros(phix.shape)
 
-        K = self.model.E/(3*(1-2*self.model.ni)) #self.model.K
+        K = 11.67e9#self.model.E/(3*(1-2*self.model.ni)) #self.model.K
 
         def J1(t):
             q0 = self.model.q0
@@ -30,13 +30,13 @@ class ChengEquation:
             return (p1/q1)*np.exp(-q0*t/q1)+(1/q0)*(1-np.exp(-q0*t/q1))
 
         M1 = 3*K
-        M2 = 2*self.model.G
+        M2 = 1/J1(self.time)#2*self.model.G
 
-        beta1 = (2-self.model.ni)/(3*(1-self.model.ni))
-        beta2 = (1-2*self.model.ni)/(3*(1-self.model.ni))
+        beta1 = (3*K*J1(self.time)+1)/(3*K*J1(self.time)+2)#(2-self.model.ni)/(3*(1-self.model.ni))
+        beta2 = 1/(3*K*J1(self.time)+2)
         half = 0.5*np.ones(beta1.shape)
 
-        C = (1-2*self.model.ni)/(3*(1-self.model.ni))
+        C = beta2#(1-2*self.model.ni)/(3*(1-self.model.ni))
 
         phix_ = np.expand_dims(phix, 1)
         phiy_ = np.expand_dims(phiy, 1)

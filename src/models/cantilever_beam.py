@@ -6,7 +6,7 @@ import sympy as sp
 
 
 class CantileverBeamModel:
-    def __init__(self, region, time=10, iterations=10):
+    def __init__(self, region, time=50, iterations=1):
         ElasticModel.__init__(self, region)
 
         self.iterations = iterations
@@ -41,7 +41,7 @@ class CantileverBeamModel:
 
         E = self.E = 3 * L1 * L2 / (2 * P1 * L2 + L1 * P2)
         print('Eshape', E.shape)
-        ni = self.ni = ((3 * K - E1) / (6 * K)) * s / s
+        ni = self.ni = (P1*L2 - L1*P2)/(2*P1*L2 + L1*P2)
         print('ni', ni)
         # ni = np.array([ni], shape=(1,len(E)))
         self.D = (E / (1 - ni ** 2)) * np.array([[ones, ni, zeros],
@@ -128,7 +128,7 @@ class CantileverBeamModel:
             I = self.I
             y = integration_point[1]
             return -w.eval(integration_point) * np.array(
-                [np.zeros(s.shape), (p / (2 * I)) * ((h ** 2) / 4 - y ** 2) * s / s])
+                [np.zeros(s.shape), (p / (2 * I)) * ((h ** 2) / 4 - y ** 2) ])
         else:
             return np.zeros([2, self.time * self.iterations])
 
