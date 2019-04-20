@@ -5,6 +5,7 @@ import numpy as np
 class GalerkinMethod(MeshlessMethod):
     def __init__(self, basis, model):
         MeshlessMethod.__init__(self, basis, model)
+        self.name = "MGLM"
 
     def integration(self, point, radius, f):
         return np.array(gq.polar_gauss_integral(point, radius, lambda p: f(p)))

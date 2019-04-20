@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 class ChengEquation:
@@ -10,18 +9,19 @@ class ChengEquation:
     """
     def __init__(self, model):
         self.model = model
+
+    def elastic_params(self):
+        self.time = np.array([0])
+        K = self.model.E/(3*(1-2*self.model.ni))
+        M1 = 3*K
+        M2 = 2*self.model.G
+        beta1 = (2-self.model.ni)/(3*(1-self.model.ni))
+        beta2 = (1-2*self.model.ni)/(3*(1-self.model.ni))
+        C = beta2
+        return M1, M2, beta1, beta2, C
+
+    def viscoelastic_params(self):
         self.time = np.linspace(1, 40)
-
-    def cheng_params(self, phi, point):
-        phix = phi.derivate("x").eval(point).ravel()
-        phiy = phi.derivate("y").eval(point).ravel()
-        phixx = phi.derivate("x").derivate("x").eval(point).ravel()
-        phiyy = phi.derivate("y").derivate("y").eval(point).ravel()
-        phixy = phi.derivate("x").derivate("y").eval(point).ravel()
-        zero = np.zeros(phix.shape)
-
-        K = 11.67e9#self.model.E/(3*(1-2*self.model.ni)) #self.model.K
-
         def J1(t):
             q0 = self.model.q0
             q1 = self.model.q1
@@ -29,14 +29,31 @@ class ChengEquation:
 
             return (p1/q1)*np.exp(-q0*t/q1)+(1/q0)*(1-np.exp(-q0*t/q1))
 
+        K = self.model.K
         M1 = 3*K
-        M2 = 1/J1(self.time)#2*self.model.G
-
-        beta1 = (3*K*J1(self.time)+1)/(3*K*J1(self.time)+2)#(2-self.model.ni)/(3*(1-self.model.ni))
+        M2 = 1/J1(self.time)
+        beta1 = (3*K*J1(self.time)+1)/(3*K*J1(self.time)+2)
         beta2 = 1/(3*K*J1(self.time)+2)
+        C = beta2
+        return M1, M2, beta1, beta2, C
+
+    def cheng_params(self, phi, point):
+        if self.model.material_type == "ELASTIC":
+            M1, M2, beta1, beta2, C = self.elastic_params()
+        elif self.model.material_type == "VISCOELASTIC":
+            M1, M2, beta1, beta2, C = self.viscoelastic_params()
+        else:
+            raise Exception("Invalid mode '%s' for Cheng method"%self.model.material_type)
+
+        phix = phi.derivate("x").eval(point).ravel()
+        phiy = phi.derivate("y").eval(point).ravel()
+        phixx = phi.derivate("x").derivate("x").eval(point).ravel()
+        phiyy = phi.derivate("y").derivate("y").eval(point).ravel()
+        phixy = phi.derivate("x").derivate("y").eval(point).ravel()
+        zero = np.zeros(phix.shape)
+
         half = 0.5*np.ones(beta1.shape)
 
-        C = beta2#(1-2*self.model.ni)/(3*(1-self.model.ni))
 
         phix_ = np.expand_dims(phix, 1)
         phiy_ = np.expand_dims(phiy, 1)
@@ -112,3 +129,33 @@ class ChengEquation:
     def independent_boundary(self, point):
         return self.model.independent_boundary_function(point).reshape([2,1]).repeat(self.time.size,1)
 
+    def petrov_galerkin_independent_domain(self, w, point):
+        return self.model.independent_domain_function(point).reshape([2,1]).repeat(self.time.size,1)
+
+    def petrov_galerkin_independent_boundary(self, w, point):
+        return -w.eval(point)*self.model.independent_boundary_function(point).reshape([2,1]).repeat(self.time.size,1)
+
+    def petrov_galerkin_stiffness_domain(self, phi, w, point):
+        M1, M2, LB1, LB2, B1, B2, space_size, time_size = self.cheng_params(phi, point)
+
+        zero = np.zeros(w.shape())
+        dwdx = w.derivate("x").eval(point)
+        dwdy = w.derivate("y").eval(point)
+
+        Lw = np.array([[dwdx, zero, dwdy],
+                       [zero, dwdy, dwdx]])
+
+        sigma = (M1*B1+M2*B2).swapaxes(0,2).swapaxes(1,3)
+
+        return (-Lw @ sigma).swapaxes(0,2).swapaxes(1,3).swapaxes(1,2).reshape([2, 2*space_size, time_size])
+
+    def petrov_galerkin_stiffness_boundary(self, phi, w, point):
+        M1, M2, LB1, LB2, B1, B2, space_size, time_size = self.cheng_params(phi, point)
+
+        nx, ny = self.model.region.normal(point)
+        N = np.array([[nx, 0, ny],
+                      [0, ny, nx]])
+
+        sigma = (M1*B1+M2*B2).swapaxes(0,2).swapaxes(1,3)
+
+        return (w.eval(point) * N @ sigma).swapaxes(0,2).swapaxes(1,3).swapaxes(1,2).reshape([2, 2*space_size, time_size])

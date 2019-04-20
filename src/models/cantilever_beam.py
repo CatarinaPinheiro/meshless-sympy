@@ -9,6 +9,8 @@ class CantileverBeamModel:
     def __init__(self, region, time=50, iterations=1):
         ElasticModel.__init__(self, region)
 
+        self.material_type = "VISCOELASTIC"
+
         self.iterations = iterations
         self.time = time
         s = self.s = np.array(
@@ -120,21 +122,6 @@ class CantileverBeamModel:
 
         self.analytical = [sp.Matrix([ux(tt) for tt in t]), sp.Matrix([uy(tt) for tt in t])]
 
-    def petrov_galerkin_independent_boundary(self, w, integration_point):
-        if integration_point[0] > self.region.x2 - 1e-3:
-            h = self.h
-            p = self.p
-            s = self.s
-            I = self.I
-            y = integration_point[1]
-            return -w.eval(integration_point) * np.array(
-                [np.zeros(s.shape), (p / (2 * I)) * ((h ** 2) / 4 - y ** 2) ])
-        else:
-            return np.zeros([2, self.time * self.iterations])
-
-    def petrov_galerkin_independent_domain(self, w, integration_point):
-        return np.zeros([2, self.time * self.iterations])
-
     def independent_domain_function(self, point):
         return np.array([0, 0])
 
@@ -144,7 +131,6 @@ class CantileverBeamModel:
             p = self.p
             I = self.I
             y = point[1]
-            # return np.array([np.zeros(s.shape), (p/(2*I))*(h**2/4 - y**2)/s])
-            return np.array([0, p * (h ** 2 / 4 - y ** 2) / (2 * I )])
+            return np.array([0, p * ((h ** 2) / 4 - y ** 2) / (2 * I)])
         else:
             return np.array([0, 0])

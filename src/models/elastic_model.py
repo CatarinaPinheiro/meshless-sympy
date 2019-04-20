@@ -7,6 +7,7 @@ import numpy as np
 class ElasticModel(Model):
     def __init__(self, region):
         self.region = region
+        self.material_type = "ELASTIC"
         x, y = sp.var("x y")
         uxx = x
         vyy = -y/4

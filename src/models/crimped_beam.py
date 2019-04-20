@@ -6,6 +6,7 @@ import src.helpers.numeric as num
 
 class CrimpedBeamModel(ElasticModel):
     def __init__(self, region):
+        self.material_type = "ELASTIC"
         self.region = region
         self.num_dimensions = 2
         self.E = E = 3e7

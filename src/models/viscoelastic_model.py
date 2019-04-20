@@ -7,6 +7,8 @@ class ViscoelasticModel(ElasticModel):
     def __init__(self, region, time=50, iterations=1):
         ElasticModel.__init__(self, region)
 
+        self.material_type = "VISCOELASTIC"
+
         self.iterations = iterations
         self.time = time
         s = self.s = np.array([np.log(2)*i/t for i in range(1, self.iterations+1) for t in range(1, self.time+1)])
@@ -52,15 +54,6 @@ class ViscoelasticModel(ElasticModel):
 
         self.analytical = [sp.Matrix([ux(tt) for tt in t]), sp.Matrix(np.zeros([self.time * self.iterations]))]
         # self.analytical = [sp.Matrix(np.zeros([self.time * self.iterations,1])), sp.Matrix(np.zeros([self.time * self.iterations,1]))]
-
-    def petrov_galerkin_independent_boundary(self, w, integration_point):
-        if integration_point[0] > self.region.x2 - 1e-3:
-            return -w.eval(integration_point)*np.array([self.p/self.s, np.zeros(self.s.shape)])
-        else:
-            return np.zeros([2,self.time*self.iterations])
-
-    def petrov_galerkin_independent_domain(self, w, integration_point):
-        return np.zeros([2,self.time*self.iterations])
 
     def independent_domain_function(self, point):
         return np.array([0, 0])

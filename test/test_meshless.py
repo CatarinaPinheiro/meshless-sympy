@@ -241,7 +241,7 @@ class TestMeshless(unittest.TestCase):
             print(point)
 
             plt.plot(point[0], point[1], "b^-")
-            plt.plot(point[0] + calculated_x, point[1] + calculated_y, ".", color="red")
+            plt.plot(point[0] + calculated_x, point[1] + calculated_y, ".", color="red", label=method.name)
 
             if model.analytical:
                 analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[
@@ -267,7 +267,7 @@ class TestMeshless(unittest.TestCase):
             print(point)
 
             print("x")
-            plt.plot(calculated_x, ".", color="red", label="Colocação")
+            plt.plot(calculated_x, ".", color="red", label=method.name)
             if model.analytical:
                 plt.plot(analytical_x, color="indigo", label="Analítica")
             plt.legend()
@@ -277,7 +277,7 @@ class TestMeshless(unittest.TestCase):
             plt.show()
 
             print("y")
-            plt.plot(calculated_y, ".", color="red", label="Colocação")
+            plt.plot(calculated_y, ".", color="red", label=method.name)
             if model.analytical:
                 plt.plot(analytical_y, color="indigo", label="Analítica")
             plt.legend()
@@ -314,7 +314,7 @@ class TestMeshless(unittest.TestCase):
         plt.show()
 
     def test_collocation_viscoelasticity(self):
-        self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example(0.4, 0.4))
+        self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example(1, 1))
 
     def test_collocation_cantilever_beam(self):
         self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantilever_beam_region_example(1, 1))
@@ -354,16 +354,16 @@ class TestMeshless(unittest.TestCase):
         self.rectangle_template(PetrovGalerkinMethod, PotentialModel, potential_region_example(5, 5))
 
     def test_petrov_galerkin_elasticity(self):
-        self.rectangle_template(PetrovGalerkinMethod, ElasticModel, elastic_region_example(2, 2))
+        self.rectangle_template(PetrovGalerkinMethod, ElasticModel, elastic_region_example(30, 15))
 
     def test_petrov_galerkin_crimped_beam_elasticity(self):
-        self.rectangle_template(PetrovGalerkinMethod, CrimpedBeamModel, crimped_beam_region_example(3, 3))
+        self.rectangle_template(PetrovGalerkinMethod, CrimpedBeamModel, crimped_beam_region_example(6, 6))
 
     def test_petrov_galerkin_viscoelasticity(self):
         self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticModel, viscoelastic_region_example(1, 1))
 
     def test_petrov_galerkin_cantiliever_beam(self):
-        self.visco_rectangle_template(PetrovGalerkinMethod, CantileverBeamModel, cantilever_beam_region_example(5, 5))
+        self.visco_rectangle_template(PetrovGalerkinMethod, CantileverBeamModel, cantilever_beam_region_example(6, 6))
 
     def test_petrov_galerkin_simply_supported_beam(self):
         self.visco_rectangle_template(PetrovGalerkinMethod, SimplySupportedBeamModel,
