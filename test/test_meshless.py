@@ -31,12 +31,10 @@ def elastic_region_example(dx, dy):
         dy=dy,
         parametric_partition={
             0.01: ["DIRICHLET", "NEUMANN"],
-            1: ["NEUMANN", "NEUMANN"],
-            2: ["NEUMANN", "NEUMANN"],
-            3: ["NEUMANN", "NEUMANN"],
+            2.99: ["NEUMANN", "NEUMANN"],
             3.49: ["DIRICHLET", "NEUMANN"],
             3.51: ["DIRICHLET", "DIRICHLET"],
-            4: ["DIRICHLET", "NEUMANN"]
+            4.01: ["DIRICHLET", "NEUMANN"]
             # 5: ["DIRICHLET", "DIRICHLET"]
         })
 
@@ -289,11 +287,11 @@ class TestMeshless(unittest.TestCase):
     def test_collocation_crimped_beam_elasticity(self):
         steps = [
             [6, 6],
-            # [3, 3],
+            [3, 3],
             [2, 2],
-            # [1.5, 1.5],
-            # [6/5, 6/5],
-            # [1, 1]
+            [1.5, 1.5],
+            [6/5, 6/5],
+            [1, 1]
         ]
         diffs = []
         for dx, dy in steps:
