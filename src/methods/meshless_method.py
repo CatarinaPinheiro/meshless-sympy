@@ -4,50 +4,42 @@ from numpy import linalg as la
 import src.methods.mls2d as mls
 import numpy as np
 from src.helpers.cache import cache
-from src.helpers.functions import unique_rows
 import src.helpers.duration as duration
 from src.helpers.list import element_inside_list
 from src.helpers.weights import GaussianWithRadius as Weight
-from matplotlib import pyplot as plt, cm
-import matplotlib as mpl
+from src.equation.cheng_equation import ChengEquation
+from matplotlib import pyplot as plt
 
 
 class MeshlessMethod:
     def __init__(self, basis, model, weight_function=Weight()):
         self.basis = basis
         self.model = model
+        self.equation = ChengEquation(model)
         self.weight_function = weight_function
         self.m2d = mls.MovingLeastSquares2D(self.data, self.basis, self.weight_function)
         self.support_radius = {}
+        cache.reset()
 
     def domain_append(self, i, d):
+        self.m2d.point = d
         radius = min(self.m2d.r_first(1), self.model.region.distance_from_boundary(d))
 
         def stiffness_element(integration_point):
-            key = "stiffeness element %s %s" % (d, integration_point)
-            found, value = cache.get(key)
-            if found:
-                return value
-
             self.m2d.point = integration_point
+            phi = self.m2d.numeric_phi
             weight = self.integration_weight(d, integration_point, radius)
-            Lphi = self.model.stiffness_domain_operator(self.m2d.numeric_phi, integration_point)
+            # Lphi = self.model.stiffness_domain_operator(self.m2d.numeric_phi, integration_point)
+            Lphi = self.equation.stiffness_domain(phi, integration_point)
             value = weight*Lphi
 
-            cache.set(key, value)
             return value
 
         def independent_element(integration_point):
-            key = "independent element %s %s" % (d, integration_point)
-            found, value = cache.get(key)
-            if found:
-                return value
-
             weight = self.integration_weight(d,integration_point,radius)
-            b = self.model.independent_domain_function(integration_point)
+            b = self.equation.independent_domain(integration_point)
             value = weight*b
 
-            cache.set(key, value)
             return value
 
         stiffness_element = self.integration(d, radius, stiffness_element)
@@ -56,8 +48,11 @@ class MeshlessMethod:
         return stiffness_element, b_element
 
     def boundary_append(self, i, d):
-        stiffness_element = self.model.stiffness_boundary_operator(self.m2d.numeric_phi, d)
-        b_element = self.model.independent_boundary_function(self.m2d.point)
+        self.m2d.point = d
+        phi = self.m2d.numeric_phi
+        # stiffness_element = self.model.stiffness_boundary_operator(self.m2d.numeric_phi, d)
+        stiffness_element = self.equation.stiffness_boundary(phi, d)
+        b_element = self.equation.independent_boundary(self.m2d.point)
 
         return stiffness_element, b_element
 
@@ -66,7 +61,8 @@ class MeshlessMethod:
         b = []
 
         for i, d in enumerate(self.data):
-            cache.reset()
+            self.m2d.i = i
+            # cache.reset()
 
             duration.duration.start("%d/%d" % (i, len(self.data)))
             self.m2d.point = d
@@ -93,7 +89,14 @@ class MeshlessMethod:
         print(self.stiffness.shape)
         print(self.b.shape)
         print(self.b.max(axis=0))
+        print("cond(stiffness)", np.linalg.cond(self.stiffness))
+        # return np.array([svd.solve(self.stiffness[i], self.b.astype(np.float)[i]) for i in range(self.stiffness.shape[0])])
         return la.inv(self.stiffness)@self.b.astype(np.float64)
+        # return sci.sparse.linalg.inv(self.stiffness)@self.b.astype(np.float64)
+        # size = 104
+        # return sci.sparse.linalg.lsmr(A=self.stiffness.reshape([size, size]),
+        #                               b=self.b.astype(np.float64).reshape([1, size]),
+        #                               show=True)[0]
 
     @property
     def boundary_data(self):
@@ -134,9 +137,9 @@ class MeshlessMethod:
             xs, ys = self.data[point_index][0]+r*np.cos(angles), self.data[point_index][1]+r*np.sin(angles)
             plt.plot(xs,ys)
 
-        # phis
-        points = np.array(self.data)
-        plt.scatter(points[:,0],points[:,1],s=[500*value for value in self.stiffness[point_index] ])
+        # # phis
+        # points = np.array(self.data)
+        # plt.scatter(points[:,0],points[:,1],s=[500*value for value in self.stiffness[point_index] ])
 
         # domain points
         inside_array = np.array(self.domain_data)
@@ -157,13 +160,13 @@ class MeshlessMethod:
 
 
         # matrix
-        norm = mpl.colors.Normalize(vmin=self.b.min(), vmax=self.b.max())
-        cmap = cm.hot
-        m = cm.ScalarMappable(norm=norm, cmap=cmap)
-        for index, point in enumerate(self.data):
-            plt.text(point[0], point[1], str(self.b[index])+"\n")
+       # norm = mpl.colors.Normalize(vmin=self.b.min(), vmax=self.b.max())
+       # cmap = cm.hot
+       # m = cm.ScalarMappable(norm=norm, cmap=cmap)
+       # for index, point in enumerate(self.data):
+       #     plt.text(point[0], point[1], str(self.b[index])+"\n")
 
         # default point
-        plt.scatter(points[point_index][0], points[point_index][1])
+        # plt.scatter(points[point_index][0], points[point_index][1])
 
 

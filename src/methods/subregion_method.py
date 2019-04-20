@@ -6,6 +6,7 @@ import numpy as np
 class SubregionMethod(MeshlessMethod):
     def __init__(self, basis, model):
         MeshlessMethod.__init__(self, basis, model)
+        self.name = "Subregião"
 
     def integration(self, point, radius, f):
         return np.array(gq.polar_gauss_integral(point, radius, lambda p: f(p)))

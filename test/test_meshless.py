@@ -1,29 +1,153 @@
 import unittest
 
-from src.basis import *
+from src.helpers.basis import *
 from src.methods.collocation_method import CollocationMethod
 from src.methods.galerkin_method import GalerkinMethod
 from src.methods.petrov_galerkin_method import PetrovGalerkinMethod
 from src.methods.subregion_method import SubregionMethod
-import os
 import src.helpers.numeric as num
 import numpy as np
 import sympy as sp
+from src.models.simply_supported_beam import SimplySupportedBeamModel
+from src.models.simply_supported_elastic import SimplySupportedElasticModel
 from src.geometry.regions.rectangle import Rectangle
-from src.geometry.regions.circle import Circle
 import mpmath as mp
 from src.models.potential_model import PotentialModel
+from src.models.crimped_beam import CrimpedBeamModel
+from src.models.cantilever_beam import CantileverBeamModel
 from src.models.plane_stress_elastic_model import PlaneStressElasticModel
-from src.models.plane_strain_elastic_model import PlaneStrainElasticModel
-from src.models.rectangular_viscoelastic_model import PlaneStressViscoelasticModel
-from src.models.circular_viscoelastic_model import PlaneStrainViscoelasticModel
+from src.models.rectangular_viscoelastic_model import ViscoelasticModel
 from matplotlib import pyplot as plt
-import time
+import random
+plt.style.use('bmh')
+csfont = {'fontname':'Times New Roman'}
+plt.rcParams["font.family"] = "Times New Roman"
+
+def elastic_region_example(dx, dy):
+    return Rectangle(
+        x1=0,
+        y1=-15,
+        x2=60,
+        y2=15,
+        dx=dx,
+        dy=dy,
+        conditions={
+            "right": ["DIRICHLET", "NEUMANN"],
+            "bottom": ["NEUMANN", "NEUMANN"],
+            "left": ["DIRICHLET", "NEUMANN"],
+            "": ["DIRICHLET", "NEUMANN"]
+        })
+
+
+def simply_supported_elastic_region_example(dx, dy):
+    return Rectangle(
+        x1=-24,
+        y1=-6,
+        x2=24,
+        y2=6,
+        dx=dx,
+        dy=dy,
+        parametric_partition={
+            0.01: ["DIRICHLET", "DIRICHLET"],
+            0.99: ["NEUMANN", "NEUMANN"],
+            1.01: ["NEUMANN", "DIRICHLET"],
+            3.99: ["NEUMANN", "NEUMANN"],
+            4.01: ["DIRICHLET", "DIRICHLET"]
+            # 5.01: ["DIRICHLET", "DIRICHLET"]
+        })
+
+
+def simply_supported_beam_region_example(dx, dy):
+    return Rectangle(
+        x1=-24,
+        y1=-6,
+        x2=24,
+        y2=6,
+        dx=dx,
+        dy=dy,
+        parametric_partition={
+            0.01: ["DIRICHLET", "DIRICHLET"],
+            0.99: ["NEUMANN", "NEUMANN"],
+            1.01: ["NEUMANN", "DIRICHLET"],
+            3.99: ["NEUMANN", "NEUMANN"],
+            4.01: ["DIRICHLET", "DIRICHLET"]
+            # 5.01: ["DIRICHLET", "DIRICHLET"]
+        })
+
+
+def cantilever_beam_region_example(dx, dy):
+    return Rectangle(
+        x1=0,
+        x2=48,
+        y1=-6,
+        y2=6,
+        dx=dx,
+        dy=dy,
+        parametric_partition={
+            0.01: ["DIRICHLET", "NEUMANN"],
+            2.99: ["NEUMANN", "NEUMANN"],
+            3.49: ["DIRICHLET", "NEUMANN"],
+            3.51: ["DIRICHLET", "DIRICHLET"],
+            4.01: ["DIRICHLET", "NEUMANN"]
+            # 5: ["DIRICHLET", "DIRICHLET"]
+        })
+
+
+def crimped_beam_region_example(dx, dy):
+    return Rectangle(
+        x1=0,
+        y1=-6,
+        x2=48,
+        y2=6,
+        dx=dx,
+        dy=dy,
+        parametric_partition={
+            0.01: ["DIRICHLET", "NEUMANN"],
+            2.99: ["NEUMANN", "NEUMANN"],
+            3.49: ["DIRICHLET", "NEUMANN"],
+            3.51: ["DIRICHLET", "DIRICHLET"],
+            4.01: ["DIRICHLET", "NEUMANN"]
+            # 5: ["DIRICHLET", "DIRICHLET"]
+        })
+
+
+def viscoelastic_region_example(dx, dy):
+    return Rectangle(
+        x1=0,
+        y1=0,
+        x2=2,
+        y2=2,
+        dx=dx,
+        dy=dy,
+        parametric_partition={
+            0.99: ["NEUMANN", "DIRICHLET"],
+            2.01: ["NEUMANN", "NEUMANN"],
+            2.99: ["NEUMANN", "DIRICHLET"],
+            5.00: ["DIRICHLET", "NEUMANN"],
+            # 5:    ["DIRICHLET", "DIRICHLET"]
+        })
+
+
+def potential_region_example(dx, dy):
+    return Rectangle(
+        x1=0,
+        y1=0,
+        x2=2,
+        y2=2,
+        dx=dx,
+        dy=dy,
+        parametric_partition={
+            1: ["DIRICHLET"],
+            2: ["NEUMANN"],
+            3: ["DIRICHLET"],
+            4: ["NEUMANN"],
+        })
+
 
 class TestMeshless(unittest.TestCase):
 
-    def template(self, method_class, model_class, region):
-        data = region.all_points
+    def rectangle_template(self, method_class, model_class, region):
+        data = region.cartesian
 
         model = model_class(region=region)
 
@@ -34,52 +158,56 @@ class TestMeshless(unittest.TestCase):
         result = method.solve()
         print("result", result.shape)
 
-        region.plot()
-        if model.coordinate_system == "polar":
-            plt.scatter(data[:, 0], data[:, 1])
-            x = data[:,0]
-            y = data[:,1]
-            norm = np.sqrt(x*x+y*y)
-            x_norm = x/norm
-            y_norm = y/norm
-            r = result.reshape(int(result.size/model.num_dimensions), model.num_dimensions)[:, 0]
-            plt.scatter(data[:, 0] + r*x_norm, data[:, 1] + y_norm*r)
-
-            for index, point in enumerate(data):
-                analytical_r = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)
-                x = point[0]
-                y = point[1]
-                norm = np.sqrt(x*x+y*y)
-                x_norm = x/norm
-                y_norm = y/norm
-                plt.plot(point[0] + analytical_r*x_norm, point[1] + y_norm*analytical_r, "r^")
-        elif model.coordinate_system == "rectangular":
-            plt.scatter(data[:, 0], data[:, 1], "s")
-            computed = result.reshape(int(result.size/2), 2)
-            plt.scatter((data+computed)[:,0], (data+computed)[:,1])
-
-            for index, point in enumerate(data):
-                analytical_x = num.Function(model.analytical[0], name="analytical u(%s)").eval(point)
-                analytical_y = num.Function(model.analytical[1], name="analytical v(%s)").eval(point)
-                plt.plot(point[0] + analytical_x, point[1] + analytical_y, "r^")
-        plt.show()
-
-
-        # test if system makes sense
-        print("stiffness", method.stiffness)
-        print("np.matmul(method.stiffness,np.transpose([corrects])) - method.b", np.matmul(method.stiffness, corrects) - method.b)
-
-        result = result.reshape(model.num_dimensions * len(data))
-
-        diff = corrects - result
-        print('diff', diff)
-
-        self.assertAlmostEqual(np.linalg.norm(diff) / len(corrects), 0, 3)
-
-    def visco_template(self, method_class, model_class, region):
         # region.plot()
+        # method.plot()
         # plt.show()
-        data = region.all_points
+        # plt.show()(block=False)
+        # for index, point in enumerate(data):
+        #     plt.clf()
+        #     method.plot(index)
+        #     plt.draw()
+        #     plt.pause(0.001)
+        #     time.sleep(5)
+
+        if model.analytical:
+            corrects = np.reshape([sp.lambdify((x, y), model.analytical, "numpy")(*point) for point in data],
+                                  (model.num_dimensions * len(data)))
+
+            # test if system makes sense
+            # print("stiffness", method.stiffness)
+            print("np.matmul(method.stiffness,np.transpose([corrects])) - method.b",
+                  np.matmul(method.stiffness, np.transpose([corrects])) - method.b)
+            # print("np.matmul(method.stiffness,np.transpose([corrects]))", np.matmul(method.stiffness,np.transpose([corrects])))
+            result = result.reshape(model.num_dimensions * len(data))
+            for point in data:
+                method.m2d.point = point
+                phi = method.m2d.numeric_phi
+                print('point: ', point)
+                print('stress: ', model.stress(phi, point, result))
+                print('analytical stress: ', model.analytical_stress(point))
+
+            diff = corrects - result
+            rel_error = abs(diff) / corrects
+            i = 0
+            ii = 1
+            for p in data:
+                print('point, result, correct, diff',
+                      [p, result[i], result[ii], corrects[i], corrects[ii], diff[i], diff[ii]])
+                if abs(corrects[i] - 10e-8) > 0:
+                    print('relative error x: ', rel_error[i])
+                if abs(corrects[ii] - 10e-8) > 0:
+                    print('relative error y: ', rel_error[ii])
+                    i = i + 2
+                    ii = ii + 2
+            print('rel error max: ', max(rel_error))
+            # print('relative error', rel_error)
+            # print('diff',diff)
+
+            # self.assertAlmostEqual(np.abs(diff).max(), 0, 3)
+            return np.abs(diff).max()
+
+    def visco_rectangle_template(self, method_class, model_class, region):
+        data = region.cartesian
 
         model = model_class(region=region)
 
@@ -99,112 +227,184 @@ class TestMeshless(unittest.TestCase):
             print(".", end="")
             return np.abs(model.s - t).argmin()
 
-        fts = np.array([
-            [mp.invertlaplace(lambda t: result[nearest_indices(t)][i][0], x, method='stehfest', degree=model.iterations)
-             for x in range(1, model.time + 1)]
-            for i in range(result.shape[1])], dtype=np.float64)
+        # fts = np.array([
+        #     [mp.invertlaplace(lambda t: result[nearest_indices(t)][i][0], x, method='stehfest', degree=model.iterations)
+        #      for x in range(1, model.time + 1)]
+        #     for i in range(result.shape[1])], dtype=np.float64)
 
+        fts = result[:,:,0]
         for point_index, point in enumerate(data):
-            analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[
-                           ::model.iterations].ravel()
-            analytical_y = num.Function(model.analytical[1], name="analytical uy(%s)").eval(point)[
-                           ::model.iterations].ravel()
-            calculated_x = fts[2 * point_index].ravel()
-            calculated_y = fts[2 * point_index + 1].ravel()
-            print('point',point)
-            print('calculated_x, point diff, analytical', [calculated_x, np.diff(calculated_x), analytical_x, ])
-            print('calculated_y', calculated_y)
+            calculated_x = fts[:, 2 * point_index]
+            calculated_y = fts[:, 2 * point_index + 1]
+            print(point)
 
-            plt.plot(point[0], point[1], "r^-")
-            plt.plot(point[0] + np.diff(calculated_x), point[1] + np.diff(calculated_y), "b^-")
-            plt.plot(point[0] + analytical_x, point[1] + analytical_y, "gs-")
+            plt.plot(point[0], point[1], "b^-")
+            plt.plot(point[0] + calculated_x, point[1] + calculated_y, ".", color="red", label=method.name)
+
+            if model.analytical:
+                analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[
+                               ::model.iterations].ravel()
+                analytical_y = num.Function(model.analytical[1], name="analytical uy(%s)").eval(point)[
+                               ::model.iterations].ravel()
+                plt.plot(point[0] + analytical_x, point[1] + analytical_y, color="indigo")
 
         region.plot()
+        method.plot()
         plt.show()
 
         for point_index, point in enumerate(data):
-            analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[
-                           ::model.iterations].ravel()
-            calculated_x = fts[2 * point_index].ravel()
+            calculated_x = fts[:,2 * point_index]
+
+            calculated_y = fts[:, 2 * point_index + 1]
+
+            if model.analytical:
+                analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[
+                               ::model.iterations].ravel()
+                analytical_y = num.Function(model.analytical[1], name="analytical uy(%s)").eval(point)[
+                               ::model.iterations].ravel()
             print(point)
-            t = np.arange(0.5, calculated_x.size - 1)
-            # plt.plot(t, 1.5*np.diff(np.diff(calculated_x))[0]+np.diff(calculated_x), "b^-")
-            plt.plot(calculated_x, "r^-")
-            # plt.plot(np.diff(calculated_x), "b^-")
-            plt.plot(analytical_x, "gs-")
+
+            print("x")
+            plt.plot(calculated_x, ".", color="red", label=method.name)
+            if model.analytical:
+                plt.plot(analytical_x, color="indigo", label="Analítica")
+            plt.legend()
+            plt.ylabel("Deslocamento (cm)")
+            plt.xlabel("Tempo (s)")
+            plt.title("Deslocamento $u$ para o ponto $%s$"%point)
             plt.show()
 
-    def test_collocation_potential_rectangular(self):
-        self.template(CollocationMethod, PotentialModel, Rectangle(model='potential'))
+            print("y")
+            plt.plot(calculated_y, ".", color="red", label=method.name)
+            if model.analytical:
+                plt.plot(analytical_y, color="indigo", label="Analítica")
+            plt.legend()
+            plt.ylabel("Deslocamento (cm)")
+            plt.xlabel("Tempo (s)")
+            plt.title("Deslocamento $v$ para o ponto $%s$"%point)
+            plt.show()
 
-    def test_collocation_potential_circular(self):
-        self.template(CollocationMethod, PotentialModel, Circle(model='potential'))
+    # __________Collocation Test______________
 
-    def test_collocation_elasticity_rectangular(self):
-        self.template(CollocationMethod, PlaneStressElasticModel, Rectangle(model='elastic'))
+    def test_collocation_potential(self):
+        self.rectangle_template(CollocationMethod, PotentialModel, potential_region_example(0.5, 0.5))
 
-    def test_collocation_elasticity_circular(self):
-        self.template(CollocationMethod, PlaneStrainElasticModel, Circle(model='elastic'))
+    def test_collocation_elasticity(self):
+        self.rectangle_template(CollocationMethod, PlaneStressElasticModel, elastic_region_example(30, 15))
 
-    def test_collocation_viscoelasticity_rectangular(self):
-        self.visco_template(CollocationMethod, PlaneStressViscoelasticModel, Rectangle(model='viscoelastic'))
+    def test_collocation_crimped_beam_elasticity(self):
+        steps = [
+            [6, 6],
+            [3, 3],
+            [2, 2],
+            [1.5, 1.5],
+            [6/5, 6/5],
+            [1, 1]
+        ]
+        diffs = []
+        for dx, dy in steps:
+            diff = self.rectangle_template(CollocationMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
+            diffs.append(diff)
 
-    def test_collocation_viscoelasticity_circular(self):
-        self.visco_template(CollocationMethod, PlaneStrainViscoelasticModel, Circle(model='viscoelastic'))
+            plt.plot(diffs)
+            plt.draw()
+            plt.pause(0.001)
+        plt.show()
 
-    def test_subregion_potential_rectangular(self):
-        self.template(SubregionMethod, PotentialModel, Rectangle(model='potential'))
+    def test_collocation_viscoelasticity(self):
+        self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example(1, 1))
 
-    def test_subregion_potential_circular(self):
-        self.template(SubregionMethod, PotentialModel, Circle(model='potential'))
+    def test_collocation_cantilever_beam(self):
+        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantilever_beam_region_example(1, 1))
 
-    def test_subregion_elasticity_rectangular(self):
-        self.template(SubregionMethod, PlaneStressElasticModel, Rectangle(model='elastic'))
+    def test_collocation_simply_supported_beam(self):
+        self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel,
+                                      simply_supported_beam_region_example(1, 1))
 
-    def test_subregion_elasticity_circular(self):
-        self.template(SubregionMethod, PlaneStrainElasticModel, Circle(model='elastic'))
+    # ______________Subregion Test_______________
 
-    def test_subregion_viscoelasticity_rectangular(self):
-        self.visco_template(SubregionMethod, PlaneStressViscoelasticModel, Rectangle(model='viscoelastic'))
+    def test_subregion_potential(self):
+        self.rectangle_template(SubregionMethod, PotentialModel, potential_region_example(1, 1))
 
-    def test_subregion_viscoelasticity_circular(self):
-        self.visco_template(SubregionMethod, PlaneStrainViscoelasticModel, Circle(model='viscoelastic'))
+    def test_subregion_elasticity(self):
+        self.rectangle_template(SubregionMethod, ElasticModel, elastic_region_example(1, 1))
 
-    def test_galerkin_potential_rectangular(self):
-        self.template(GalerkinMethod, PotentialModel, Rectangle(model='potential'))
+    def test_subregion_viscoelasticity(self):
+        self.visco_rectangle_template(SubregionMethod, ViscoelasticModel, viscoelastic_region_example(1, 1))
 
-    def test_galerkin_potential_circular(self):
-        self.template(GalerkinMethod, PotentialModel, Circle(model='potential'))
+    # _____________Element Free Galerkin Test_________________
 
-    def test_galerkin_elasticity_rectangular(self):
-        self.template(GalerkinMethod, PlaneStressElasticModel, Rectangle(model='elastic'))
+    def test_galerkin_potential(self):
+        self.rectangle_template(GalerkinMethod, PotentialModel, potential_region_example(1, 1))
 
-    def test_galerkin_elasticity_circular(self):
-        self.template(GalerkinMethod, PlaneStrainElasticModel, Circle(model='elastic'))
+    def test_galerkin_elasticity(self):
+        self.rectangle_template(GalerkinMethod, ElasticModel, elastic_region_example(1, 1))
 
-    def test_galerkin_viscoelasticity_rectangular(self):
-        self.visco_template(GalerkinMethod, PlaneStressViscoelasticModel, Rectangle(model='viscoelastic'))
+    def test_galerkin_crimped_beam_elasticity(self):
+        self.rectangle_template(GalerkinMethod, CrimpedBeamModel, crimped_beam_region_example(1, 1))
 
-    def test_galerkin_viscoelasticity_circular(self):
-        self.visco_template(GalerkinMethod, PlaneStrainViscoelasticModel, Circle(model='viscoelastic'))
+    def test_galerkin_viscoelasticity(self):
+        self.visco_rectangle_template(GalerkinMethod, ViscoelasticModel, viscoelastic_region_example(1, 1))
 
-    def test_petrov_galerkin_potential_rectangular(self):
-        self.template(PetrovGalerkinMethod, PotentialModel, Rectangle(model='potential'))
+    # __________________Petrov Galerkin Method____________________
 
-    def test_petrov_galerkin_potential_circular(self):
-        self.template(PetrovGalerkinMethod, PotentialModel, Circle(model='potential'))
+    def test_petrov_galerkin_potential(self):
+        self.rectangle_template(PetrovGalerkinMethod, PotentialModel, potential_region_example(5, 5))
 
-    def test_petrov_galerkin_elasticity_rectangular(self):
-        self.template(PetrovGalerkinMethod, PlaneStressElasticModel, Rectangle(model='elastic'))
+    def test_petrov_galerkin_elasticity(self):
+        self.rectangle_template(PetrovGalerkinMethod, ElasticModel, elastic_region_example(30, 15))
 
-    def test_petrov_galerkin_elasticity_circular(self):
-        self.template(PetrovGalerkinMethod, PlaneStrainElasticModel, Circle(model='elastic'))
+    def test_petrov_galerkin_crimped_beam_elasticity(self):
+        self.rectangle_template(PetrovGalerkinMethod, CrimpedBeamModel, crimped_beam_region_example(6, 6))
 
-    def test_petrov_galerkin_viscoelasticity_rectangular(self):
-        self.visco_template(PetrovGalerkinMethod, PlaneStressViscoelasticModel, Rectangle(model='viscoelastic'))
+    def test_petrov_galerkin_viscoelasticity(self):
+        self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticModel, viscoelastic_region_example(1, 1))
 
-    def test_petrov_galerkin_viscoelasticity_circular(self):
-        self.visco_template(PetrovGalerkinMethod, PlaneStrainViscoelasticModel, Circle(model='viscoelastic'))
+    def test_petrov_galerkin_cantiliever_beam(self):
+        self.visco_rectangle_template(PetrovGalerkinMethod, CantileverBeamModel, cantilever_beam_region_example(6, 6))
+
+    def test_petrov_galerkin_simply_supported_beam(self):
+        self.visco_rectangle_template(PetrovGalerkinMethod, SimplySupportedBeamModel,
+                                      simply_supported_beam_region_example(1, 1))
+
+    def test_petrov_galerkin_simply_supported_elasticity(self):
+        steps = [
+            [6, 6],
+            # [3, 3],
+            [2, 2],
+            # [1.5, 1.5],
+            # [6/5, 6/5],
+            # [1, 1]
+        ]
+        diffs = []
+        for dx, dy in steps:
+            diff = self.rectangle_template(PetrovGalerkinMethod, SimplySupportedElasticModel,
+                                           simply_supported_elastic_region_example(dx, dy))
+            diffs.append(diff)
+
+            plt.plot(diffs)
+            plt.draw()
+            plt.pause(0.001)
+        plt.show()
+
+    def test_petrov_galerkin_crimped_beam_elasticity(self):
+        steps = [
+            [6, 6],
+            # [3, 3],
+            [2, 2],
+            # [1.5, 1.5],
+            # [6/5, 6/5],
+            # [1, 1]
+        ]
+        diffs = []
+        for dx, dy in steps:
+            diff = self.rectangle_template(PetrovGalerkinMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
+            diffs.append(diff)
+
+            plt.plot(diffs)
+            plt.draw()
+            plt.pause(0.001)
+        plt.show()
 
 
 if __name__ == '__main__':

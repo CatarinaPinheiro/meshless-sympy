@@ -3,9 +3,11 @@ import numpy as np
 import sympy as sp
 
 
-class PlaneStressViscoelasticModel(PlaneStressElasticModel):
-    def __init__(self, region, time=40, iterations=10):
+class ViscoelasticModel(PlaneStressElasticModel):
+    def __init__(self, region, time=50, iterations=1):
         PlaneStressElasticModel.__init__(self, region)
+
+        self.material_type = "VISCOELASTIC"
 
         self.iterations = iterations
         self.time = time
@@ -17,19 +19,19 @@ class PlaneStressViscoelasticModel(PlaneStressElasticModel):
         p = self.p = 2e6
         F = 8e9
         G = 1.92e9
-        K = 4.17e9
-        E1 = 9*K*G/(3*K+G)
+        self.K = K = 4.17e9
+
+        E1 = 9 * K * G / (3 * K + G)
         E2 = E1
 
-        p1 = F/E1
-        p0 = 1+E2/E1
-        q0 = E2
-        q1 = F
+        self.p1 = p1 = F/(E1+E2)
+        self.q0 = q0 = E1*E2/(E1+E2)
+        self.q1 = q1 = F*E1/(E1+E2)
 
         L1 = q0 + q1*s
         L2 = 3*K
 
-        P1 = p0 + p1*s
+        P1 = 1/s + p1
         P2 = ones
 
         E = self.E = 3*L1*L2/(2*P1*L2 + L1*P2)
@@ -53,22 +55,12 @@ class PlaneStressViscoelasticModel(PlaneStressElasticModel):
         self.analytical = [sp.Matrix([ux(tt) for tt in t]), sp.Matrix(np.zeros([self.time * self.iterations]))]
         # self.analytical = [sp.Matrix(np.zeros([self.time * self.iterations,1])), sp.Matrix(np.zeros([self.time * self.iterations,1]))]
 
-    def petrov_galerkin_independent_boundary(self, w, integration_point):
-        if integration_point[0] > 1.99:
-            print('Integration ', w.eval(integration_point)*np.array([self.p/self.s, np.zeros(self.s.shape)]))
-            return -w.eval(integration_point)*np.array([self.p/self.s, np.zeros(self.s.shape)])
-        else:
-            return np.zeros([2,self.time*self.iterations])
-
-    def petrov_galerkin_independent_domain(self, w, integration_point):
-        return np.zeros([2, self.time*self.iterations])
-
     def independent_domain_function(self, point):
-        return np.zeros([2,self.time*self.iterations])
+        return np.array([0, 0])
 
     def independent_boundary_function(self, point):
-        if point[0] > 2 - 1e-3 and point[1] > 0:
-            return np.array([self.p/self.s, np.zeros(self.s.shape)])
+        if point[0] > self.region.x2 - 1e-3:
+            return np.array([self.p, 0])
         else:
-            return np.zeros([2,self.time*self.iterations])
+            return np.array([0, 0])
 

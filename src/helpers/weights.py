@@ -4,21 +4,26 @@ import src.helpers.numeric as num
 
 
 class WeightFunction:
-    def numeric(self, extra={}):
-        return num.Function(self.sympy(),extra)
+    def numeric(self, xj, yj, r):
+        return num.RadialFunction(self.sympy(), xj, yj, r, name="weight function")
 
 
 class GaussianWithRadius(WeightFunction):
-    def sympy(self):
-        x, y, xj, yj, r = sp.var("x y xj yj r")
-        c = 100
-        exp1 = sp.exp(-(((x - xj) ** 2 + (y - yj) ** 2) / c ** 2))
+    def __init__(self):
+        x, y, r = sp.var("x y r")
+        c = r/3
+        exp1 = sp.exp(-((x ** 2 + y ** 2) / c ** 2))
         exp2 = sp.exp(-((r / c) ** 2))
         weight = (exp1 - exp2) / (1 - exp2)
-        return weight
+        self.cached_sympy = weight
+
+    def sympy(self):
+        return self.cached_sympy
+
+        #return weight
 
     def numpy(self, x, y, r):
-        c = 100
+        c = r/3
         exp1 = np.exp(-((x ** 2 + y ** 2) / c ** 2))
         exp2 = np.exp(-((r / c) ** 2))
         weight = (exp1 - exp2) / (1 - exp2)
@@ -26,10 +31,13 @@ class GaussianWithRadius(WeightFunction):
 
 
 class Spline(WeightFunction):
+    def __init__(self):
+        x, y, r = sp.var("x y r")
+        di = sp.sqrt(x**2 + y**2)
+        self.cached_sympy = 1 - 6*((di/r)**2) + 8*((di/r)**3) - 3*((di/r)**4)
+
     def sympy(self):
-        x, y, xj, yj, r = sp.var("x y xj yj r")
-        di = sp.sqrt((x-xj)**2 + (y-yj)**2)
-        return 1 - 6*((di/r)**2) + 8*((di/r)**3) - 3*((di/r)**4)
+        return self.cached_sympy
 
     def numpy(self, x, y,r):
         di = np.sqrt(x**2 + y**2)
@@ -38,8 +46,8 @@ class Spline(WeightFunction):
 
 class Cossine(WeightFunction):
     def sympy(self):
-        x, y, xj, yj, r = sp.var("x y xj yj r")
-        d2 = (x-xj)**2 + (y-yj)**2
+        x, y, r = sp.var("x y r")
+        d2 = x**2 + y**2
         return sp.cos(0.5*sp.pi*d2/r**2)*0.5+0.5
 
     def numpy(self, dx, dy,r):
@@ -48,8 +56,8 @@ class Cossine(WeightFunction):
 
 class Parabola(WeightFunction):
     def sympy(self):
-        x, y, xj, yj, r = sp.var("x y xj yj r")
-        d2 = (x-xj)**2 + (y-yj)**2
+        x, y, r = sp.var("x y r")
+        d2 = x**2 + y**2
         return -(sp.sqrt(d2) - r)**2
 
     def numpy(self, dx, dy,r):
