@@ -16,6 +16,7 @@ from src.models.potential_model import PotentialModel
 from src.models.crimped_beam import CrimpedBeamModel
 from src.models.cantilever_beam import CantileverBeamModel
 from src.models.elastic_model import ElasticModel
+from src.models.viscoelastic_relaxation import ViscoelasticRelaxationModel
 from src.models.viscoelastic_model import ViscoelasticModel
 from matplotlib import pyplot as plt
 import random
@@ -124,6 +125,22 @@ def viscoelastic_region_example(dx, dy):
         parametric_partition={
             0.99: ["NEUMANN", "DIRICHLET"],
             2.01: ["NEUMANN", "NEUMANN"],
+            2.99: ["NEUMANN", "DIRICHLET"],
+            5.00: ["DIRICHLET", "NEUMANN"],
+            # 5:    ["DIRICHLET", "DIRICHLET"]
+        })
+
+def viscoelastic_relaxation_region_example(dx, dy):
+    return Rectangle(
+        x1=0,
+        y1=0,
+        x2=2,
+        y2=2,
+        dx=dx,
+        dy=dy,
+        parametric_partition={
+            0.99: ["NEUMANN", "DIRICHLET"],
+            2.01: ["DIRICHLET", "NEUMANN"],
             2.99: ["NEUMANN", "DIRICHLET"],
             5.00: ["DIRICHLET", "NEUMANN"],
             # 5:    ["DIRICHLET", "DIRICHLET"]
@@ -316,6 +333,9 @@ class TestMeshless(unittest.TestCase):
     def test_collocation_viscoelasticity(self):
         self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example(1, 1))
 
+    def test_collocation_viscoelastic_relaxation(self):
+        self.visco_rectangle_template(CollocationMethod, ViscoelasticRelaxationModel, viscoelastic_relaxation_region_example(1, 1))
+
     def test_collocation_cantilever_beam(self):
         self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantilever_beam_region_example(1, 1))
 
@@ -361,6 +381,9 @@ class TestMeshless(unittest.TestCase):
 
     def test_petrov_galerkin_viscoelasticity(self):
         self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticModel, viscoelastic_region_example(1, 1))
+
+    def test_petrov_galerkin_viscoelastic_relaxation(self):
+        self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticRelaxationModel, viscoelastic_relaxation_region_example(1, 1))
 
     def test_petrov_galerkin_cantiliever_beam(self):
         self.visco_rectangle_template(PetrovGalerkinMethod, CantileverBeamModel, cantilever_beam_region_example(6, 6))
