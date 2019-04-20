@@ -19,7 +19,9 @@ from src.models.elastic_model import ElasticModel
 from src.models.viscoelastic_model import ViscoelasticModel
 from matplotlib import pyplot as plt
 import random
-
+plt.style.use('bmh')
+csfont = {'fontname':'Times New Roman'}
+plt.rcParams["font.family"] = "Times New Roman"
 
 def elastic_region_example(dx, dy):
     return Rectangle(
@@ -239,14 +241,14 @@ class TestMeshless(unittest.TestCase):
             print(point)
 
             plt.plot(point[0], point[1], "b^-")
-            plt.plot(point[0] + calculated_x, point[1] + calculated_y, "r^")
+            plt.plot(point[0] + calculated_x, point[1] + calculated_y, ".", color="red")
 
             if model.analytical:
                 analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[
                                ::model.iterations].ravel()
                 analytical_y = num.Function(model.analytical[1], name="analytical uy(%s)").eval(point)[
                                ::model.iterations].ravel()
-                plt.plot(point[0] + analytical_x, point[1] + analytical_y, "g-")
+                plt.plot(point[0] + analytical_x, point[1] + analytical_y, color="indigo")
 
         region.plot()
         method.plot()
@@ -265,15 +267,23 @@ class TestMeshless(unittest.TestCase):
             print(point)
 
             print("x")
-            plt.plot(calculated_x, "r^")
+            plt.plot(calculated_x, ".", color="red", label="Colocação")
             if model.analytical:
-                plt.plot(analytical_x, "g-")
+                plt.plot(analytical_x, color="indigo", label="Analítica")
+            plt.legend()
+            plt.ylabel("Deslocamento (cm)")
+            plt.xlabel("Tempo (s)")
+            plt.title("Deslocamento $u$ para o ponto $%s$"%point)
             plt.show()
 
             print("y")
-            plt.plot(calculated_y, "r^")
+            plt.plot(calculated_y, ".", color="red", label="Colocação")
             if model.analytical:
-                plt.plot(analytical_y, "g-")
+                plt.plot(analytical_y, color="indigo", label="Analítica")
+            plt.legend()
+            plt.ylabel("Deslocamento (cm)")
+            plt.xlabel("Tempo (s)")
+            plt.title("Deslocamento $v$ para o ponto $%s$"%point)
             plt.show()
 
     # __________Collocation Test______________
