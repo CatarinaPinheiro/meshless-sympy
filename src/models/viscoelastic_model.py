@@ -4,7 +4,7 @@ import sympy as sp
 
 
 class ViscoelasticModel(ElasticModel):
-    def __init__(self, region, time=10, iterations=10):
+    def __init__(self, region, time=50, iterations=1):
         ElasticModel.__init__(self, region)
 
         self.iterations = iterations
@@ -17,20 +17,19 @@ class ViscoelasticModel(ElasticModel):
         p = self.p = 2e6
         F = 8e9
         G = 1.92e9
-        K = 4.17e9
+        self.K = K = 4.17e9
 
         E1 = 9 * K * G / (3 * K + G)
         E2 = E1
 
-        p1 = F/E1
-        p0 = 1+E2/E1
-        q0 = E2
-        q1 = F
+        self.p1 = p1 = F/(E1+E2)
+        self.q0 = q0 = E1*E2/(E1+E2)
+        self.q1 = q1 = F*E1/(E1+E2)
 
         L1 = q0 + q1*s
         L2 = 3*K
 
-        P1 = p0 + p1*s
+        P1 = 1/s + p1
         P2 = ones
 
         E = self.E = 3*L1*L2/(2*P1*L2 + L1*P2)
@@ -64,11 +63,11 @@ class ViscoelasticModel(ElasticModel):
         return np.zeros([2,self.time*self.iterations])
 
     def independent_domain_function(self, point):
-        return np.zeros([2,self.time*self.iterations])
+        return np.array([0, 0])
 
     def independent_boundary_function(self, point):
         if point[0] > self.region.x2 - 1e-3:
-            return np.array([self.p/self.s, np.zeros(self.s.shape)])
+            return np.array([self.p, 0])
         else:
-            return np.zeros([2,self.time*self.iterations])
+            return np.array([0, 0])
 

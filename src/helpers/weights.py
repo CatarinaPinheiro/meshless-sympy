@@ -31,10 +31,13 @@ class GaussianWithRadius(WeightFunction):
 
 
 class Spline(WeightFunction):
-    def sympy(self):
+    def __init__(self):
         x, y, r = sp.var("x y r")
         di = sp.sqrt(x**2 + y**2)
-        return 1 - 6*((di/r)**2) + 8*((di/r)**3) - 3*((di/r)**4)
+        self.cached_sympy = 1 - 6*((di/r)**2) + 8*((di/r)**3) - 3*((di/r)**4)
+
+    def sympy(self):
+        return self.cached_sympy
 
     def numpy(self, x, y,r):
         di = np.sqrt(x**2 + y**2)

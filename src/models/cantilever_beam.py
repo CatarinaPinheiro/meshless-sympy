@@ -5,7 +5,7 @@ from src.helpers.cache import cache
 import sympy as sp
 
 
-class CantileverBeamModel(ElasticModel):
+class CantileverBeamModel:
     def __init__(self, region, time=10, iterations=10):
         ElasticModel.__init__(self, region)
 
@@ -20,7 +20,7 @@ class CantileverBeamModel(ElasticModel):
         p = self.p = -1e3
         F = 35e5
         G = 8.75e5
-        K = 11.67e5
+        self.K = K = 11.67e5
 
         E1 = 9 * K * G / (3 * K + G)
         E2 = E1
@@ -136,16 +136,15 @@ class CantileverBeamModel(ElasticModel):
         return np.zeros([2, self.time * self.iterations])
 
     def independent_domain_function(self, point):
-        return np.zeros([2, self.time * self.iterations])
+        return np.array([0, 0])
 
     def independent_boundary_function(self, point):
         if point[0] > self.region.x2 - 1e-3:
             h = self.h
             p = self.p
-            s = self.s
             I = self.I
             y = point[1]
             # return np.array([np.zeros(s.shape), (p/(2*I))*(h**2/4 - y**2)/s])
-            return np.array([np.zeros(s.shape), p * s * (h ** 2 / 4 - y ** 2) / (2 * I * s)])
+            return np.array([0, p * (h ** 2 / 4 - y ** 2) / (2 * I )])
         else:
-            return np.zeros([2, self.time * self.iterations])
+            return np.array([0, 0])

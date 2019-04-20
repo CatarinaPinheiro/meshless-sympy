@@ -68,7 +68,7 @@ def simply_supported_beam_region_example(dx, dy):
         dx=dx,
         dy=dy,
         parametric_partition={
-            1.01: ["NEUMANN", "NEUMANN"],
+            1.01: ["DIRICHLET", "DIRICHLET"],
             1.99: ["NEUMANN", "NEUMANN"],
             2.99: ["NEUMANN", "NEUMANN"],
             3.01: ["DIRICHLET", "DIRICHLET"],
@@ -122,10 +122,10 @@ def viscoelastic_region_example(dx, dy):
         dx=dx,
         dy=dy,
         parametric_partition={
-            1.01: ["NEUMANN", "DIRICHLET"],
-            1.99: ["NEUMANN", "NEUMANN"],
+            0.99: ["NEUMANN", "DIRICHLET"],
+            2.01: ["NEUMANN", "NEUMANN"],
             2.99: ["NEUMANN", "DIRICHLET"],
-            5: ["DIRICHLET", "DIRICHLET"],
+            5.00: ["DIRICHLET", "NEUMANN"],
             # 5:    ["DIRICHLET", "DIRICHLET"]
         })
 
@@ -229,37 +229,35 @@ class TestMeshless(unittest.TestCase):
             print(".", end="")
             return np.abs(model.s - t).argmin()
 
-        fts = np.array([
-            [mp.invertlaplace(lambda t: result[nearest_indices(t)][i][0], x, method='stehfest', degree=model.iterations)
-             for x in range(1, model.time + 1)]
-            for i in range(result.shape[1])], dtype=np.float64)
+        # fts = np.array([
+        #     [mp.invertlaplace(lambda t: result[nearest_indices(t)][i][0], x, method='stehfest', degree=model.iterations)
+        #      for x in range(1, model.time + 1)]
+        #     for i in range(result.shape[1])], dtype=np.float64)
 
+        fts = result[:,:,0]
         for point_index, point in enumerate(data):
-            calculated_x = fts[2 * point_index].ravel()
-            calculated_y = fts[2 * point_index + 1].ravel()
+            calculated_x = fts[:, 2 * point_index]
+            calculated_y = fts[:, 2 * point_index + 1]
             print(point)
 
             plt.plot(point[0], point[1], "b^-")
-            plt.plot(point[0] + calculated_x, point[1] + calculated_y, "r^-")
+            plt.plot(point[0] + calculated_x, point[1] + calculated_y, "r^")
 
             if model.analytical:
                 analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[
                                ::model.iterations].ravel()
                 analytical_y = num.Function(model.analytical[1], name="analytical uy(%s)").eval(point)[
                                ::model.iterations].ravel()
-                plt.plot(point[0] + analytical_x, point[1] + analytical_y, "gs-")
+                plt.plot(point[0] + analytical_x, point[1] + analytical_y, "g-")
 
         region.plot()
         method.plot()
         plt.show()
 
-        for t in range(model.time):
-            print(fts[t])
-
         for point_index, point in enumerate(data):
-            calculated_x = fts[2 * point_index].ravel()
+            calculated_x = fts[:,2 * point_index]
 
-            calculated_y = fts[2 * point_index + 1].ravel()
+            calculated_y = fts[:, 2 * point_index + 1]
 
             if model.analytical:
                 analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[
@@ -269,15 +267,15 @@ class TestMeshless(unittest.TestCase):
             print(point)
 
             print("x")
-            plt.plot(calculated_x, "r^-")
+            plt.plot(calculated_x, "r^")
             if model.analytical:
-                plt.plot(analytical_x, "gs-")
+                plt.plot(analytical_x, "g-")
             plt.show()
 
             print("y")
-            plt.plot(calculated_y, "r^-")
+            plt.plot(calculated_y, "r^")
             if model.analytical:
-                plt.plot(analytical_y, "gs-")
+                plt.plot(analytical_y, "g-")
             plt.show()
 
     # __________Collocation Test______________
@@ -308,14 +306,14 @@ class TestMeshless(unittest.TestCase):
         plt.show()
 
     def test_collocation_viscoelasticity(self):
-        self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example(0.5, 0.5))
+        self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example(0.4, 0.4))
 
     def test_collocation_cantilever_beam(self):
-        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantilever_beam_region_example(2, 2))
+        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantilever_beam_region_example(1, 1))
 
     def test_collocation_simply_supported_beam(self):
         self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel,
-                                      simply_supported_beam_region_example(5, 5))
+                                      simply_supported_beam_region_example(2.5, 2.5))
 
     # ______________Subregion Test_______________
 

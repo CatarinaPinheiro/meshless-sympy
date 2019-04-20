@@ -17,14 +17,14 @@ class SimplySupportedBeamModel(ElasticModel):
         q = self.p = -2e6
         F = 8e9
         G = 1.92e9
-        K = 4.17e9
+        self.K = K = 4.17e9
 
         E1 = 9 * K * G / (3 * K + G)
         E2 = E1
 
-        p1 = F/(E1+E2)
-        q0 = E2*E1/(E1+E2)
-        q1 = F*E1/(E1+E2)
+        self.p1 = p1 = F/(E1+E2)
+        self.q0 = q0 = E2*E1/(E1+E2)
+        self.q1 = q1 = F*E1/(E1+E2)
 
         L1 = q0 + q1*s
         L2 = 3*K

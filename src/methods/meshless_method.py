@@ -4,20 +4,18 @@ from numpy import linalg as la
 import src.methods.mls2d as mls
 import numpy as np
 from src.helpers.cache import cache
-import src.helpers.svd as svd
-import scipy as sci
-from src.helpers.functions import unique_rows
 import src.helpers.duration as duration
 from src.helpers.list import element_inside_list
 from src.helpers.weights import GaussianWithRadius as Weight
-from matplotlib import pyplot as plt, cm
-import matplotlib as mpl
+from src.equation.cheng_equation import ChengEquation
+from matplotlib import pyplot as plt
 
 
 class MeshlessMethod:
     def __init__(self, basis, model, weight_function=Weight()):
         self.basis = basis
         self.model = model
+        self.equation = ChengEquation(model)
         self.weight_function = weight_function
         self.m2d = mls.MovingLeastSquares2D(self.data, self.basis, self.weight_function)
         self.support_radius = {}
@@ -29,15 +27,17 @@ class MeshlessMethod:
 
         def stiffness_element(integration_point):
             self.m2d.point = integration_point
+            phi = self.m2d.numeric_phi
             weight = self.integration_weight(d, integration_point, radius)
-            Lphi = self.model.stiffness_domain_operator(self.m2d.numeric_phi, integration_point)
+            # Lphi = self.model.stiffness_domain_operator(self.m2d.numeric_phi, integration_point)
+            Lphi = self.equation.stiffness_domain(phi, integration_point)
             value = weight*Lphi
 
             return value
 
         def independent_element(integration_point):
             weight = self.integration_weight(d,integration_point,radius)
-            b = self.model.independent_domain_function(integration_point)
+            b = self.equation.independent_domain(integration_point)
             value = weight*b
 
             return value
@@ -49,8 +49,10 @@ class MeshlessMethod:
 
     def boundary_append(self, i, d):
         self.m2d.point = d
-        stiffness_element = self.model.stiffness_boundary_operator(self.m2d.numeric_phi, d)
-        b_element = self.model.independent_boundary_function(self.m2d.point)
+        phi = self.m2d.numeric_phi
+        # stiffness_element = self.model.stiffness_boundary_operator(self.m2d.numeric_phi, d)
+        stiffness_element = self.equation.stiffness_boundary(phi, d)
+        b_element = self.equation.independent_boundary(self.m2d.point)
 
         return stiffness_element, b_element
 

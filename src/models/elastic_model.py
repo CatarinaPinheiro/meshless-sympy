@@ -117,18 +117,19 @@ class ElasticModel(Model):
         space_points = phix.shape[1]
         time_points = self.D.shape[2]
 
-        Lt = np.array([[phix, zero],
-                       [zero, phiy],
-                       [phiy, phix]]). \
+        D = self.D.repeat(space_points, axis=2). \
+            reshape(3, 3, time_points, space_points). \
+            swapaxes(0, 3).swapaxes(1, 2)
+
+        Ltphi = np.array([[phix, zero],
+                          [zero, phiy],
+                          [phiy, phix]]). \
             reshape([3, 2, space_points]). \
             repeat(time_points, axis=2). \
             reshape([3, 2, space_points, time_points]). \
             swapaxes(0, 2).swapaxes(1, 3)
 
-        D = self.D.repeat(space_points, axis=2). \
-            reshape(3, 3, time_points, space_points). \
-            swapaxes(0, 3).swapaxes(1, 2)
-        neumann_case = (N @ D @ Lt).swapaxes(0, 1). \
+        neumann_case = (N @ D @ Ltphi).swapaxes(0, 1). \
             swapaxes(0, 3).swapaxes(0, 2). \
             reshape([2, 2 * space_points, time_points])
 
