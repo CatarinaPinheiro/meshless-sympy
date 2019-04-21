@@ -53,7 +53,7 @@ class ViscoelasticRelaxationModel(ElasticModel):
             exp5 = np.exp(-t*(3*K + 2*self.q0)/(3*K*self.p1 + 2*self.q1))
             return exp1*(exp2 - exp3 + exp4*exp5)
 
-        self.relaxation_analytical = [sp.Matrix([sx(tt) for tt in t]), sp.Matrix([sy(tt) for tt in t])]
+        self.relaxation_analytical = [sx, sy, lambda t: 0*t]
         # self.analytical = [sp.Matrix(np.zeros([self.time * self.iterations,1])), sp.Matrix(np.zeros([self.time * self.iterations,1]))]
 
     def independent_domain_function(self, point):
