@@ -231,7 +231,8 @@ class TestMeshless(unittest.TestCase):
             phi = method.m2d.numeric_phi
             stress = method.equation.stress(phi, point, result)
             for index, component_name in enumerate(["$\\sigma_x$", "$\\sigma_y$", "$\\tau_{xy}$"]):
-                plt.plot(method.equation.time, stress[index], label=component_name)
+                plt.plot(method.equation.time, stress[index], label='%s %s'%(method.name, component_name))
+                plt.plot(method.equation.time, model.relaxation_analytical[index](method.equation.time), label='Analítica %s' %component_name)
                 plt.legend()
                 plt.show()
 

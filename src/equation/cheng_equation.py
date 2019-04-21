@@ -44,7 +44,7 @@ class ChengEquation:
 
         K = self.model.K
         M1 = 3 * K
-        M2 = 1 / f(self.time)
+        M2 = 1/f(self.time)
         beta1 = (3 * K * f(self.time) + 1) / (3 * K * f(self.time) + 2)
         beta2 = 1 / (3 * K * f(self.time) + 2)
         C = beta2
@@ -154,7 +154,7 @@ class ChengEquation:
                              -beta2*ux + beta1*vy,
                               half*(uy + vx)])
 
-            return Ltu1 + Ltu2
+            return M1*Ltu1 + M2*Ltu2
 
     def independent_domain(self, point):
         return self.model.independent_domain_function(point).reshape([2, 1]).repeat(self.time.size, 1)
