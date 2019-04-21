@@ -1,4 +1,5 @@
 .idea
+*.xlsx
 *__pycache__*
 venv
 .vscode

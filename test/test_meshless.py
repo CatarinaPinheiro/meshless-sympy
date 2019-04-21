@@ -8,6 +8,8 @@ from src.methods.subregion_method import SubregionMethod
 import src.helpers.numeric as num
 import numpy as np
 import sympy as sp
+import pandas as pd
+import datetime
 from src.models.simply_supported_beam import SimplySupportedBeamModel
 from src.models.simply_supported_elastic import SimplySupportedElasticModel
 from src.geometry.regions.rectangle import Rectangle
@@ -468,7 +470,19 @@ class TestMeshless(unittest.TestCase):
         galerkin_diff = []
         petrov_galerkin_diff = []
 
+
+
         def plot():
+            df = pd.DataFrame.from_dict({
+                "dx": pd.Series(np.array(steps)[:, 0]),
+                "dy": pd.Series(np.array(steps)[:, 1]),
+                CollocationMethod.name:    pd.Series(collocation_diff),
+                SubregionMethod.name:      pd.Series(subregion_diff),
+                GalerkinMethod.name:       pd.Series(galerkin_diff),
+                PetrovGalerkinMethod.name: pd.Series(petrov_galerkin_diff)
+            })
+            df.to_excel("%s.xlsx"%datetime.datetime.utcnow())
+
             plt.clf()
             plt.plot(collocation_diff, label=CollocationMethod.name, marker=".")
             plt.plot(subregion_diff, label=SubregionMethod.name, marker=".")
@@ -477,11 +491,10 @@ class TestMeshless(unittest.TestCase):
             plt.legend()
             plt.draw()
             plt.pause(0.001)
-
         for dx, dy in steps:
             diff = self.rectangle_template(CollocationMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
             collocation_diff.append(diff)
-
+            plot()
             diff = self.rectangle_template(SubregionMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
             subregion_diff.append(diff)
             plot()
@@ -491,6 +504,7 @@ class TestMeshless(unittest.TestCase):
             diff = self.rectangle_template(PetrovGalerkinMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
             petrov_galerkin_diff.append(diff)
             plot()
+            print(pd)
         plt.show()
 
 
