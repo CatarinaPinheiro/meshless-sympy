@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class ChengEquation:
@@ -22,18 +23,28 @@ class ChengEquation:
 
     def viscoelastic_params(self):
         self.time = np.linspace(1, 40)
-        def J1(t):
-            q0 = self.model.q0
-            q1 = self.model.q1
-            p1 = self.model.p1
+        q0 = self.model.q0
+        q1 = self.model.q1
+        p1 = self.model.p1
 
+        def creep(t):
             return (p1/q1)*np.exp(-q0*t/q1)+(1/q0)*(1-np.exp(-q0*t/q1))
+
+        def relaxation(t):
+            return (q1/p1)*np.exp(-t/p1)+q0*(1-np.exp(-t/p1))
+
+        if self.model.viscoelastic_phase == "RELAXATION":
+            f = relaxation
+        elif self.model.viscoelastic_phase == "CREEP":
+            f = creep
+        else:
+            raise Exception("Invalid viscoelastic phase: %s"%self.model.viscoelastic_phase)
 
         K = self.model.K
         M1 = 3*K
-        M2 = 1/J1(self.time)
-        beta1 = (3*K*J1(self.time)+1)/(3*K*J1(self.time)+2)
-        beta2 = 1/(3*K*J1(self.time)+2)
+        M2 = 1/f(self.time)
+        beta1 = (3*K*f(self.time)+1)/(3*K*f(self.time)+2)
+        beta2 = 1/(3*K*f(self.time)+2)
         C = beta2
         return M1, M2, beta1, beta2, C
 

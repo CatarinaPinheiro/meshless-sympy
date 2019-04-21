@@ -8,6 +8,7 @@ class ViscoelasticRelaxationModel(ElasticModel):
         ElasticModel.__init__(self, region)
 
         self.material_type = "VISCOELASTIC"
+        self.viscoelastic_phase = "RELAXATION"
 
         self.iterations = iterations
         self.time = time
@@ -17,7 +18,7 @@ class ViscoelasticRelaxationModel(ElasticModel):
         ones = np.ones(s.shape)
         zeros = np.zeros(s.shape)
 
-        u = self.u = 1
+        u = self.u = self.p = -1e-3
         F = 8e9
         G = 1.92e9
         self.K = K = 4.17e9
