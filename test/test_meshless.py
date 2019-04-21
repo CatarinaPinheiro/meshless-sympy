@@ -372,7 +372,7 @@ class TestMeshless(unittest.TestCase):
         self.rectangle_template(SubregionMethod, PotentialModel, potential_region_example(1, 1))
 
     def test_subregion_elasticity(self):
-        self.rectangle_template(SubregionMethod, ElasticModel, elastic_region_example(1, 1))
+        self.rectangle_template(SubregionMethod, ElasticModel, elastic_region_example(30, 15))
 
     def test_subregion_viscoelasticity(self):
         self.visco_rectangle_template(SubregionMethod, ViscoelasticModel, viscoelastic_region_example(1, 1))
@@ -452,6 +452,45 @@ class TestMeshless(unittest.TestCase):
             plt.plot(diffs)
             plt.draw()
             plt.pause(0.001)
+        plt.show()
+
+    def test_all_crimed_beam(self):
+        steps = [
+            [24, 6],
+            [12, 6],
+            [6, 6],
+            [3, 3],
+            [2, 2],
+            [1, 1]
+        ]
+        collocation_diff = []
+        subregion_diff = []
+        galerkin_diff = []
+        petrov_galerkin_diff = []
+
+        def plot():
+            plt.clf()
+            plt.plot(collocation_diff, label=CollocationMethod.name, marker=".")
+            plt.plot(subregion_diff, label=SubregionMethod.name, marker=".")
+            plt.plot(galerkin_diff, label=GalerkinMethod.name, marker=".")
+            plt.plot(petrov_galerkin_diff, label=PetrovGalerkinMethod.name, marker=".")
+            plt.legend()
+            plt.draw()
+            plt.pause(0.001)
+
+        for dx, dy in steps:
+            diff = self.rectangle_template(CollocationMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
+            collocation_diff.append(diff)
+
+            diff = self.rectangle_template(SubregionMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
+            subregion_diff.append(diff)
+            plot()
+            diff = self.rectangle_template(GalerkinMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
+            galerkin_diff.append(diff)
+            plot()
+            diff = self.rectangle_template(PetrovGalerkinMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
+            petrov_galerkin_diff.append(diff)
+            plot()
         plt.show()
 
 

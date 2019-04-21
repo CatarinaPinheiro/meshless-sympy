@@ -153,7 +153,7 @@ class Function(Numeric):
             # print("found function", name)
             self.eval_function = stored
         else:
-            print("computing function", name)
+            # print("computing function", name)
             self.eval_function = sp.lambdify(sp.var("x y"), self.expression, "numpy")
             cache.set(name, self.eval_function)
 
@@ -187,7 +187,7 @@ class RadialFunction(Function):
         if found:
             self.eval_function = stored
         else:
-            print("computing radial function", str(self))
+            # print("computing radial function", str(self))
             self.eval_function = sp.lambdify(sp.var("x y r"), self.expression, "numpy")
             cache.set(str(self), self.eval_function)
 
@@ -199,7 +199,7 @@ class RadialFunction(Function):
         key = "sympy expression for " + name
         found, value = cache.get(key)
         if not found:
-            print("computing sympy differentiation %s" % name)
+            # print("computing sympy differentiation %s" % name)
             value = self.expression.diff(var)
             cache.set(key, value)
         return RadialFunction(value, self.xj, self.yj, self.r, name)

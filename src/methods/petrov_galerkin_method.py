@@ -5,9 +5,10 @@ import numpy as np
 
 
 class PetrovGalerkinMethod(MeshlessMethod):
+    name = "MLPG-01"
+
     def __init__(self, basis, model):
         MeshlessMethod.__init__(self, basis, model)
-        self.name = "MLPG-01"
 
     def domain_append(self, i, d):
         radius = min(self.m2d.r_first(1), self.model.region.distance_from_boundary(d))

@@ -76,7 +76,7 @@ class MeshlessMethod:
             stiffness.append(stiffness_element)
             print("b_element.shape", b_element.shape)
             b.append(b_element)
-            print("max", np.abs(b_element).max(axis=1))
+            # print("max", np.abs(b_element).max(axis=1))
 
             print(i)
 

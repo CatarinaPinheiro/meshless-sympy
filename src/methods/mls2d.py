@@ -79,7 +79,7 @@ class MovingLeastSquares2D:
         while True:
             A, B = self.numeric_AB(self.ri)
             # print("condition(A)", np.linalg.cond(A))
-            print("det(A)", np.linalg.det(A))
+            # print("det(A)", np.linalg.det(A))
             det = np.linalg.det(A)
             cond = np.linalg.cond(A)
             # if self.ri > max(dx, dy):
@@ -89,7 +89,7 @@ class MovingLeastSquares2D:
                 continue
             else:
                 break
-        print("self.ri", self.ri)
+        # print("self.ri", self.ri)
 
         sA, sB, P, sW = self.ABPW(self.ri)
 
