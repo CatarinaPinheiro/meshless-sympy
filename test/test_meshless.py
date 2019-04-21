@@ -225,23 +225,17 @@ class TestMeshless(unittest.TestCase):
             # self.assertAlmostEqual(np.abs(diff).max(), 0, 3)
             return np.abs(diff).max()
 
-    def visco_rectangle_template(self, method_class, model_class, region):
-        data = region.cartesian
+    def viscoelastic_relaxation_plot(self, method, model, data, result, region):
+        for index, point in enumerate(data):
+            method.m2d.point = point
+            phi = method.m2d.numeric_phi
+            stress = method.equation.stress(phi, point, result)
+            for index, component_name in enumerate(["$\\sigma_x$", "$\\sigma_y$", "$\\tau_{xy}$"]):
+                plt.plot(method.equation.time, stress[index], label=component_name)
+                plt.legend()
+                plt.show()
 
-        model = model_class(region=region)
-
-        method = method_class(
-            model=model,
-            basis=quadratic_2d)
-        # cache_path = "result.npy"
-        # if os.path.exists(cache_path):
-        #     result = np.load(cache_path)
-        # else:
-        #     result = method.solve()
-        #     np.save(cache_path, result)
-        result = method.solve()
-        print("result", result)
-
+    def viscoelastic_creep_plot(self, method, model, data, result, region):
         def nearest_indices(t):
             print(".", end="")
             return np.abs(model.s - t).argmin()
@@ -302,6 +296,34 @@ class TestMeshless(unittest.TestCase):
             plt.xlabel("Tempo (s)")
             plt.title("Deslocamento $v$ para o ponto $%s$"%point)
             plt.show()
+
+    def viscoelastic_plot(self, method, model, data, result, region):
+        if model.viscoelastic_phase == "CREEP":
+            self.viscoelastic_creep_plot(method, model, data, result, region)
+        elif model.viscoelastic_phase == "RELAXATION":
+            self.viscoelastic_relaxation_plot(method, model, data, result, region)
+        else:
+            raise Exception("Invalid viscoelastic phase: %s"%model.viscoelastic_phase)
+
+    def visco_rectangle_template(self, method_class, model_class, region):
+        data = region.cartesian
+
+        model = model_class(region=region)
+
+        method = method_class(
+            model=model,
+            basis=quadratic_2d)
+        # cache_path = "result.npy"
+        # if os.path.exists(cache_path):
+        #     result = np.load(cache_path)
+        # else:
+        #     result = method.solve()
+        #     np.save(cache_path, result)
+        result = method.solve()
+        print("result", result)
+
+
+        self.viscoelastic_plot(method, model, data, result, region)
 
     # __________Collocation Test______________
 
