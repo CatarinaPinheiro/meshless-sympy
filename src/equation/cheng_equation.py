@@ -38,7 +38,7 @@ class ChengEquation:
         if self.model.viscoelastic_phase == "RELAXATION":
             f = relaxation
         elif self.model.viscoelastic_phase == "CREEP":
-            f = creep #lambda t: creep(t) - np.heaviside(t - 51, 1)*creep(t - 51)
+            f = lambda t: creep(t) - np.heaviside(t - 25, 1)*creep(t - 25)
         else:
             raise Exception("Invalid viscoelastic phase: %s" % self.model.viscoelastic_phase)
 

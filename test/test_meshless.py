@@ -384,11 +384,11 @@ class TestMeshless(unittest.TestCase):
         self.visco_rectangle_template(CollocationMethod, ViscoelasticRelaxationModel, viscoelastic_relaxation_region_example(1, 1))
 
     def test_collocation_cantilever_beam(self):
-        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantilever_beam_region_example(1, 1))
+        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantilever_beam_region_example(3, 3))
 
     def test_collocation_simply_supported_beam(self):
         self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel,
-                                      simply_supported_beam_region_example(2, 2))
+                                      simply_supported_beam_region_example(3, 3))
 
     # ______________Subregion Test_______________
 

@@ -109,18 +109,25 @@ class SimplySupportedBeamModel(ElasticModel):
 
         x, y = sp.var("x y")
 
-        u = (q / (2 * E * I)) * (
+        def pe(t):
+            for tt in t:
+                if tt <= t1:
+                    return q
+                else:
+                    return 0
+
+        u = (pe(t) / (2 * E * I)) * (
                 (x * (L ** 2) / 4 - (x ** 3) / 3) * y + x * (2 * (y ** 3) / 3 - 2 * y * (c ** 2) / 5) + ni * x * (
                 (y ** 3) / 3 - y * (c ** 2) + 2 * (c ** 3) / 3))
-        v = -(q / (2 * E * I)) * ((y ** 4) / 12 - (c ** 2) * (y ** 2) / 2 + 2 * (c ** 3) * y / 3 + ni * (
+        v = -(pe(t) / (2 * E * I)) * ((y ** 4) / 12 - (c ** 2) * (y ** 2) / 2 + 2 * (c ** 3) * y / 3 + ni * (
                 ((L ** 2) / 4 - x ** 2) * (y ** 2) / 2 + (y ** 4) / 6 - (c ** 2) * (y ** 2) / 5)) - (
-                    q / (2 * E * I)) * (
+                    pe(t) / (2 * E * I)) * (
                     (L ** 2) * (x ** 2) / 8 - (x ** 4) / 12 - (c ** 2) * (x ** 2) / 5 + (1 + ni / 2) * (c ** 2) * (
-                    x ** 2)) + (5 * q * (L ** 4) / (384 * E * I)) * (
+                    x ** 2)) + (5 * pe(t) * (L ** 4) / (384 * E * I)) * (
                     1 + (12 * (h ** 2) / (5 * (L ** 2))) * (4 / 5 + ni / 2))
 
         self.analytical = [sp.Matrix([u]), sp.Matrix([v])]
-        self.analytical_visco = [sp.Matrix([ux(tt) for tt in t]), sp.Matrix([uy(tt) for tt in t])]
+        self.analytical_visco = [sp.Matrix([ux_c2(tt) for tt in t]), sp.Matrix([uy_c2(tt) for tt in t])]
         self.analytical_visco_c2 = [sp.Matrix([ux_c2(tt) for tt in t]), sp.Matrix([uy_c2(tt) for tt in t])]
         # self.analytical = [sp.Matrix(np.zeros([self.time * self.iterations,1])), sp.Matrix(np.zeros([self.time * self.iterations,1]))]
 
