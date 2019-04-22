@@ -255,10 +255,10 @@ class TestMeshless(unittest.TestCase):
             plt.plot(point[0], point[1], "b^-")
             plt.plot(point[0] + calculated_x, point[1] + calculated_y, ".", color="red", label=method.name)
 
-            if model.analytical:
-                analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[
+            if model.analytical_visco:
+                analytical_x = num.Function(model.analytical_visco[0], name="analytical ux(%s)").eval(point)[
                                ::model.iterations].ravel()
-                analytical_y = num.Function(model.analytical[1], name="analytical uy(%s)").eval(point)[
+                analytical_y = num.Function(model.analytical_visco[1], name="analytical uy(%s)").eval(point)[
                                ::model.iterations].ravel()
                 plt.plot(point[0] + analytical_x, point[1] + analytical_y, color="indigo")
 
@@ -271,16 +271,16 @@ class TestMeshless(unittest.TestCase):
 
             calculated_y = fts[:, 2 * point_index + 1]
 
-            if model.analytical:
-                analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[
+            if model.analytical_visco:
+                analytical_x = num.Function(model.analytical_visco[0], name="analytical ux(%s)").eval(point)[
                                ::model.iterations].ravel()
-                analytical_y = num.Function(model.analytical[1], name="analytical uy(%s)").eval(point)[
+                analytical_y = num.Function(model.analytical_visco[1], name="analytical uy(%s)").eval(point)[
                                ::model.iterations].ravel()
             print(point)
 
             print("x")
             plt.plot(calculated_x, ".", color="red", label=method.name)
-            if model.analytical:
+            if model.analytical_visco:
                 plt.plot(analytical_x, color="indigo", label="Analítica")
             plt.legend()
             plt.ylabel("Deslocamento (cm)")
@@ -290,7 +290,7 @@ class TestMeshless(unittest.TestCase):
 
             print("y")
             plt.plot(calculated_y, ".", color="red", label=method.name)
-            if model.analytical:
+            if model.analytical_visco:
                 plt.plot(analytical_y, color="indigo", label="Analítica")
             plt.legend()
             plt.ylabel("Deslocamento (cm)")
@@ -334,6 +334,25 @@ class TestMeshless(unittest.TestCase):
     def test_collocation_elasticity(self):
         self.rectangle_template(CollocationMethod, ElasticModel, elastic_region_example(30, 15))
 
+    def test_collocation_simply_supported_elasticity(self):
+        steps = [
+            [6, 6],
+            [3, 3],
+            [2, 2],
+            # [1.5, 1.5],
+            # [6/5, 6/5],
+            [1, 1]
+        ]
+        diffs = []
+        for dx, dy in steps:
+            diff = self.rectangle_template(CollocationMethod, SimplySupportedElasticModel, simply_supported_elastic_region_example(dx, dy))
+            diffs.append(diff)
+
+            plt.plot(diffs)
+            plt.draw()
+            plt.pause(0.001)
+        plt.show()
+
     def test_collocation_crimped_beam_elasticity(self):
         steps = [
             [6, 6],
@@ -360,7 +379,7 @@ class TestMeshless(unittest.TestCase):
         self.visco_rectangle_template(CollocationMethod, ViscoelasticRelaxationModel, viscoelastic_relaxation_region_example(1, 1))
 
     def test_collocation_cantilever_beam(self):
-        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantilever_beam_region_example(2, 2))
+        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantilever_beam_region_example(1, 1))
 
     def test_collocation_simply_supported_beam(self):
         self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel,

@@ -6,6 +6,7 @@ import src.helpers.numeric as num
 
 class SimplySupportedElasticModel(ElasticModel):
     def __init__(self, region):
+        self.material_type = "ELASTIC"
         self.region = region
         self.num_dimensions = 2
         F = 35e5
@@ -42,6 +43,7 @@ class SimplySupportedElasticModel(ElasticModel):
         self.L = L = (region.x2 - region.x1) / 2
         x, y = sp.var("x y")
 
+
         u = (q / (2 * E * I)) * (
                 (x * (L ** 2) / 4 - (x ** 3) / 3) * y + x * (2 * (y ** 3) / 3 - 2 * y * (c ** 2) / 5) + ni * x * (
                 (y ** 3) / 3 - y * (c ** 2) + 2 * (c ** 3) / 3))
@@ -51,6 +53,7 @@ class SimplySupportedElasticModel(ElasticModel):
                     (L ** 2) * (x ** 2) / 8 - (x ** 4) / 12 - (c ** 2) * (x ** 2) / 5 + (1 + ni / 2) * (c ** 2) * (
                     x ** 2)) + (5 * q * (L ** 4) / (384 * E * I)) * (
                     1 + (12 * (h ** 2) / (5 * (L ** 2))) * (4 / 5 + ni / 2))
+
 
         self.analytical = [sp.Matrix([u]), sp.Matrix([v])]
 

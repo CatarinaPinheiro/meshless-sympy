@@ -9,8 +9,12 @@ class CrimpedBeamModel(ElasticModel):
         self.material_type = "ELASTIC"
         self.region = region
         self.num_dimensions = 2
-        self.E = E = 3e7
-        self.ni = ni = 0.3
+        G = 8.75e8
+        K = 11.67e8
+        E1 = 9 * K * G / (3 * K + G)
+        q0 = E1/2
+        self.E = E = 9 * K * q0 / (6 * K + q0)#3e7
+        self.ni = ni = (3*K - q0)/(6*K + q0)#0.3
         self.ni = np.array([ni])
         self.G = G = E / (2 * (1 + ni))
         self.p = p = -1000
@@ -41,6 +45,19 @@ class CrimpedBeamModel(ElasticModel):
             return D @ Ltu
 
         self.analytical_stress = analytical_stress
+
+    def independent_domain_function(self, point):
+        return np.array([0, 0])
+
+    def independent_boundary_function(self, point):
+        if point[0] > self.region.x2 - 1e-3:
+            h = self.h
+            p = self.p
+            I = self.I
+            y = point[1]
+            return np.array([0, (p * ((h ** 2) / 4 - y ** 2) / (2 * I))])
+        else:
+            return np.array([0, 0])
 
     # def independent_domain_function(self, point):
     #     return np.zeros([2, 1])

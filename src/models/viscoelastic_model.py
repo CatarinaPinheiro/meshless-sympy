@@ -71,9 +71,9 @@ class ViscoelasticModel(ElasticModel):
             return ht*p*x*(exp10+exp9*exp8) - ht1*p*x*(exp1+exp2*exp3)
 
 
-        self.analytical = [sp.Matrix([ux_c2(tt) for tt in t]), sp.Matrix(np.zeros([self.time * self.iterations]))]
-        # self.analytical = [sp.Matrix(np.zeros([self.time * self.iterations,1])), sp.Matrix(np.zeros([self.time * self.iterations,1]))]
+        self.analytical_visco = [sp.Matrix([ux(tt) for tt in t]), sp.Matrix(np.zeros([self.time * self.iterations]))]
 
+        self.analytical_visco_c2 = [sp.Matrix([ux_c2(tt) for tt in t]), sp.Matrix(np.zeros([self.time * self.iterations]))]
 
     def independent_domain_function(self, point):
         return np.array([0, 0])
