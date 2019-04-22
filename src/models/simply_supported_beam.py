@@ -7,6 +7,9 @@ class SimplySupportedBeamModel(ElasticModel):
     def __init__(self, region, time=50, iterations=10):
         ElasticModel.__init__(self, region)
 
+        self.material_type = "VISCOELASTIC"
+        self.viscoelastic_phase = "CREEP"
+
         self.iterations = iterations
         self.time = time
         s = self.s = np.array([np.log(2)*i/t for i in range(1, self.iterations+1) for t in range(1, self.time+1)])
@@ -18,6 +21,7 @@ class SimplySupportedBeamModel(ElasticModel):
         F = 8e9
         G = 1.92e9
         self.K = K = 4.17e9
+        t1 = self.t1 = 25
 
         E1 = 9 * K * G / (3 * K + G)
         E2 = E1
@@ -88,6 +92,15 @@ class SimplySupportedBeamModel(ElasticModel):
             return -exp1 * (exp4 * exp2 + exp5 * exp3) - exp1 * (exp6 * exp2 + exp7 * exp3) + exp8 * (
                                     exp9 * exp2 + exp10 * exp3)
 
+        def ux_c2(t):
+            ht1 = np.heaviside(t - t1, 1)
+            return ux(t) - ht1*ux(t - t1)
+
+        def uy_c2(t):
+            ht1 = np.heaviside(t - t1, 1)
+            return uy(t) - ht1*uy(t - t1)
+
+
 
         # def uy(s):
     #         pvisc = self.p / s
@@ -114,13 +127,14 @@ class SimplySupportedBeamModel(ElasticModel):
         #     return ht*p*x*(exp1+exp2*exp3)
 
         self.analytical = [sp.Matrix([ux(tt) for tt in t]), sp.Matrix([uy(tt) for tt in t])]
+        self.analytical_c2 = [sp.Matrix([ux_c2(tt) for tt in t]), sp.Matrix([uy_c2(tt) for tt in t])]
         # self.analytical = [sp.Matrix(np.zeros([self.time * self.iterations,1])), sp.Matrix(np.zeros([self.time * self.iterations,1]))]
 
     def petrov_galerkin_independent_boundary(self, w, integration_point):
         if integration_point[0] > self.region.x2 - 1e-3:
             return -w.eval(integration_point)*np.array([self.p/self.s, np.zeros(self.s.shape)])
         else:
-            return np.zeros([2,self.time*self.iterations])
+            return np.zeros([2, self.time*self.iterations])
 
     def petrov_galerkin_independent_domain(self, w, integration_point):
         return np.zeros([2,self.time*self.iterations])

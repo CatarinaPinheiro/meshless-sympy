@@ -354,17 +354,17 @@ class TestMeshless(unittest.TestCase):
         plt.show()
 
     def test_collocation_viscoelasticity(self):
-        self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example(1, 1))
+        self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example(0.5, 0.5))
 
     def test_collocation_viscoelastic_relaxation(self):
         self.visco_rectangle_template(CollocationMethod, ViscoelasticRelaxationModel, viscoelastic_relaxation_region_example(1, 1))
 
     def test_collocation_cantilever_beam(self):
-        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantilever_beam_region_example(1, 1))
+        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantilever_beam_region_example(2, 2))
 
     def test_collocation_simply_supported_beam(self):
         self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel,
-                                      simply_supported_beam_region_example(1, 1))
+                                      simply_supported_beam_region_example(2, 2))
 
     # ______________Subregion Test_______________
 
@@ -408,7 +408,7 @@ class TestMeshless(unittest.TestCase):
     def test_petrov_galerkin_viscoelastic_relaxation(self):
         self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticRelaxationModel, viscoelastic_relaxation_region_example(1, 1))
 
-    def test_petrov_galerkin_cantiliever_beam(self):
+    def test_petrov_galerkin_cantilever_beam(self):
         self.visco_rectangle_template(PetrovGalerkinMethod, CantileverBeamModel, cantilever_beam_region_example(6, 6))
 
     def test_petrov_galerkin_simply_supported_beam(self):

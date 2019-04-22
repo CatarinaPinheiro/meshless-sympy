@@ -17,10 +17,11 @@ class ViscoelasticModel(ElasticModel):
         ones = np.ones(s.shape)
         zeros = np.zeros(s.shape)
 
-        p = self.p = 2e6
+        p = self.p = 2e9
         F = 8e9
         G = 1.92e9
         self.K = K = 4.17e9
+        t1 = self.t1 = 25
 
         E1 = 9 * K * G / (3 * K + G)
         E2 = E1
@@ -53,8 +54,26 @@ class ViscoelasticModel(ElasticModel):
             exp1 = (3*K+2*(E1*E2/(E1+E2)))/((E1*E2/(E1+E2))*(6*K+(E1*E2/(E1+E2))))
             return ht*p*x*(exp1+exp2*exp3)
 
-        self.analytical = [sp.Matrix([ux(tt) for tt in t]), sp.Matrix(np.zeros([self.time * self.iterations]))]
+        def ux_c2(t):
+            ht = 1
+            exp6 = sp.exp(-q0*t/q1)/(q0*q1)
+            exp7 = sp.exp(-(6*K+q0)*t/(6*K*p1+q1))*3/((6*K+q0)*(6*K*p1 + q1))
+            exp8 = exp6+exp7
+            exp9 = (p1*q0 - q1)/2
+            exp10 = (3*K+2*q0)/(q0*(6*K+q0))
+
+            ht1 = np.heaviside(t - t1, 1)
+            exp4 = sp.exp(-q0*(t-t1)/q1)/(q0*q1)
+            exp5 = sp.exp(-(6*K+q0)*(t-t1)/(6*K*p1+q1))*3/((6*K+q0)*(6*K*p1 + q1))
+            exp3 = exp4+exp5
+            exp2 = (p1*q0 - q1)/2
+            exp1 = (3*K+2*q0)/(q0*(6*K+q0))
+            return ht*p*x*(exp10+exp9*exp8) - ht1*p*x*(exp1+exp2*exp3)
+
+
+        self.analytical = [sp.Matrix([ux_c2(tt) for tt in t]), sp.Matrix(np.zeros([self.time * self.iterations]))]
         # self.analytical = [sp.Matrix(np.zeros([self.time * self.iterations,1])), sp.Matrix(np.zeros([self.time * self.iterations,1]))]
+
 
     def independent_domain_function(self, point):
         return np.array([0, 0])

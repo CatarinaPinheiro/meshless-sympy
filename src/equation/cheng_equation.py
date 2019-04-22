@@ -23,7 +23,7 @@ class ChengEquation:
         return M1, M2, beta1, beta2, C
 
     def viscoelastic_params(self):
-        self.time = np.linspace(1, 40)
+        self.time = np.linspace(1, 50)
         q0 = self.model.q0
         q1 = self.model.q1
         p1 = self.model.p1
@@ -38,7 +38,7 @@ class ChengEquation:
         if self.model.viscoelastic_phase == "RELAXATION":
             f = relaxation
         elif self.model.viscoelastic_phase == "CREEP":
-            f = lambda t: creep(t) - np.heaviside(t - 20, 1)*creep(t - 20)
+            f = lambda t: creep(t) - np.heaviside(t - 51, 1)*creep(t - 51)
         else:
             raise Exception("Invalid viscoelastic phase: %s" % self.model.viscoelastic_phase)
 

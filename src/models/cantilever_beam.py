@@ -10,6 +10,7 @@ class CantileverBeamModel:
         ElasticModel.__init__(self, region)
 
         self.material_type = "VISCOELASTIC"
+        self.viscoelastic_phase = "CREEP"
 
         self.iterations = iterations
         self.time = time
@@ -20,9 +21,10 @@ class CantileverBeamModel:
         zeros = np.zeros(s.shape)
 
         p = self.p = -1e3
-        F = 35e5
-        G = 8.75e5
-        self.K = K = 11.67e5
+        F = 35e8
+        G =8.75e8
+        self.K = K = 11.67e8
+        t1 = self.t1 = 25
 
         E1 = 9 * K * G / (3 * K + G)
         E2 = E1
@@ -63,32 +65,36 @@ class CantileverBeamModel:
             p01 = self.p1
             exp1 = -ht * self.p * y / (6 * I)
             exp2 = ((6 * K + q00) / (9 * K * q00) + (2 / 3) * ((p01 * q00 - q01) / (q00 * q01)) * np.exp(
-                -q00 * t / q01))
+                   -q00 * t / q01))
             exp3 = (6 * L - 3 * x) * x * exp2
-            exp4 = ((3 * K - E1) / (6 * K)) * (
-                    (6 * K + q00) / (9 * K * q00) + (2 / 3) * ((p01 * q00 - q01) / (q00 * q01)) * np.exp(
-                -q00 * t / q01))  # ((3 * K - q00) / (9 * K * q00) + (1 / 3) * ((p01 * q00 - q01) / (q00 * q01)) * np.exp(
-            # -q00 * t / q01))
+            exp4 = ((3 * K - q00) / (9 * K * q00) + (1 / 3) * ((p01 * q00 - q01) / (q00 * q01)) * np.exp(
+                    -q00 * t / q01))
             exp5 = (2 * exp2 + exp4) * (y ** 2 - (h ** 2) / 4)
 
             return exp1 * (exp3 + exp5)
 
         def uy(t):
             q00 = self.q0
-
             q01 = self.q1
             p01 = self.p1
             exp1 = self.p / (6 * I)
             exp2 = ((6 * K + q00) / (9 * K * q00) + (2 / 3) * ((p01 * q00 - q01) / (q00 * q01)) * np.exp(
                 -q00 * t / q01))
-            exp3 = ((3 * K - E1) / (6 * K)) * (
-                    (6 * K + q00) / (9 * K * q00) + (2 / 3) * ((p01 * q00 - q01) / (q00 * q01)) * np.exp(
-                -q00 * t / q01))  # ((3 * K - q00) / (9 * K * q00) + (1 / 3) * ((p01 * q00 - q01) / (q00 * q01)) * np.exp(
-            # -q00 * t / q01))
-            exp4 = (3 * (y ** 2) * (L - x) + 5 * x * h ** 2 / 4)
-            exp5 = (x * h ** 2 + (3 * L - x) * x ** 2)
+            exp3 = ((3 * K - q00) / (9 * K * q00) + (1 / 3) * ((p01 * q00 - q01) / (q00 * q01)) * np.exp(
+                -q00 * t / q01))
+            exp4 = (3 * (y ** 2) * (L - x) + 5 * x * (h ** 2) / 4)
+            exp5 = (x * (h ** 2) + (3 * L - x) * (x ** 2))
 
             return exp1 * (exp3 * exp4 + exp5 * exp2)
+
+        def ux_c2(t):
+            ht1 = np.heaviside(t - t1, 1)
+            return ux(t) - ht1 * ux(t - t1)
+
+        def uy_c2(t):
+            ht1 = np.heaviside(t - t1, 1)
+            return uy(t) - ht1 * uy(t - t1)
+
 
         # def ux(t):
         #     ht = 1
@@ -121,6 +127,8 @@ class CantileverBeamModel:
         #     return ht*(exp5 + exp2/3)*exp8 + 2*ht*(exp7 + exp2)*exp9 + ht*(exp1 + 2*exp2/3)*(exp10 - exp11 + exp12)
 
         self.analytical = [sp.Matrix([ux(tt) for tt in t]), sp.Matrix([uy(tt) for tt in t])]
+
+        #self.analytical = [sp.Matrix([ux_c2(tt) for tt in t]), sp.Matrix([uy_c2(tt) for tt in t])]
 
     def independent_domain_function(self, point):
         return np.array([0, 0])
