@@ -3,7 +3,7 @@ from functools import reduce
 from numpy import linalg as la
 import src.methods.mls2d as mls
 import numpy as np
-from src.helpers.cache import cache
+import pandas as pd
 import src.helpers.duration as duration
 from src.helpers.list import element_inside_list
 from src.helpers.weights import GaussianWithRadius as Weight
@@ -19,7 +19,7 @@ class MeshlessMethod:
         self.weight_function = weight_function
         self.m2d = mls.MovingLeastSquares2D(self.data, self.basis, self.weight_function)
         self.support_radius = {}
-        cache.reset()
+        # cache.reset()
 
     def domain_append(self, i, d):
         self.m2d.point = d

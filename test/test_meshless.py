@@ -1,5 +1,6 @@
 import unittest
 
+import os
 from src.helpers.basis import *
 from src.methods.collocation_method import CollocationMethod
 from src.methods.galerkin_method import GalerkinMethod
@@ -8,6 +9,10 @@ from src.methods.subregion_method import SubregionMethod
 import src.helpers.numeric as num
 import numpy as np
 import sympy as sp
+import re
+import pandas as pd
+import time
+import datetime
 from src.models.simply_supported_beam import SimplySupportedBeamModel
 from src.models.simply_supported_elastic import SimplySupportedElasticModel
 from src.geometry.regions.rectangle import Rectangle
@@ -487,29 +492,68 @@ class TestMeshless(unittest.TestCase):
         galerkin_diff = []
         petrov_galerkin_diff = []
 
+        collocation_times = []
+        subregion_times = []
+        galerkin_times = []
+        petrov_galerkin_times = []
+
+        if not os.path.exists("output"):
+            os.makedirs("output")
+        time_string = "-".join(re.compile("\\d+").findall(str(datetime.datetime.utcnow())))
+
         def plot():
+
             plt.clf()
             plt.plot(collocation_diff, label=CollocationMethod.name, marker=".")
             plt.plot(subregion_diff, label=SubregionMethod.name, marker=".")
             plt.plot(galerkin_diff, label=GalerkinMethod.name, marker=".")
             plt.plot(petrov_galerkin_diff, label=PetrovGalerkinMethod.name, marker=".")
             plt.legend()
-            plt.draw()
-            plt.pause(0.001)
+            plt.savefig("./output/%s.svg"%time_string)
 
+            diffs = pd.DataFrame.from_dict({
+                "dx": pd.Series(np.array(steps)[:, 0]),
+                "dy": pd.Series(np.array(steps)[:, 1]),
+                CollocationMethod.name:    pd.Series(collocation_diff),
+                SubregionMethod.name:      pd.Series(subregion_diff),
+                GalerkinMethod.name:       pd.Series(galerkin_diff),
+                PetrovGalerkinMethod.name: pd.Series(petrov_galerkin_diff)
+            })
+
+            times = pd.DataFrame.from_dict({
+                "dx": pd.Series(np.array(steps)[:, 0]),
+                "dy": pd.Series(np.array(steps)[:, 1]),
+                CollocationMethod.name:    pd.Series(collocation_times),
+                SubregionMethod.name:      pd.Series(subregion_times),
+                GalerkinMethod.name:       pd.Series(galerkin_times),
+                PetrovGalerkinMethod.name: pd.Series(petrov_galerkin_times)
+            })
+            excel_writer = pd.ExcelWriter("./output/%s.xlsx"%time_string, engine="xlsxwriter")
+            diffs.to_excel(excel_writer, sheet_name="Erro relativo")
+            times.to_excel(excel_writer, sheet_name="Tempo")
+            excel_writer.save()
         for dx, dy in steps:
+            start_time = time.time()
             diff = self.rectangle_template(CollocationMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
+            collocation_times.append(time.time() - start_time)
             collocation_diff.append(diff)
-
+            plot()
+            start_time = time.time()
             diff = self.rectangle_template(SubregionMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
+            subregion_times.append(time.time() - start_time)
             subregion_diff.append(diff)
             plot()
+            start_time = time.time()
             diff = self.rectangle_template(GalerkinMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
+            galerkin_times.append(time.time() - start_time)
             galerkin_diff.append(diff)
             plot()
+            start_time = time.time()
             diff = self.rectangle_template(PetrovGalerkinMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
+            petrov_galerkin_times.append(time.time() - start_time)
             petrov_galerkin_diff.append(diff)
             plot()
+            print(pd)
         plt.show()
 
 

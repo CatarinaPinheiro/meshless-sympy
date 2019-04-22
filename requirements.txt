@@ -2,5 +2,7 @@ sympy
 matplotlib
 numexpr
 numpy
+xlsxwriter
+pandas
 scipy
 mpmath
