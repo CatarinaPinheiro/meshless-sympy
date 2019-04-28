@@ -145,13 +145,13 @@ class CantileverBeamModel:
             p = self.p
             I = self.I
             y = integration_point[1]
-            return -w.eval(integration_point)*np.array([(p * ((h ** 2) / 4 - y ** 2) / (2 * I)), 0])
+            return -w.eval(integration_point)*np.array([0, (p * ((h ** 2) / 4 - y ** 2) / (2 * I))])
         elif integration_point[0] < self.region.x1 + 1e-3  and conditions[1] == "NEUMANN":
             h = self.h
             p = self.p
             I = self.I
             y = integration_point[1]
-            return -w.eval(integration_point)*np.array([(-p * ((h ** 2) / 4 - y ** 2) / (2 * I)), 0])
+            return -w.eval(integration_point)*np.array([0, (-p * ((h ** 2) / 4 - y ** 2) / (2 * I))])
         else:
             return [0, 0]
 
