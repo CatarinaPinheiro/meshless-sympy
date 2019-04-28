@@ -16,7 +16,6 @@ import datetime
 from src.models.simply_supported_beam import SimplySupportedBeamModel
 from src.models.simply_supported_elastic import SimplySupportedElasticModel
 from src.geometry.regions.rectangle import Rectangle
-import mpmath as mp
 from src.models.potential_model import PotentialModel
 from src.models.crimped_beam import CrimpedBeamModel
 from src.models.cantilever_beam import CantileverBeamModel
@@ -25,9 +24,12 @@ from src.models.viscoelastic_relaxation import ViscoelasticRelaxationModel
 from src.models.viscoelastic_model import ViscoelasticModel
 from matplotlib import pyplot as plt
 from src.runners.viscoelastic_draw_runner import ViscoelasticDrawRunner
-import random
+import locale
+plt.rcdefaults()
+locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 plt.style.use('bmh')
 csfont = {'fontname':'Times New Roman'}
+plt.rcParams['axes.formatter.use_locale'] = True
 plt.rcParams["font.family"] = "Times New Roman"
 
 def elastic_region_example(dx, dy):
@@ -319,13 +321,13 @@ class TestMeshless(unittest.TestCase):
         plt.show()
 
     def test_collocation_viscoelasticity(self):
-        self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example(0.5, 0.5))
+        self.visco_rectangle_template(CollocationMethod, ViscoelasticModel, viscoelastic_region_example(0.2, 0.2))
 
     def test_collocation_viscoelastic_relaxation(self):
         self.visco_rectangle_template(CollocationMethod, ViscoelasticRelaxationModel, viscoelastic_relaxation_region_example(1, 1))
 
     def test_collocation_cantilever_beam(self):
-        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantilever_beam_region_example(3, 3))
+        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantilever_beam_region_example(1, 1))
 
     def test_collocation_simply_supported_beam(self):
         self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel,

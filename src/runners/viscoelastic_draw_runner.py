@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import src.helpers.numeric as num
 import numpy as np
+import datetime
+import re
 
 class ViscoelasticDrawRunner:
     def __init__(self, method, model, data, result, region):
@@ -9,6 +11,16 @@ class ViscoelasticDrawRunner:
         self.data = data
         self.result = result
         self.region = region
+        self.mode = "SAVEFIG"
+
+    def render(self):
+        time_string = "-".join(re.compile("\\d+").findall(str(datetime.datetime.utcnow())))
+        if self.mode == "SHOW":
+            plt.show()
+        elif self.mode == "SAVEFIG":
+            plt.savefig("./output/%s-%s-%s-%s-%sx%s-%s-%s-%s.svg"%(time_string, self.method.__class__.__name__, self.method.equation.__class__.__name__, self.model.__class__.__name__, self.region.dx, self.region.dy, self.method.m2d.min_det, self.method.m2d.r_step, self.method.m2d.security))
+            plt.cla()
+
 
     def relaxation_plot(self):
         for index, point in enumerate(self.data):
@@ -23,7 +35,7 @@ class ViscoelasticDrawRunner:
                 plt.xlabel("Tempo (s)")
                 plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
                 plt.legend()
-                plt.show()
+                self.render()
 
     def creep_plot(self):
         def nearest_indices(t):
@@ -51,7 +63,7 @@ class ViscoelasticDrawRunner:
 
         self.region.plot()
         self.method.plot()
-        plt.show()
+        self.render()
 
         for point_index, point in enumerate(self.data):
             calculated_x = fts[:,2 * point_index]
@@ -72,7 +84,7 @@ class ViscoelasticDrawRunner:
             plt.xlabel("Tempo (s)")
             plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
             plt.title("Deslocamento $u$ para o ponto $%s$"%point)
-            plt.show()
+            self.render()
 
             print("y")
             plt.plot(self.method.equation.time, calculated_y, ".", color="red", label=self.method.name)
@@ -83,7 +95,7 @@ class ViscoelasticDrawRunner:
             plt.xlabel("Tempo (s)")
             plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
             plt.title("Deslocamento $v$ para o ponto $%s$"%point)
-            plt.show()
+            self.render()
 
     def plot(self):
         if self.model.viscoelastic_phase == "CREEP":

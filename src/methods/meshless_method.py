@@ -15,7 +15,7 @@ class MeshlessMethod:
     def __init__(self, basis, model, weight_function=Weight()):
         self.basis = basis
         self.model = model
-        self.equation = HereditaryIntegralEquation(model)
+        self.equation = ChengEquation(model)
         self.weight_function = weight_function
         self.m2d = mls.MovingLeastSquares2D(self.data, self.basis, self.weight_function)
         self.support_radius = {}

@@ -17,7 +17,7 @@ class ViscoelasticModel(ElasticModel):
         ones = np.ones(s.shape)
         zeros = np.zeros(s.shape)
 
-        p = self.p = 2e9
+        p = self.p = 2e6
         F = 8e9
         G = 1.92e9
         self.K = K = 4.17e9

@@ -5,11 +5,13 @@ import src.helpers.numeric as num
 
 
 class MovingLeastSquares2D:
-    def __init__(self, data, basis, weight_function, security=2):
+    def __init__(self, data, basis, weight_function, security=1):
         self.basis = basis
         self.data = data
         self.point = np.zeros(np.shape(data[0]))
         self.security = security
+        self.min_det = 10
+        self.r_step = 1.1
         self.weight_function = weight_function
         self.preP = np.array([
             [num.Function(exp, name="basis %d"%i).eval(d) for i, exp in enumerate(self.basis)]
@@ -85,8 +87,8 @@ class MovingLeastSquares2D:
             # print("ri, det, cond", self.ri, det, cond)
             # if self.ri > max(dx, dy):
             #     raise Exception("need more points, r=%s, det = %s, cond=%s"%(self.ri, det, cond))
-            if det < 10:
-                self.ri *= 1.1
+            if det < self.min_det:
+                self.ri *= self.r_step
                 continue
             else:
                 break
