@@ -64,9 +64,9 @@ class ViscoelasticDrawRunner:
             print(point)
 
             print("x")
-            plt.plot(calculated_x, ".", color="red", label=self.method.name)
+            plt.plot(self.method.equation.time, calculated_x, ".", color="red", label=self.method.name)
             if self.model.analytical_visco:
-                plt.plot(analytical_x, color="indigo", label="Analítica")
+                plt.plot(self.method.equation.time, analytical_x, color="indigo", label="Analítica")
             plt.legend()
             plt.ylabel("Deslocamento (m)")
             plt.xlabel("Tempo (s)")
@@ -75,9 +75,9 @@ class ViscoelasticDrawRunner:
             plt.show()
 
             print("y")
-            plt.plot(calculated_y, ".", color="red", label=self.method.name)
+            plt.plot(self.method.equation.time, calculated_y, ".", color="red", label=self.method.name)
             if self.model.analytical_visco:
-                plt.plot(analytical_y, color="indigo", label="Analítica")
+                plt.plot(self.method.equation.time, analytical_y, color="indigo", label="Analítica")
             plt.legend()
             plt.ylabel("Deslocamento (m)")
             plt.xlabel("Tempo (s)")
