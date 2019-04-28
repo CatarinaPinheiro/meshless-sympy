@@ -232,21 +232,19 @@ class TestMeshless(unittest.TestCase):
             return np.abs(diff).max()
 
 
-    def viscoelastic_error(self, method, model, data, result):
-        fts = result[:,:,0]
-
+    def viscoelastic_relative_error(self, method, model, data, result):
         errors = []
         for point_index, point in enumerate(data):
-            calculated_x = fts[:, 2 * point_index]
-            calculated_y = fts[:, 2 * point_index + 1]
+            calculated_x = result[:, 2 * point_index, 0]
+            calculated_y = result[:, 2 * point_index + 1, 0]
 
             analytical_x = np.array([num.Function(model.analytical_visco[0](t), name="analytical ux(%s)"%t).eval(point) for t in method.equation.time])
             analytical_y = np.array([num.Function(model.analytical_visco[1](t), name="analytical uy(%s)"%t).eval(point) for t in method.equation.time])
 
-            diff_x = calculated_x - analytical_x
-            diff_y = calculated_y - analytical_y
+            diff_x = (calculated_x - analytical_x)
+            diff_y = (calculated_y - analytical_y)
 
-            error = (diff_x*diff_x).mean()+(diff_y*diff_y).mean()
+            error = np.abs(diff_x).mean()+np.abs(diff_y).mean()
             errors.append(error/2)
 
         return np.mean(errors)
@@ -271,7 +269,7 @@ class TestMeshless(unittest.TestCase):
         print("result", result)
 
 
-        print("viscoelastic error: ", self.viscoelastic_error(method, model, data, result))
+        print("viscoelastic error: ", self.viscoelastic_relative_error(method, model, data, result))
         ViscoelasticDrawRunner(method, model, data, result, region).plot()
 
     # __________Collocation Test______________
