@@ -55,7 +55,7 @@ class ViscoelasticModel(ElasticModel):
             return ht*p*x*(exp1+exp2*exp3)
 
         def uy(t):
-            return sp.Matrix(np.zeros(np.shape(t)))
+            return np.zeros(np.shape(t))*sp.Integer(1)
 
         def ux_c2(t):
             ht = 1
