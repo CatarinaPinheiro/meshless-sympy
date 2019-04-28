@@ -3,7 +3,6 @@ from functools import reduce
 from numpy import linalg as la
 import src.methods.mls2d as mls
 import numpy as np
-import pandas as pd
 import src.helpers.duration as duration
 from src.helpers.list import element_inside_list
 from src.helpers.weights import GaussianWithRadius as Weight
@@ -15,7 +14,7 @@ class MeshlessMethod:
     def __init__(self, basis, model, weight_function=Weight()):
         self.basis = basis
         self.model = model
-        self.equation = ChengEquation(model)
+        self.equation = HereditaryIntegralEquation(model)
         self.weight_function = weight_function
         self.m2d = mls.MovingLeastSquares2D(self.data, self.basis, self.weight_function)
         self.support_radius = {}
@@ -91,7 +90,7 @@ class MeshlessMethod:
         print(self.b.max(axis=0))
         print("cond(stiffness)", np.linalg.cond(self.stiffness))
         # return np.array([svd.solve(self.stiffness[i], self.b.astype(np.float)[i]) for i in range(self.stiffness.shape[0])])
-        return la.inv(self.stiffness)@self.b.astype(np.float64)
+        return la.pinv(self.stiffness)@self.b.astype(np.float64)
         # return sci.sparse.linalg.inv(self.stiffness)@self.b.astype(np.float64)
         # size = 104
         # return sci.sparse.linalg.lsmr(A=self.stiffness.reshape([size, size]),
