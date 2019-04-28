@@ -245,6 +245,26 @@ class TestMeshless(unittest.TestCase):
                 plt.legend()
                 plt.show()
 
+    def viscoelastic_error(self, method, model, data, result):
+        fts = result[:,:,0]
+
+        errors = []
+        for point_index, point in enumerate(data):
+            calculated_x = fts[:, 2 * point_index]
+            calculated_y = fts[:, 2 * point_index + 1]
+
+            analytical_x = np.array([num.Function(model.analytical_visco[0](t), name="analytical ux(%s)"%t).eval(point) for t in method.equation.time])
+            analytical_y = np.array([num.Function(model.analytical_visco[1](t), name="analytical uy(%s)"%t).eval(point) for t in method.equation.time])
+
+            diff_x = calculated_x - analytical_x
+            diff_y = calculated_y - analytical_y
+
+            error = (diff_x*diff_x).mean()+(diff_y*diff_y).mean()
+            errors.append(error/2)
+
+        return np.mean(errors)
+
+
     def viscoelastic_creep_plot(self, method, model, data, result, region):
         def nearest_indices(t):
             print(".", end="")
@@ -331,6 +351,7 @@ class TestMeshless(unittest.TestCase):
         print("result", result)
 
 
+        print("viscoelastic error: ", self.viscoelastic_error(method, model, data, result))
         self.viscoelastic_plot(method, model, data, result, region)
 
     # __________Collocation Test______________

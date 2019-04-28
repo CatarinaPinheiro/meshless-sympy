@@ -21,9 +21,9 @@ class CantileverBeamModel:
         zeros = np.zeros(s.shape)
 
         p = self.p = -1e3
-        F = 8e9
-        G = 2e9
-        self.K = K = 4.20e9
+        F = 8e4
+        G = 2e4
+        self.K = K = 4.20e4
         t1 = self.t1 = 25
 
         E1 = 9 * K * G / (3 * K + G)
