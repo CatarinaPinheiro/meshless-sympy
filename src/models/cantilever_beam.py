@@ -101,9 +101,9 @@ class CantileverBeamModel:
             ht1 = np.heaviside(t - t1, 1)
             return uy(t) - ht1 * uy(t - t1)
 
-        self.analytical_visco = [sp.Matrix([ux_c2(tt) for tt in t]), sp.Matrix([uy_c2(tt) for tt in t])]
+        self.analytical_visco = [ux_c2, uy_c2]
 
-        self.analytical_visco_c2 = [sp.Matrix([ux_c2(tt) for tt in t]), sp.Matrix([uy_c2(tt) for tt in t])]
+        self.analytical_visco_c2 = [ux_c2, uy_c2]
 
         def pe(t):
             for tt in t:
@@ -115,7 +115,7 @@ class CantileverBeamModel:
         uxx = (-pe(t) * y / (6 * E * I)) * ((6 * L - 3 * x) * x + (2 + ni) * (y ** 2 - h ** 2 / 4))
         uyy = (pe(t) / (6 * E * I)) * (3 * ni * y ** 2 * (L - x) + (4 + 5 * ni) * h ** 2 * x / 4 + (3 * L - x) * x ** 2)
 
-        self.analytical = [sp.Matrix([uxx]), sp.Matrix([uyy])]
+        self.analytical = [uxx, uyy]
 
 
     def independent_domain_function(self, point):

@@ -265,10 +265,8 @@ class TestMeshless(unittest.TestCase):
             plt.plot(point[0] + calculated_x, point[1] + calculated_y, ".", color="red", label=method.name)
 
             if model.analytical_visco:
-                analytical_x = num.Function(model.analytical_visco[0], name="analytical ux(%s)").eval(point)[
-                               ::model.iterations].ravel()
-                analytical_y = num.Function(model.analytical_visco[1], name="analytical uy(%s)").eval(point)[
-                               ::model.iterations].ravel()
+                analytical_x = np.array([num.Function(model.analytical_visco[0](t), name="analytical ux(%s)"%t).eval(point) for t in method.equation.time])
+                analytical_y = np.array([num.Function(model.analytical_visco[1](t), name="analytical uy(%s)"%t).eval(point) for t in method.equation.time])
                 plt.plot(point[0] + analytical_x, point[1] + analytical_y, color="indigo")
 
         region.plot()
@@ -281,10 +279,8 @@ class TestMeshless(unittest.TestCase):
             calculated_y = fts[:, 2 * point_index + 1]
 
             if model.analytical_visco:
-                analytical_x = num.Function(model.analytical_visco[0], name="analytical ux(%s)").eval(point)[
-                               ::model.iterations].ravel()
-                analytical_y = num.Function(model.analytical_visco[1], name="analytical uy(%s)").eval(point)[
-                               ::model.iterations].ravel()
+                analytical_x = np.array([num.Function(model.analytical_visco[0](t), name="analytical ux(%s)"%t).eval(point) for t in method.equation.time])
+                analytical_y = np.array([num.Function(model.analytical_visco[1](t), name="analytical uy(%s)"%t).eval(point) for t in method.equation.time])
             print(point)
 
             print("x")
@@ -439,7 +435,7 @@ class TestMeshless(unittest.TestCase):
         self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticRelaxationModel, viscoelastic_relaxation_region_example(1, 1))
 
     def test_petrov_galerkin_cantilever_beam(self):
-        self.visco_rectangle_template(PetrovGalerkinMethod, CantileverBeamModel, cantilever_beam_region_example(6, 6))
+        self.visco_rectangle_template(PetrovGalerkinMethod, CantileverBeamModel, cantilever_beam_region_example(3, 3))
 
     def test_petrov_galerkin_simply_supported_beam(self):
         self.visco_rectangle_template(PetrovGalerkinMethod, SimplySupportedBeamModel,

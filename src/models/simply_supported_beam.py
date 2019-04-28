@@ -126,9 +126,9 @@ class SimplySupportedBeamModel(ElasticModel):
                     x ** 2)) + (5 * pe(t) * (L ** 4) / (384 * E * I)) * (
                     1 + (12 * (h ** 2) / (5 * (L ** 2))) * (4 / 5 + ni / 2))
 
-        self.analytical = [sp.Matrix([u]), sp.Matrix([v])]
-        self.analytical_visco = [sp.Matrix([ux_c2(tt) for tt in t]), sp.Matrix([uy_c2(tt) for tt in t])]
-        self.analytical_visco_c2 = [sp.Matrix([ux_c2(tt) for tt in t]), sp.Matrix([uy_c2(tt) for tt in t])]
+        self.analytical = [u, v]
+        self.analytical_visco = [ux_c2, uy_c2]
+        self.analytical_visco_c2 = [ux_c2, uy_c2]
         # self.analytical = [sp.Matrix(np.zeros([self.time * self.iterations,1])), sp.Matrix(np.zeros([self.time * self.iterations,1]))]
 
     # def petrov_galerkin_independent_boundary(self, w, integration_point):

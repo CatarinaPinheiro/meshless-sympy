@@ -11,6 +11,7 @@ class ChengEquation:
 
     def __init__(self, model):
         self.model = model
+        self.time = np.linspace(0, 50)
 
     def elastic_params(self):
         self.time = np.array([0])
@@ -23,7 +24,6 @@ class ChengEquation:
         return M1, M2, beta1, beta2, C
 
     def viscoelastic_params(self):
-        self.time = np.linspace(1, 50)
         q0 = self.model.q0
         q1 = self.model.q1
         p1 = self.model.p1
