@@ -236,8 +236,12 @@ class TestMeshless(unittest.TestCase):
             phi = method.m2d.numeric_phi
             stress = method.equation.stress(phi, point, result)
             for index, component_name in enumerate(["$\\sigma_x$", "$\\sigma_y$", "$\\tau_{xy}$"]):
-                plt.plot(method.equation.time, stress[index], label='%s %s'%(method.name, component_name))
-                plt.plot(method.equation.time, model.relaxation_analytical[index](method.equation.time), label='Analítica %s' %component_name)
+                plt.plot(method.equation.time, stress[index], ".", color="red", label='%s %s'%(method.name, component_name))
+                plt.plot(method.equation.time, model.relaxation_analytical[index](method.equation.time), color="indigo", label='Analítica %s' %component_name)
+                plt.title("Tensão %s para o ponto $%s$" %(component_name, point))
+                plt.ylabel("Tensão (Pa)")
+                plt.xlabel("Tempo (s)")
+                plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
                 plt.legend()
                 plt.show()
 
@@ -288,8 +292,9 @@ class TestMeshless(unittest.TestCase):
             if model.analytical_visco:
                 plt.plot(analytical_x, color="indigo", label="Analítica")
             plt.legend()
-            plt.ylabel("Deslocamento (cm)")
+            plt.ylabel("Deslocamento (m)")
             plt.xlabel("Tempo (s)")
+            plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
             plt.title("Deslocamento $u$ para o ponto $%s$"%point)
             plt.show()
 
@@ -298,8 +303,9 @@ class TestMeshless(unittest.TestCase):
             if model.analytical_visco:
                 plt.plot(analytical_y, color="indigo", label="Analítica")
             plt.legend()
-            plt.ylabel("Deslocamento (cm)")
+            plt.ylabel("Deslocamento (m)")
             plt.xlabel("Tempo (s)")
+            plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
             plt.title("Deslocamento $v$ para o ponto $%s$"%point)
             plt.show()
 

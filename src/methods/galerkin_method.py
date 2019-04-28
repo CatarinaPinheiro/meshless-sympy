@@ -3,7 +3,7 @@ import src.helpers.integration as gq
 import numpy as np
 
 class GalerkinMethod(MeshlessMethod):
-    name = "MGLM"
+    name = "MGMFF"
 
     def __init__(self, basis, model):
         MeshlessMethod.__init__(self, basis, model)

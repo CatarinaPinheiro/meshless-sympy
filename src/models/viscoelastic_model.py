@@ -84,3 +84,11 @@ class ViscoelasticModel(ElasticModel):
         else:
             return np.array([0, 0])
 
+    def petrov_galerkin_independent_boundary(self, w, integration_point):
+        if integration_point[0] > self.region.x2 - 1e-3:
+            return -w.eval(integration_point)*np.array([self.p, 0])
+        else:
+            return w.eval(integration_point)*np.array([0, 0])
+
+    def petrov_galerkin_independent_domain(self, w, integration_point):
+        return w.eval(integration_point)*np.array([0, 0])
