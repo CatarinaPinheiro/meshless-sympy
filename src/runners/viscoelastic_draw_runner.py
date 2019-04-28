@@ -4,6 +4,8 @@ import numpy as np
 import datetime
 import re
 
+plt.subplots(2,2, figsize=(5,8))
+plt.subplot(2,1,1)
 class ViscoelasticDrawRunner:
     def __init__(self, method, model, data, result, region):
         self.method = method
@@ -14,12 +16,31 @@ class ViscoelasticDrawRunner:
         self.mode = "SAVEFIG"
 
     def render(self):
+        ha = plt.subplot(2,1,2)
+        ha.axis('off')
+        plt.text(0.1, 0.0, "Método: %s"%self.method.name)
+        plt.text(0.1, 0.1, "Modelo: %s"%self.model.__class__.__name__)
+        plt.text(0.1, 0.2, "Equacionador: %s"%self.method.equation.__class__.__name__)
+        plt.text(0.1, 0.3, "MLS.security: %s"%self.method.m2d.security)
+        plt.text(0.1, 0.4, "MLS.r_step: %s"%self.method.m2d.r_step)
+        plt.text(0.1, 0.5, "MLS.min_det: %s"%self.method.m2d.min_det)
+        plt.text(0.1, 0.6, "(dx, dy): %s, %s"%(self.region.dx, self.region.dy))
         time_string = "-".join(re.compile("\\d+").findall(str(datetime.datetime.utcnow())))
         if self.mode == "SHOW":
             plt.show()
         elif self.mode == "SAVEFIG":
-            plt.savefig("./output/%s-%s-%s-%s-%sx%s-%s-%s-%s.svg"%(time_string, self.method.__class__.__name__, self.method.equation.__class__.__name__, self.model.__class__.__name__, self.region.dx, self.region.dy, self.method.m2d.min_det, self.method.m2d.r_step, self.method.m2d.security))
-            plt.cla()
+            plt.savefig("./output/%s-%s-%s-%s-%sx%s-%s-%s-%s.svg"%(
+                time_string,
+                self.method.__class__.__name__,
+                self.method.equation.__class__.__name__,
+                self.model.__class__.__name__,
+                self.region.dx,
+                self.region.dy,
+                self.method.m2d.min_det,
+                self.method.m2d.r_step,
+                self.method.m2d.security))
+            plt.clf()
+        plt.subplot(2,1,1)
 
 
     def relaxation_plot(self):
