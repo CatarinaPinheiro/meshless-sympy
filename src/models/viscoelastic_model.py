@@ -19,8 +19,8 @@ class ViscoelasticModel(ElasticModel):
 
         p = self.p = 2e6
         F = 8e9
-        G = 1.92e9
-        self.K = K = 4.17e9
+        G = 1.9e9
+        self.K = K = 4.2e9
         t1 = self.t1 = 25
 
         E1 = 9 * K * G / (3 * K + G)
@@ -74,24 +74,16 @@ class ViscoelasticModel(ElasticModel):
             return ht*p*x*(exp10+exp9*exp8) - ht1*p*x*(exp1+exp2*exp3)
 
 
-        self.analytical_visco = [ux, uy]
+        #self.analytical_visco = [ux, uy]
 
-        self.analytical_visco_c2 = [ux_c2, uy]
+        self.analytical_visco = [ux_c2, uy]
 
     def independent_domain_function(self, point):
         return np.array([0, 0])
 
     def independent_boundary_function(self, point):
-        if point[0] > self.region.x2 - 1e-3:
+        if point[0] > self.region.x2 - 1e-2:
             return np.array([self.p, 0])
         else:
             return np.array([0, 0])
 
-    def petrov_galerkin_independent_boundary(self, w, integration_point):
-        if integration_point[0] > self.region.x2 - 1e-3:
-            return -w.eval(integration_point)*np.array([self.p, 0])
-        else:
-            return w.eval(integration_point)*np.array([0, 0])
-
-    def petrov_galerkin_independent_domain(self, w, integration_point):
-        return w.eval(integration_point)*np.array([0, 0])

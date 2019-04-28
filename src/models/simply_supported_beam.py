@@ -18,10 +18,10 @@ class SimplySupportedBeamModel(ElasticModel):
         ones = np.ones(s.shape)
         zeros = np.zeros(s.shape)
 
-        q = self.p = -2e6
-        F = 8e9
-        G = 1.92e9
-        self.K = K = 4.17e9
+        q = self.p = -2e3
+        F = 16e6
+        G = 4e6
+        self.K = K = 8.20e6
         t1 = self.t1 = 25
 
         E1 = 9 * K * G / (3 * K + G)
