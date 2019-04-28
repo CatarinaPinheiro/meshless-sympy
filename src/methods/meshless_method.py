@@ -7,6 +7,7 @@ import src.helpers.duration as duration
 from src.helpers.list import element_inside_list
 from src.helpers.weights import GaussianWithRadius as Weight
 from src.equation.cheng_equation import ChengEquation
+from src.equation.hereditary_integral_equation import HereditaryIntegralEquation
 from matplotlib import pyplot as plt
 
 

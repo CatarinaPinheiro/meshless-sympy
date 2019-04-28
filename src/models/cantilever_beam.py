@@ -20,7 +20,7 @@ class CantileverBeamModel:
         ones = np.ones(s.shape)
         zeros = np.zeros(s.shape)
 
-        p = self.p = -1e6
+        p = self.p = -1e3
         F = 8e9
         G = 2e9
         self.K = K = 4.20e9
