@@ -91,7 +91,7 @@ class MeshlessMethod:
         print(self.b.max(axis=0))
         print("cond(stiffness)", np.linalg.cond(self.stiffness))
         # return np.array([svd.solve(self.stiffness[i], self.b.astype(np.float)[i]) for i in range(self.stiffness.shape[0])])
-        return la.pinv(self.stiffness)@self.b.astype(np.float64)
+        return la.inv(self.stiffness)@self.b.astype(np.float64)
         # return sci.sparse.linalg.inv(self.stiffness)@self.b.astype(np.float64)
         # size = 104
         # return sci.sparse.linalg.lsmr(A=self.stiffness.reshape([size, size]),
