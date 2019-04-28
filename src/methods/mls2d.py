@@ -87,7 +87,7 @@ class MovingLeastSquares2D:
             # print("ri, det, cond", self.ri, det, cond)
             # if self.ri > max(dx, dy):
             #     raise Exception("need more points, r=%s, det = %s, cond=%s"%(self.ri, det, cond))
-            if det < self.min_det:
+            if np.abs(det) < self.min_det:
                 self.ri *= self.r_step
                 continue
             else:
