@@ -115,7 +115,7 @@ class CantileverBeamModel:
         uxx = (-pe(t) * y / (6 * E * I)) * ((6 * L - 3 * x) * x + (2 + ni) * (y ** 2 - h ** 2 / 4))
         uyy = (pe(t) / (6 * E * I)) * (3 * ni * y ** 2 * (L - x) + (4 + 5 * ni) * h ** 2 * x / 4 + (3 * L - x) * x ** 2)
 
-        self.analytical = [uxx, uyy]
+        self.analytical = [sp.Matrix([uxx]), sp.Matrix([uyy])]
 
 
     def independent_domain_function(self, point):

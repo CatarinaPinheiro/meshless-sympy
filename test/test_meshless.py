@@ -331,7 +331,15 @@ class TestMeshless(unittest.TestCase):
 
     def test_collocation_simply_supported_beam(self):
         self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel,
-                                      simply_supported_beam_region_example(1.5, 1.5))
+                                      simply_supported_beam_region_example(6, 6))
+        self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel,
+                                      simply_supported_beam_region_example(3, 3))
+        self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel,
+                                      simply_supported_beam_region_example(2, 2))
+        self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel,
+                                      simply_supported_beam_region_example(1, 1))
+        self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel,
+                                      simply_supported_beam_region_example(0.75, 0.75))
 
     # ______________Subregion Test_______________
 
@@ -379,6 +387,12 @@ class TestMeshless(unittest.TestCase):
         self.visco_rectangle_template(PetrovGalerkinMethod, CantileverBeamModel, cantilever_beam_region_example(3, 3))
 
     def test_petrov_galerkin_simply_supported_beam(self):
+        self.visco_rectangle_template(PetrovGalerkinMethod, SimplySupportedBeamModel,
+                                      simply_supported_beam_region_example(6, 6))
+        self.visco_rectangle_template(PetrovGalerkinMethod, SimplySupportedBeamModel,
+                                      simply_supported_beam_region_example(3, 3))
+        self.visco_rectangle_template(PetrovGalerkinMethod, SimplySupportedBeamModel,
+                                      simply_supported_beam_region_example(2, 2))
         self.visco_rectangle_template(PetrovGalerkinMethod, SimplySupportedBeamModel,
                                       simply_supported_beam_region_example(1, 1))
 
