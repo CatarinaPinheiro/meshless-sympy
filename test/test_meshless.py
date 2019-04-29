@@ -271,8 +271,8 @@ class TestMeshless(unittest.TestCase):
         print("result", result)
 
 
-        print("viscoelastic error: ", self.viscoelastic_relative_error(method, model, data, result))
-        ViscoelasticDrawRunner(method, model, data, result, region).plot()
+        # ViscoelasticDrawRunner(method, model, data, result, region).plot()
+        return self.viscoelastic_relative_error(method, model, data, result)
 
     # __________Collocation Test______________
 
@@ -327,7 +327,7 @@ class TestMeshless(unittest.TestCase):
         self.visco_rectangle_template(CollocationMethod, ViscoelasticRelaxationModel, viscoelastic_relaxation_region_example(1, 1))
 
     def test_collocation_cantilever_beam(self):
-        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantilever_beam_region_example(3, 3))
+        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantilever_beam_region_example(1.5, 1.5))
 
     def test_collocation_simply_supported_beam(self):
         self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel,
@@ -435,7 +435,10 @@ class TestMeshless(unittest.TestCase):
             plt.pause(0.001)
         plt.show()
 
-    def test_all_crimed_beam(self):
+    def test_all(self):
+        model = CantileverBeamModel
+        region = cantilever_beam_region_example
+        func = self.visco_rectangle_template
         steps = [
             [24, 6],
             [12, 6],
@@ -490,23 +493,23 @@ class TestMeshless(unittest.TestCase):
             times.to_excel(excel_writer, sheet_name="Tempo")
             excel_writer.save()
         for dx, dy in steps:
+            # start_time = time.time()
+            # diff = func(CollocationMethod, model, region(dx, dy))
+            # collocation_times.append(time.time() - start_time)
+            # collocation_diff.append(diff)
+            # plot()
+            # start_time = time.time()
+            # diff = func(SubregionMethod, model, region(dx, dy))
+            # subregion_times.append(time.time() - start_time)
+            # subregion_diff.append(diff)
+            # plot()
+            # start_time = time.time()
+            # diff = func(GalerkinMethod, model, region(dx, dy))
+            # galerkin_times.append(time.time() - start_time)
+            # galerkin_diff.append(diff)
+            # plot()
             start_time = time.time()
-            diff = self.rectangle_template(CollocationMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
-            collocation_times.append(time.time() - start_time)
-            collocation_diff.append(diff)
-            plot()
-            start_time = time.time()
-            diff = self.rectangle_template(SubregionMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
-            subregion_times.append(time.time() - start_time)
-            subregion_diff.append(diff)
-            plot()
-            start_time = time.time()
-            diff = self.rectangle_template(GalerkinMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
-            galerkin_times.append(time.time() - start_time)
-            galerkin_diff.append(diff)
-            plot()
-            start_time = time.time()
-            diff = self.rectangle_template(PetrovGalerkinMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
+            diff = func(PetrovGalerkinMethod, model, region(dx, dy))
             petrov_galerkin_times.append(time.time() - start_time)
             petrov_galerkin_diff.append(diff)
             plot()
