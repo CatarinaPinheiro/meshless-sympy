@@ -5,13 +5,17 @@ import src.helpers.numeric as num
 
 
 class MovingLeastSquares2D:
-    def __init__(self, data, basis, weight_function, security=1):
+    security=1
+    min_det = 10
+    r_step = 1.1
+
+    def __init__(self, data, basis, weight_function):
         self.basis = basis
         self.data = data
         self.point = np.zeros(np.shape(data[0]))
-        self.security = security
-        self.min_det = 10
-        self.r_step = 1.1
+        self.security = self.__class__.security
+        self.min_det = self.__class__.min_det
+        self.r_step = self.__class__.r_step
         self.weight_function = weight_function
         self.preP = np.array([
             [num.Function(exp, name="basis %d"%i).eval(d) for i, exp in enumerate(self.basis)]

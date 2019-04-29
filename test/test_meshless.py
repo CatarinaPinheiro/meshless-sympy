@@ -13,6 +13,7 @@ import re
 import pandas as pd
 import time
 import datetime
+from src.methods.mls2d import MovingLeastSquares2D
 from src.models.simply_supported_beam import SimplySupportedBeamModel
 from src.models.simply_supported_elastic import SimplySupportedElasticModel
 from src.geometry.regions.rectangle import Rectangle
@@ -488,32 +489,38 @@ class TestMeshless(unittest.TestCase):
                 GalerkinMethod.name:       pd.Series(galerkin_times),
                 PetrovGalerkinMethod.name: pd.Series(petrov_galerkin_times)
             })
+
+            m2d = pd.DataFrame.from_dict({
+                "security": [MovingLeastSquares2D.security],
+                "r_step": [MovingLeastSquares2D.r_step],
+                "min_det": [MovingLeastSquares2D.min_det]
+            }, orient="index")
             excel_writer = pd.ExcelWriter("./output/%s.xlsx"%time_string, engine="xlsxwriter")
             diffs.to_excel(excel_writer, sheet_name="Erro relativo")
             times.to_excel(excel_writer, sheet_name="Tempo")
+            m2d.to_excel(excel_writer, sheet_name="Moving Least Squares")
             excel_writer.save()
         for dx, dy in steps:
-            # start_time = time.time()
-            # diff = func(CollocationMethod, model, region(dx, dy))
-            # collocation_times.append(time.time() - start_time)
-            # collocation_diff.append(diff)
-            # plot()
-            # start_time = time.time()
-            # diff = func(SubregionMethod, model, region(dx, dy))
-            # subregion_times.append(time.time() - start_time)
-            # subregion_diff.append(diff)
-            # plot()
-            # start_time = time.time()
-            # diff = func(GalerkinMethod, model, region(dx, dy))
-            # galerkin_times.append(time.time() - start_time)
-            # galerkin_diff.append(diff)
-            # plot()
+            start_time = time.time()
+            diff = func(CollocationMethod, model, region(dx, dy))
+            collocation_times.append(time.time() - start_time)
+            collocation_diff.append(diff)
+            plot()
+            start_time = time.time()
+            diff = func(SubregionMethod, model, region(dx, dy))
+            subregion_times.append(time.time() - start_time)
+            subregion_diff.append(diff)
+            plot()
+            start_time = time.time()
+            diff = func(GalerkinMethod, model, region(dx, dy))
+            galerkin_times.append(time.time() - start_time)
+            galerkin_diff.append(diff)
+            plot()
             start_time = time.time()
             diff = func(PetrovGalerkinMethod, model, region(dx, dy))
             petrov_galerkin_times.append(time.time() - start_time)
             petrov_galerkin_diff.append(diff)
             plot()
-            print(pd)
         plt.show()
 
 
