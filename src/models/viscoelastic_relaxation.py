@@ -4,7 +4,7 @@ import sympy as sp
 
 
 class ViscoelasticRelaxationModel(ElasticModel):
-    def __init__(self, region, time=111, iterations=1):
+    def __init__(self, region, time=50, iterations=1):
         ElasticModel.__init__(self, region)
 
         self.material_type = "ELASTIC"
@@ -54,7 +54,8 @@ class ViscoelasticRelaxationModel(ElasticModel):
             return exp1*(exp2 - exp3 + exp4*exp5)
 
         self.relaxation_analytical = [sx, sy, lambda t: 0*t]
-        # self.analytical = [sp.Matrix(np.zeros([self.time * self.iterations,1])), sp.Matrix(np.zeros([self.time * self.iterations,1]))]
+        #self.relaxation_analytical = [sp.Matrix([sx(tt) for tt in t]), sp.Matrix(np.zeros([self.time * self.iterations]))]
+        #self.analytical = [sp.Matrix(np.zeros([self.time * self.iterations,1])), sp.Matrix(np.zeros([self.time * self.iterations,1]))]
 
     def independent_domain_function(self, point):
         return np.array([0, 0])

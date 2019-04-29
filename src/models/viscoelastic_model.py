@@ -8,6 +8,7 @@ class ViscoelasticModel(ElasticModel):
         ElasticModel.__init__(self, region)
 
         self.material_type = "VISCOELASTIC"
+        self.viscoelastic_phase = "CREEP"
 
         self.iterations = iterations
         self.time = time
@@ -18,8 +19,8 @@ class ViscoelasticModel(ElasticModel):
 
         p = self.p = 2e6
         F = 8e9
-        G = 1.92e9
-        self.K = K = 4.17e9
+        G = 1.9e9
+        self.K = K = 4.15e9
 
         E1 = 9 * K * G / (3 * K + G)
         E2 = E1

@@ -10,6 +10,7 @@ class CantileverBeamModel:
         ElasticModel.__init__(self, region)
 
         self.material_type = "VISCOELASTIC"
+        self.viscoelastic_phase = "CREEP"
 
         self.iterations = iterations
         self.time = time
@@ -19,10 +20,10 @@ class CantileverBeamModel:
         ones = np.ones(s.shape)
         zeros = np.zeros(s.shape)
 
-        p = self.p = -1e3
-        F = 35e5
-        G = 8.75e5
-        self.K = K = 11.67e5
+        p = self.p = 1e3
+        F = 35e8
+        G = 8.75e8
+        self.K = K = 11.67e8
 
         E1 = 9 * K * G / (3 * K + G)
         E2 = E1
@@ -120,17 +121,24 @@ class CantileverBeamModel:
         #     exp12 = self.p*(L**3)/(3*I)
         #     return ht*(exp5 + exp2/3)*exp8 + 2*ht*(exp7 + exp2)*exp9 + ht*(exp1 + 2*exp2/3)*(exp10 - exp11 + exp12)
 
-        self.analytical = [sp.Matrix([ux(tt) for tt in t]), sp.Matrix([uy(tt) for tt in t])]
+        self.analytical_visco = [sp.Matrix([ux(tt) for tt in t]), sp.Matrix([uy(tt) for tt in t])]
 
     def independent_domain_function(self, point):
         return np.array([0, 0])
 
     def independent_boundary_function(self, point):
+        conditions = self.region.condition(point)
         if point[0] > self.region.x2 - 1e-3:
             h = self.h
             p = self.p
             I = self.I
             y = point[1]
             return np.array([0, p * ((h ** 2) / 4 - y ** 2) / (2 * I)])
+        elif point[0] < self.region.x1 + 1e-3 and conditions[1] == 'NEUMANN':
+            h = self.h
+            p = self.p
+            I = self.I
+            y = point[1]
+            return np.array([0, -p * ((h ** 2) / 4 - y ** 2) / (2 * I)])
         else:
             return np.array([0, 0])

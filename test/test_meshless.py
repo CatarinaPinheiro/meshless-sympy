@@ -20,9 +20,13 @@ from src.models.viscoelastic_relaxation import ViscoelasticRelaxationModel
 from src.models.viscoelastic_model import ViscoelasticModel
 from matplotlib import pyplot as plt
 import random
+import locale
+plt.rcdefaults()
+locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 plt.style.use('bmh')
-csfont = {'fontname':'Times New Roman'}
-plt.rcParams["font.family"] = "Times New Roman"
+csfont = {'fontname':'Liberation Serif'}
+plt.rcParams['axes.formatter.use_locale'] = True
+plt.rcParams["font.family"] = "Liberation Serif"
 
 def elastic_region_example(dx, dy):
     return Rectangle(
@@ -231,9 +235,13 @@ class TestMeshless(unittest.TestCase):
             phi = method.m2d.numeric_phi
             stress = method.equation.stress(phi, point, result)
             for index, component_name in enumerate(["$\\sigma_x$", "$\\sigma_y$", "$\\tau_{xy}$"]):
-                plt.plot(method.equation.time, stress[index], label='%s %s'%(method.name, component_name))
-                plt.plot(method.equation.time, model.relaxation_analytical[index](method.equation.time), label='Analítica %s' %component_name)
+                plt.plot(method.equation.time, stress[index],".", color="red", label='%s %s'%(method.name, component_name))
+                plt.plot(method.equation.time, model.relaxation_analytical[index](method.equation.time), color="indigo", label='Analítica %s' %component_name)
                 plt.legend()
+                plt.ylabel("Tensão (Pa)")
+                plt.xlabel("Tempo (s)")
+                plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+                plt.title("Tensão %s para o ponto $%s$" %(component_name,point))
                 plt.show()
 
     def viscoelastic_creep_plot(self, method, model, data, result, region):
@@ -256,9 +264,9 @@ class TestMeshless(unittest.TestCase):
             plt.plot(point[0] + calculated_x, point[1] + calculated_y, ".", color="red", label=method.name)
 
             if model.analytical:
-                analytical_x = num.Function(model.analytical[0], name="analytical ux(%s)").eval(point)[
+                analytical_x = num.Function(model.analytical_visco[0], name="analytical ux(%s)").eval(point)[
                                ::model.iterations].ravel()
-                analytical_y = num.Function(model.analytical[1], name="analytical uy(%s)").eval(point)[
+                analytical_y = num.Function(model.analytical_visco[1], name="analytical uy(%s)").eval(point)[
                                ::model.iterations].ravel()
                 plt.plot(point[0] + analytical_x, point[1] + analytical_y, color="indigo")
 
@@ -283,9 +291,11 @@ class TestMeshless(unittest.TestCase):
             if model.analytical:
                 plt.plot(analytical_x, color="indigo", label="Analítica")
             plt.legend()
-            plt.ylabel("Deslocamento (cm)")
+            plt.ylabel("Deslocamento (m)")
             plt.xlabel("Tempo (s)")
-            plt.title("Deslocamento $u$ para o ponto $%s$"%point)
+            plt.ylim(bottom=0)
+            plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+            plt.title("Deslocamento $u$ para o ponto $%s$" % point)
             plt.show()
 
             print("y")
@@ -293,9 +303,11 @@ class TestMeshless(unittest.TestCase):
             if model.analytical:
                 plt.plot(analytical_y, color="indigo", label="Analítica")
             plt.legend()
-            plt.ylabel("Deslocamento (cm)")
+            plt.ylabel("Deslocamento (m)")
+            plt.ylim(bottom=0)
             plt.xlabel("Tempo (s)")
-            plt.title("Deslocamento $v$ para o ponto $%s$"%point)
+            plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+            plt.title("Deslocamento $v$ para o ponto $%s$" % point)
             plt.show()
 
     def viscoelastic_plot(self, method, model, data, result, region):
@@ -391,6 +403,12 @@ class TestMeshless(unittest.TestCase):
     def test_galerkin_viscoelasticity(self):
         self.visco_rectangle_template(GalerkinMethod, ViscoelasticModel, viscoelastic_region_example(1, 1))
 
+    def test_galerkin_viscoelastic_relaxation(self):
+        self.visco_rectangle_template(GalerkinMethod, ViscoelasticRelaxationModel, viscoelastic_relaxation_region_example(1, 1))
+
+    def test_galerkin_cantilever_beam(self):
+        self.visco_rectangle_template(GalerkinMethod, CantileverBeamModel, cantilever_beam_region_example(2, 2))
+
     # __________________Petrov Galerkin Method____________________
 
     def test_petrov_galerkin_potential(self):
@@ -403,12 +421,12 @@ class TestMeshless(unittest.TestCase):
         self.rectangle_template(PetrovGalerkinMethod, CrimpedBeamModel, crimped_beam_region_example(6, 6))
 
     def test_petrov_galerkin_viscoelasticity(self):
-        self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticModel, viscoelastic_region_example(1, 1))
+        self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticModel, viscoelastic_region_example(0.5, 0.5))
 
     def test_petrov_galerkin_viscoelastic_relaxation(self):
-        self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticRelaxationModel, viscoelastic_relaxation_region_example(1, 1))
+        self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticRelaxationModel, viscoelastic_relaxation_region_example(0.5, 0.5))
 
-    def test_petrov_galerkin_cantiliever_beam(self):
+    def test_petrov_galerkin_cantilever_beam(self):
         self.visco_rectangle_template(PetrovGalerkinMethod, CantileverBeamModel, cantilever_beam_region_example(6, 6))
 
     def test_petrov_galerkin_simply_supported_beam(self):
