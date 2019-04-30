@@ -9,9 +9,9 @@ class SimplySupportedElasticModel(ElasticModel):
         self.material_type = "ELASTIC"
         self.region = region
         self.num_dimensions = 2
-        F = 35e5
-        self.G = G = 8.75e5
-        K = 11.67e5
+        F = 8e9
+        G = 2e9
+        self.K = K = 4.20e9
         self.ni = ni = (3 * K - 2 * G) / (2 * (3 * K + G))
         self.ni = np.array([ni])
         E1 = 9 * K * G / (3 * K + G)

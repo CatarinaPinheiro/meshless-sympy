@@ -20,10 +20,10 @@ class CantileverBeamModel:
         ones = np.ones(s.shape)
         zeros = np.zeros(s.shape)
 
-        p = self.p = -1e3
-        F = 8e9
-        G = 2e9
-        self.K = K = 4.20e9
+        p = self.p = 1e3
+        F = self.F = 35e8
+        G = self.G = 8.75e8
+        K = self.K = 11.67e8
         t1 = self.t1 = 25
 
         E1 = 9 * K * G / (3 * K + G)
@@ -101,9 +101,9 @@ class CantileverBeamModel:
             ht1 = np.heaviside(t - t1, 1)
             return uy(t) - ht1 * uy(t - t1)
 
-        self.analytical_visco = [sp.Matrix([ux_c2(tt) for tt in t]), sp.Matrix([uy_c2(tt) for tt in t])]
+        #self.analytical_visco = [sp.Matrix([ux_c2(tt) for tt in t]), sp.Matrix([uy_c2(tt) for tt in t])]
 
-        self.analytical_visco_c2 = [sp.Matrix([ux_c2(tt) for tt in t]), sp.Matrix([uy_c2(tt) for tt in t])]
+        self.analytical_visco = [sp.Matrix([ux_c2(tt) for tt in t]), sp.Matrix([uy_c2(tt) for tt in t])]
 
         def pe(t):
             for tt in t:
