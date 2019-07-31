@@ -3,7 +3,7 @@ import scipy.integrate as si
 from numpy.polynomial.legendre import leggauss
 
 
-def polar_gauss_integral(point, radius, f, angle1=0, angle2=2*np.pi, n=10):
+def polar_gauss_integral(point, radius, f, angle1=0, angle2=2*np.pi, n=14):
     xs, ws = leggauss(n)
     outer_integral = []
     for i1,w1 in enumerate(ws):
@@ -21,7 +21,7 @@ def polar_gauss_integral(point, radius, f, angle1=0, angle2=2*np.pi, n=10):
 
     return np.sum(outer_integral, axis=0)*radius*(angle2 - angle1)/4
 
-def angular_integral(central, radius, f, angle1=0, angle2=np.pi, n=10):
+def angular_integral(central, radius, f, angle1=0, angle2=np.pi, n=14):
     xs, ws = leggauss(n)
 
     integral1 = []

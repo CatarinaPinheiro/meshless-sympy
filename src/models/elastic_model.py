@@ -61,9 +61,9 @@ class ElasticModel(Model):
                       [0, ny, nx]])
 
         zr = np.zeros(ux.shape)
-
-        print(ux.shape, uy.shape)
-        print(vx.shape, vy.shape)
+        #
+        # print(ux.shape, uy.shape)
+        # print(vx.shape, vy.shape)
         Lt = np.array([[ux, zr],
                        [zr, vy],
                        [uy, vx]]). \
@@ -77,8 +77,8 @@ class ElasticModel(Model):
         uv = np.array(u.eval(integration_point))
         vv = np.array(v.eval(integration_point))
 
-        print(uv.ravel().shape, vv.ravel().shape)
-        print(np.zeros(uv.size).shape, np.zeros(vv.size).shape)
+        # print(uv.ravel().shape, vv.ravel().shape)
+        # print(np.zeros(uv.size).shape, np.zeros(vv.size).shape)
         dirichlet_case = np.array([[uv.ravel(), np.zeros(uv.size)],
                                    [np.zeros(vv.size), vv.ravel()]])
 

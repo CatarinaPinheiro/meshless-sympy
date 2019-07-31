@@ -4,7 +4,7 @@ import numpy as np
 class HereditaryIntegralEquation(ChengEquation):
     def __init__(self, model):
         self.model = model
-        self.time = np.linspace(1, 50)
+        self.time = np.linspace(1, 30)
 
     def elastic_params(self):
         self.time = np.array([0])

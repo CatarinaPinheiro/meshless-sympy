@@ -24,6 +24,7 @@ class ChengEquation:
 
     def viscoelastic_params(self):
         self.time = np.linspace(1, 50)
+        # print("Time", self.time)
         q0 = self.model.q0
         q1 = self.model.q1
         p1 = self.model.p1
@@ -38,7 +39,7 @@ class ChengEquation:
         if self.model.viscoelastic_phase == "RELAXATION":
             f = relaxation
         elif self.model.viscoelastic_phase == "CREEP":
-            f = creep #f = lambda t: creep(t) - np.heaviside(t - 25, 0.99)*creep(t - 24)
+            f = creep #lambda t: creep(t) - np.heaviside(t - 25, 1)*creep(t - 24)
         else:
             raise Exception("Invalid viscoelastic phase: %s" % self.model.viscoelastic_phase)
 
@@ -116,6 +117,7 @@ class ChengEquation:
         zero = np.zeros(value.shape)
         space_size = value.size
         time_size = self.time.size
+
         return np.expand_dims(np.array([[value, zero],
                                         [zero, value]]), 3).repeat(time_size, 3).swapaxes(1, 2).reshape(
             [2, 2 * space_size, time_size])
@@ -156,9 +158,14 @@ class ChengEquation:
 
             return M1*Ltu1 + M2*Ltu2
 
+
+
     def independent_domain(self, point):
+        # print("Time Size", self.time.size)
         return self.model.independent_domain_function(point).reshape([2, 1]).repeat(self.time.size, 1)
 
+    # def independent_boundary(self, point):
+    #     return self.model.independ_boundary_function(point, self.time)
     def independent_boundary(self, point):
         return self.model.independent_boundary_function(point).reshape([2, 1]).repeat(self.time.size, 1)
 
@@ -166,8 +173,7 @@ class ChengEquation:
         return self.model.independent_domain_function(point).reshape([2, 1]).repeat(self.time.size, 1)
 
     def petrov_galerkin_independent_boundary(self, w, point):
-        return -w.eval(point) * self.model.independent_boundary_function(point).reshape([2, 1]).repeat(self.time.size,
-                                                                                                       1)
+        return -w.eval(point) * self.model.independent_boundary_function(point).reshape([2, 1]).repeat(self.time.size, 1)
 
     def petrov_galerkin_stiffness_domain(self, phi, w, point):
         M1, M2, LB1, LB2, B1, B2, space_size, time_size = self.cheng_params(phi, point)

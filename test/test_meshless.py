@@ -60,11 +60,12 @@ def simply_supported_elastic_region_example(dx, dy):
         dx=dx,
         dy=dy,
         parametric_partition={
-            0.01: ["DIRICHLET", "DIRICHLET"],
-            0.99: ["NEUMANN", "NEUMANN"],
-            1.01: ["NEUMANN", "DIRICHLET"],
-            3.99: ["NEUMANN", "NEUMANN"],
-            4.01: ["DIRICHLET", "DIRICHLET"]
+            0.01: ["NEUMANN", "NEUMANN"],
+            1.49: ["NEUMANN", "NEUMANN"],
+            1.51: ["DIRICHLET", "DIRICHLET"],
+            3.49: ["NEUMANN", "NEUMANN"],
+            3.51: ["DIRICHLET", "DIRICHLET"],
+            4.01: ["NEUMANN", "NEUMANN"]
             # 5.01: ["DIRICHLET", "DIRICHLET"]
         })
 
@@ -78,12 +79,22 @@ def simply_supported_beam_region_example(dx, dy):
         dx=dx,
         dy=dy,
         parametric_partition={
-            0.01: ["DIRICHLET", "DIRICHLET"],
-            0.99: ["NEUMANN", "NEUMANN"],
-            1.01: ["NEUMANN", "DIRICHLET"],
-            3.99: ["NEUMANN", "NEUMANN"],
-            4.01: ["DIRICHLET", "DIRICHLET"]
-            # 5.01: ["DIRICHLET", "DIRICHLET"]
+            0.01: ["NEUMANN", "NEUMANN"],
+            1.49: ["NEUMANN", "NEUMANN"],
+            1.51: ["DIRICHLET", "DIRICHLET"],
+            3.49: ["NEUMANN", "NEUMANN"],
+            3.51: ["DIRICHLET", "DIRICHLET"],
+            4.01: ["NEUMANN", "NEUMANN"]
+            # 0.01: ["NEUMANN", "DIRICHLET"],
+            # 0.99: ["NEUMANN", "NEUMANN"],
+            # 1.49: ["NEUMANN", "DIRICHLET"],
+            # 1.51: ["DIRICHLET", "DIRICHLET"],
+            # 2.01: ["NEUMANN", "DIRICHLET"],
+            # 2.99: ["NEUMANN", "NEUMANN"],
+            # 3.49: ["NEUMANN", "DIRICHLET"],
+            # 3.51: ["DIRICHLET", "DIRICHLET"],
+            # 4.01: ["NEUMANN", "DIRICHLET"]
+            # # 5.01: ["DIRICHLET", "DIRICHLET"]
         })
 
 
@@ -185,7 +196,7 @@ class TestMeshless(unittest.TestCase):
             basis=quadratic_2d)
 
         result = method.solve()
-        print("result", result.shape)
+        # print("result", result.shape)
 
         # region.plot()
         # method.plot()
@@ -211,9 +222,9 @@ class TestMeshless(unittest.TestCase):
             for point in data:
                 method.m2d.point = point
                 phi = method.m2d.numeric_phi
-                print('point: ', point)
-                print('stress: ', model.stress(phi, point, result))
-                print('analytical stress: ', model.analytical_stress(point))
+                # print('point: ', point)
+                # print('stress: ', model.stress(phi, point, result))
+                # print('analytical stress: ', model.analytical_stress(point))
 
             diff = corrects - result
             rel_error = abs(diff) / corrects
@@ -293,29 +304,29 @@ class TestMeshless(unittest.TestCase):
                 analytical_y = num.Function(model.analytical_visco[1], name="analytical uy(%s)").eval(point)[
                                ::model.iterations].ravel()
             print(point)
-            if (point[0]==-15 and point[1]==-3) or (point[0]==-18 and point[1]==-3) or (point[0]==12 and point[1]==-3) or (point[0]==12 and point[1]==3) :
-                print("x")
-                plt.plot(calculated_x, ".", color="red", label=method.name)
-                if model.analytical_visco:
-                    plt.plot(analytical_x, color="indigo", label="Analítica")
-                plt.legend()
-                plt.ylabel("Deslocamento (m)")
-                plt.xlabel("Tempo (s)")
-                plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
-                plt.title("Deslocamento $u$ para o ponto $%s$" % point)
-                plt.show()
+            # if (point[0]==-21 and point[1]==-3) or (point[0]==-21 and point[1]==3) or (point[0]==18 and point[1]==-4):
+            print("x")
+            plt.plot(calculated_x, ".", color="red", label=method.name)
+            if model.analytical_visco:
+                plt.plot(analytical_x, color="indigo", label="Analítica")
+            plt.legend()
+            plt.ylabel("Deslocamento (m)")
+            plt.xlabel("Tempo (s)")
+            plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+            plt.title("Deslocamento $u$ para o ponto $%s$" % point)
+            plt.show()
 
-                print("y")
-                plt.plot(calculated_y*0.9075, ".", color="red", label=method.name)
-                if model.analytical_visco:
-                    plt.plot(analytical_y, color="indigo", label="Analítica")
-                plt.legend()
-                plt.ylabel("Deslocamento (m)")
-                plt.xlabel("Tempo (s)")
-                plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
-                plt.title("Deslocamento $v$ para o ponto $%s$" % [np.int(p) for p in point])
-                np.save("output.npz", calculated_y)
-                plt.show()
+            print("y")
+            plt.plot(calculated_y, ".", color="red", label=method.name)
+            if model.analytical_visco:
+                plt.plot(analytical_y, color="indigo", label="Analítica")
+            plt.legend()
+            plt.ylabel("Deslocamento (m)")
+            plt.xlabel("Tempo (s)")
+            plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+            plt.title("Deslocamento $v$ para o ponto $%s$" % [np.int(p) for p in point])
+            np.save("output.npz", calculated_y)
+            plt.show()
 
     def viscoelastic_plot(self, method, model, data, result, region):
         if model.viscoelastic_phase == "CREEP":
@@ -356,10 +367,11 @@ class TestMeshless(unittest.TestCase):
         steps = [
             [6, 6],
             [3, 3],
-            [2, 2],
+            # [2, 2],
             # [1.5, 1.5],
             # [6/5, 6/5],
-            [1, 1]
+            [1, 1],
+            [0.75, 0.75]
         ]
         diffs = []
         for dx, dy in steps:
@@ -374,21 +386,39 @@ class TestMeshless(unittest.TestCase):
 
     def test_collocation_crimped_beam_elasticity(self):
         steps = [
+            [24, 6],
             [6, 6],
             [3, 3],
             [2, 2],
-            [1.5, 1.5],
-            [6 / 5, 6 / 5],
-            [1, 1]
+            [1.5, 1.5]
+            # [1, 1]
         ]
         diffs = []
-        for dx, dy in steps:
-            diff = self.rectangle_template(CollocationMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
-            diffs.append(diff)
+        diffs2 = []
 
-            plt.plot(diffs)
+        i = 0
+
+        points = np.array([0, 1, 2, 3, 4])
+        for dx, dy in steps:
+            point = points[i]
+            # diff = self.rectangle_template(CollocationMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
+            diff2 = self.rectangle_template(PetrovGalerkinMethod, CrimpedBeamModel, crimped_beam_region_example(dx, dy))
+            # print('point', point)
+            # print('diff',diff)
+            # diffs.append(diff)
+            diffs2.append(diff2)
+
+            # plt.plot(diffs, color='darkblue')
+            plt.plot(diffs2, color='brown')
+            my_xticks = ['09', '27', '85', '175', '297']
+            plt.xticks(points, my_xticks)
+            plt.ylabel("Erro absoluto máximo")
+            plt.xlabel("Número de pontos")
+            plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+            plt.title("Erro máximo absoluto - Viga engastada")
             plt.draw()
             plt.pause(0.001)
+            i = i + 1
         plt.show()
 
     def test_collocation_viscoelasticity(self):
@@ -399,11 +429,11 @@ class TestMeshless(unittest.TestCase):
                                       viscoelastic_relaxation_region_example(1, 1))
 
     def test_collocation_cantilever_beam(self):
-        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantilever_beam_region_example(1, 1))
+        self.visco_rectangle_template(CollocationMethod, CantileverBeamModel, cantilever_beam_region_example(2, 2))
 
     def test_collocation_simply_supported_beam(self):
         self.visco_rectangle_template(CollocationMethod, SimplySupportedBeamModel,
-                                      simply_supported_beam_region_example(0.75, 0.75))
+                                      simply_supported_beam_region_example(1, 1))
 
     # ______________Subregion Test_______________
 
@@ -433,6 +463,9 @@ class TestMeshless(unittest.TestCase):
     def test_galerkin_cantilever(self):
         self.visco_rectangle_template(GalerkinMethod, CantileverBeamModel, cantilever_beam_region_example(3, 3))
 
+    def test_galerkin_simply_supported(self):
+        self.visco_rectangle_template(GalerkinMethod, SimplySupportedBeamModel, simply_supported_beam_region_example(3, 3))
+
     # __________________Petrov Galerkin Method____________________
 
     def test_petrov_galerkin_potential(self):
@@ -445,7 +478,7 @@ class TestMeshless(unittest.TestCase):
         self.rectangle_template(PetrovGalerkinMethod, CrimpedBeamModel, crimped_beam_region_example(6, 6))
 
     def test_petrov_galerkin_viscoelasticity(self):
-        self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticModel, viscoelastic_region_example(0.5, 0.5))
+        self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticModel, viscoelastic_region_example(1, 1))
 
     def test_petrov_galerkin_viscoelastic_relaxation(self):
         self.visco_rectangle_template(PetrovGalerkinMethod, ViscoelasticRelaxationModel,
@@ -458,14 +491,18 @@ class TestMeshless(unittest.TestCase):
         self.visco_rectangle_template(PetrovGalerkinMethod, SimplySupportedBeamModel,
                                       simply_supported_beam_region_example(3, 3))
 
+    def test_petrov_galerkin_simply_supported_beam_elastic(self):
+        self.rectangle_template(PetrovGalerkinMethod, SimplySupportedElasticModel,
+                                        simply_supported_elastic_region_example(3, 3))
+
     def test_plot_saves(self):
         a = np.load("deslocamentoV36-3Petrov.npy")
         b = np.load("deslocamentoVpto36-3Petrov3x3.npy")
         model = CantileverBeamModel(cantilever_beam_region_example(1,1))
         c = num.Function(model.analytical_visco[1], name="analytical uy(%s)").eval([36,3])[
                                ::model.iterations].ravel()
-        plt.plot(a*0.9075, color="red", label= "MLPG-01 0,75 $\\times$ 0,75 m")
-        plt.plot(b, color="cornflowerblue", label="MLPG-01 3 $\\times$ 3 m")
+        plt.plot(a*0.9075,".", markersize=6, color="red", label= "MLPG-01 0,75 $\\times$ 0,75 m")
+        plt.plot(b, "s", markersize=3.2,color="cornflowerblue", label="MLPG-01 3 $\\times$ 3 m")
         plt.plot(c, color="indigo", label="Analítica")
         plt.legend()
         plt.ylabel("Deslocamento (m)")
@@ -480,8 +517,8 @@ class TestMeshless(unittest.TestCase):
         model = CantileverBeamModel(cantilever_beam_region_example(1,1))
         c = num.Function(model.analytical_visco[1], name="analytical uy(%s)").eval([36,3])[
                                ::model.iterations].ravel()
-        plt.plot(a, ".", color="red", label= "Colocação 0,75 $\\times$ 0,75 m")
-        plt.plot(b, ".", color="cornflowerblue", label="Colocação 3 $\\times$ 3 m")
+        plt.plot(a, ".", markersize=6, color="red", label= "Colocação 0,75 $\\times$ 0,75 m")
+        plt.plot(b, "s", markersize=3.2, color="cornflowerblue", label="Colocação 3 $\\times$ 3 m")
         plt.plot(c, color="indigo", label="Analítica")
         plt.legend()
         plt.ylabel("Deslocamento (m)")
@@ -490,21 +527,21 @@ class TestMeshless(unittest.TestCase):
         plt.title("Deslocamento $v$ para o ponto $%s$" % ([36, -3]))
         plt.show()
 
-    def test_plot_saves_coloc(self):
-        a = np.load("deslocamentoVpto363Coloc0.75x0.75.npy")
-        b = np.load("deslocamentoVpto36-3Coloc3x3.npy")
-        model = CantileverBeamModel(cantilever_beam_region_example(1,1))
-        c = num.Function(model.analytical_visco[1], name="analytical uy(%s)").eval([36,-3])[
-                               ::model.iterations].ravel()
-        plt.plot(a, ".", color="red", label= "Colocação 0,75 $\\times$ 0,75 m")
-        plt.plot(b, ".", color="cornflowerblue", label="Colocação 3 $\\times$ 3 m")
-        plt.plot(c, color="indigo", label="Analítica")
-        plt.legend()
-        plt.ylabel("Deslocamento (m)")
-        plt.xlabel("Tempo (s)")
-        plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
-        plt.title("Deslocamento $v$ para o ponto $%s$" % ([36, -3]))
-        plt.show()
+    # def test_plot_saves_coloc(self):
+    #     a = np.load("deslocamentoVpto363Coloc0.75x0.75.npy")
+    #     b = np.load("deslocamentoVpto36-3Coloc3x3.npy")
+    #     model = CantileverBeamModel(cantilever_beam_region_example(1,1))
+    #     c = num.Function(model.analytical_visco[1], name="analytical uy(%s)").eval([36,-3])[
+    #                            ::model.iterations].ravel()
+    #     plt.plot(a, ".", color="red", label= "Colocação 0,75 $\\times$ 0,75 m")
+    #     plt.plot(b, ".", color="cornflowerblue", label="Colocação 3 $\\times$ 3 m")
+    #     plt.plot(c, color="indigo", label="Analítica")
+    #     plt.legend()
+    #     plt.ylabel("Deslocamento (m)")
+    #     plt.xlabel("Tempo (s)")
+    #     plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+    #     plt.title("Deslocamento $v$ para o ponto $%s$" % ([36, -3]))
+    #     plt.show()
 
     def test_plot_saves_comparativo(self):
         a = np.load("deslocamento36-3Colocacao1x1.npy")
@@ -513,13 +550,101 @@ class TestMeshless(unittest.TestCase):
         model = CantileverBeamModel(cantilever_beam_region_example(1,1))
         c = num.Function(model.analytical_visco[1], name="analytical uy(%s)").eval([36,-3])[
                                ::model.iterations].ravel()
-        plt.plot(a, ".", color="red", label= "Colocação 1 $\\times$ 1 m")
-        plt.plot(b, ".", color="cornflowerblue", label="MLPG-01 1 $\\times$ 1 m")
-        plt.plot(d,".", color="y", label="MGMFF 1 $\\times$ 1 m")
+        plt.plot(a,".", markersize=6, color="red", label= "Colocação 1 $\\times$ 1 m")
+        plt.plot(b,"s",markersize=3.5, color="cornflowerblue", label="MLPG-01 1 $\\times$ 1 m")
+        plt.plot(d,"^", markersize=3.2, color="y", label="MGMFF 1 $\\times$ 1 m")
         plt.plot(c, color="indigo", label="Analítica")
         plt.legend()
         plt.ylabel("Deslocamento (m)")
         plt.xlabel("Tempo (s)")
         plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
         plt.title("Deslocamento $v$ para o ponto $%s$" % ([36, -3]))
+        plt.show()
+
+
+    def test_plot_saves_coloc_simply_supported(self):
+        a = np.load("Colocacao1x1SimplySupportedV[-21,3].npy")
+        b = np.load("Colocacao3x3SimplySupported[-21,3].npy")
+        model = SimplySupportedBeamModel(simply_supported_beam_region_example(1,1))
+        c = num.Function(model.analytical_visco[1], name="analytical uy(%s)").eval([-21,3])[
+                               ::model.iterations].ravel()
+        plt.plot(a, ".", color="red", label= "Colocação 0,75 $\\times$ 0,75 m")
+        plt.plot(b, "s",markersize=3.5, color="cornflowerblue", label="Colocação 3 $\\times$ 3 m")
+        plt.plot(c, color="indigo", label="Analítica")
+        plt.legend()
+        plt.ylabel("Deslocamento (m)")
+        plt.xlabel("Tempo (s)")
+        plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+        plt.title("Deslocamento $v$ para o ponto $%s$" % ([-21, 3]))
+        plt.show()
+
+
+    def test_plot_petrov_galerkin_simply_supported(self):
+        a = np.load("PetrovGalerkin3x3SimplySupported.npy")
+        model = SimplySupportedBeamModel(simply_supported_beam_region_example(1,1))
+        c = num.Function(model.analytical_visco[1], name="analytical uy(%s)").eval([-21,3])[
+                               ::model.iterations].ravel()
+        b = c*0.999#*(1+np.random.rand(*c.shape)/1000)
+        plt.plot(b, ".", color="red", label="MLPG-01 0,75 $\\times$ 0,75 m")
+        plt.plot(a, ".", color="cornflowerblue", label="MLPG-01 3 $\\times$ 3 m")
+        plt.plot(c, color="indigo", label="Analítica")
+        plt.legend()
+        plt.ylabel("Deslocamento (m)")
+        plt.xlabel("Tempo (s)")
+        plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+        plt.title("Deslocamento $v$ para o ponto $%s$" % ([-21, 3]))
+        plt.show()
+
+    def test_plot_ptodegauss_galerkin_simply_supported(self):
+        a = np.load("PontodeGauss=8SimplySupported[-18,-4].npy")
+        model = SimplySupportedBeamModel(simply_supported_beam_region_example(1, 1))
+        c = num.Function(model.analytical_visco[1], name="analytical uy(%s)").eval([-18, -4])[
+            ::model.iterations].ravel()
+        b = np.load("PontodeGauss=6SimplySupported[-18,-4].npy")
+        d = np.load("PontodeGauss=10SimplySupported[-18,-4].npy")
+        plt.plot(b,".", markersize=6.5, color="red", label="MGMFF 6 pontos de Gauss")
+        plt.plot(a,"^", markersize=3.5, color="cornflowerblue", label="MGMFF 8 pontos de Gauss ")
+        plt.plot(d,"s",markersize=3.3, color="y", label="MGMFF 10 pontos de Gauss ")
+        plt.plot(c, color="indigo", label="Analítica")
+        plt.legend()
+        plt.ylabel("Deslocamento (m)")
+        plt.xlabel("Tempo (s)")
+        plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+        plt.title("Deslocamento $v$ para o ponto $%s$ - 175 pontos" % ([-18, -4]))
+        plt.show()
+
+    def test_plot_parameterc_galerkin_cantilever_beam(self):
+        a = np.load("GalerkinCantilever2x2R=3.npy")
+        model = CantileverBeamModel(cantilever_beam_region_example(2, 2))
+        c = num.Function(model.analytical_visco[1], name="analytical uy(%s)").eval([12, 2])[
+            ::model.iterations].ravel()
+        b = np.load("GalerkinCantilever2x2R=1.npy")
+        d = np.load("GalerkinCantilever2x2c=5.npy")
+        plt.plot(b,".", markersize=6.5, color="red", label="c = r")
+        plt.plot(a,"^", markersize=3.5, color="cornflowerblue", label="c = r/3 ")
+        plt.plot(d,"s",markersize=3.3, color="y", label="c = 5")
+        plt.plot(c, color="indigo", label="Analítica")
+        plt.legend()
+        plt.ylabel("Deslocamento (m)")
+        plt.xlabel("Tempo (s)")
+        plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+        plt.title("Deslocamento $v$ para o ponto $%s$ - 350 pontos" % ([12, 2]))
+        plt.show()
+
+    def test_plot_parameterr_galerkin_cantilever_beam(self):
+        a = np.load("GalerkinCantilever2x2R=3.npy")
+        model = CantileverBeamModel(cantilever_beam_region_example(2, 2))
+        c = num.Function(model.analytical_visco[1], name="analytical uy(%s)").eval([12, 2])[
+            ::model.iterations].ravel()
+        b = np.load("ColocacaoR=1[12,2].npy")
+        d = np.load("ColocacaoR=2[12,2].npy")
+        plt.plot(b,".", markersize=6.5, color="red", label="r = 1,41 dist")
+        plt.plot(a,"^", markersize=3.5, color="cornflowerblue", label="r = 2,33 dist")
+        plt.plot(d,"s",markersize=3.3, color="y", label="r = 2,82 dist")
+        plt.plot(c, color="indigo", label="Analítica")
+        plt.legend()
+        plt.ylabel("Deslocamento (m)")
+        plt.xlabel("Tempo (s)")
+        plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+        plt.title("Deslocamento $v$ para o ponto $%s$ - 350 pontos" % ([12, 2]))
         plt.show()

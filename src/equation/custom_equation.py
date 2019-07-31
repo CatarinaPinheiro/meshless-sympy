@@ -2,7 +2,7 @@ import numpy as np
 class CustomEquation:
     def __init__(self, model):
         self.model = model
-        self.time = np.linspace(0, 50)
+        self.time = np.linspace(0, 30)
 
     def creep(self):
         return 1 - np.exp(-self.time/100)

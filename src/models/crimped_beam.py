@@ -9,12 +9,8 @@ class CrimpedBeamModel(ElasticModel):
         self.material_type = "ELASTIC"
         self.region = region
         self.num_dimensions = 2
-        G = 8.75e8
-        K = 11.67e8
-        E1 = 9 * K * G / (3 * K + G)
-        q0 = E1/2
-        self.E = E = 9 * K * q0 / (6 * K + q0)#3e7
-        self.ni = ni = (3*K - q0)/(6*K + q0)#0.3
+        self.E = E = 3e7
+        self.ni = ni = 0.3
         self.ni = np.array([ni])
         self.G = G = E / (2 * (1 + ni))
         self.p = p = -1000
